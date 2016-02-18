@@ -8,3 +8,14 @@ C:\temp\VBProjects\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\bin\Debug\DaS-PC-MPChan.xm
 C:\temp\VBProjects\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.exe
 C:\temp\VBProjects\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.xml
 C:\temp\VBProjects\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.pdb
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\bin\Debug\DaS-PC-MPChan.exe.config
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.xml
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\bin\Debug\DaS-PC-MPChan.exe
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\bin\Debug\DaS-PC-MPChan.pdb
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\bin\Debug\DaS-PC-MPChan.xml
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.vbprojResolveAssemblyReference.cache
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS_PC_MPChan.Form1.resources
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS_PC_MPChan.Resources.resources
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.vbproj.GenerateResource.Cache
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.exe
+C:\Users\Lane\Documents\GitHub\DaS-PC-MPChan\DaS-PC-MPChan\obj\Debug\DaS-PC-MPChan.pdb

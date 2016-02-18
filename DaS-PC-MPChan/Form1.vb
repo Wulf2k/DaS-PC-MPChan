@@ -176,4 +176,8 @@ Public Class Form1
         nmbMPChannel.Value = ReadBytes(tmpptr + &HB69, 1)(0)
 
     End Sub
+
+    Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
+        TryAttachToProcess("DARK SOULS")
+    End Sub
 End Class
