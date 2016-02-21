@@ -4,6 +4,8 @@ Imports System.Threading
 Public Class Form1
 
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
+    Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
+    Public Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Integer) As Short
 
     Private Declare Function OpenProcess Lib "kernel32.dll" (ByVal dwDesiredAcess As UInt32, ByVal bInheritHandle As Boolean, ByVal dwProcessId As Int32) As IntPtr
     Private Declare Function ReadProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesRead As Integer) As Boolean
@@ -23,6 +25,10 @@ Public Class Form1
 
     Private _targetProcess As Process = Nothing
     Private _targetProcessHandle As IntPtr = IntPtr.Zero
+
+    Dim ctrlHeld As Boolean
+    Dim oneHeld As Boolean
+
 
     Dim debug As Boolean
 
@@ -60,9 +66,9 @@ Public Class Form1
             Try
                 CloseHandle(_targetProcessHandle)
                 _targetProcessHandle = IntPtr.Zero
-                MessageBox.Show("MemReader::Detach() OK")
+                'MessageBox.Show("MemReader::Detach() OK")
             Catch ex As Exception
-                MessageBox.Show("MemoryManager::DetachFromProcess::CloseHandle error " & Environment.NewLine & ex.Message)
+                'MessageBox.Show("MemoryManager::DetachFromProcess::CloseHandle error " & Environment.NewLine & ex.Message)
             End Try
         End If
     End Sub
@@ -160,6 +166,11 @@ Public Class Form1
         refTimer.Enabled = True
         refTimer.Start()
 
+        hotkeyTimer.Enabled = True
+        hotkeyTimer.Interval = 10
+        hotkeyTimer.Start()
+
+
         TryAttachToProcess("DARK SOULS")
     End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
@@ -176,8 +187,32 @@ Public Class Form1
         nmbMPChannel.Value = ReadBytes(tmpptr + &HB69, 1)(0)
 
     End Sub
+    Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
+        Dim ctrlkey As Boolean
+        Dim oneKey As Boolean
+
+        ctrlkey = GetAsyncKeyState(Keys.ControlKey)
+        oneKey = GetAsyncKeyState(Keys.D1)
+
+        If (ctrlkey And oneKey) And Not (Form1.ctrlHeld And Form1.oneHeld) Then
+            Form1.chkDebugDrawing.Checked = Not Form1.chkDebugDrawing.Checked
+            Dim dbgboost As Integer = 0
+
+            If Form1.debug Then dbgboost = &H3C20
+
+            If Form1.chkDebugDrawing.Checked Then
+                Form1.WriteBytes(&HFA256C + dbgboost, {&H1})
+            Else
+                Form1.WriteBytes(&HFA256C + dbgboost, {&H0})
+            End If
+        End If
+
+        Form1.ctrlHeld = ctrlkey
+        Form1.oneHeld = oneKey
+    End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
+        DetachFromProcess()
         TryAttachToProcess("DARK SOULS")
     End Sub
 End Class
