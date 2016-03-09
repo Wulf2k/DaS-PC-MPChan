@@ -29,7 +29,7 @@ Public Class Form1
     Dim ctrlHeld As Boolean
     Dim oneHeld As Boolean
 
-
+    Dim beta As Boolean
     Dim debug As Boolean
 
     Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
@@ -172,6 +172,11 @@ Public Class Form1
 
 
         TryAttachToProcess("DARK SOULS")
+        beta = (ReadUInt32(&H400080) = &HE91B11E2&)
+        If beta Then
+            MsgBox("Beta version detected.  Disconnecting from process.")
+            DetachFromProcess()
+        End If
     End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
@@ -214,5 +219,10 @@ Public Class Form1
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
         DetachFromProcess()
         TryAttachToProcess("DARK SOULS")
+        beta = (ReadUInt32(&H400080) = &HE91B11E2&)
+        If beta Then
+            MsgBox("Beta version detected.  Disconnecting from process.")
+            DetachFromProcess()
+        End If
     End Sub
 End Class

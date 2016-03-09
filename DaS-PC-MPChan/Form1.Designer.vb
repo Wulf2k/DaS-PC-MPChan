@@ -71,7 +71,7 @@ Partial Class Form1
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(137, 13)
         Me.Label1.TabIndex = 49
-        Me.Label1.Text = "Dark Souls - 2016.02.17.22"
+        Me.Label1.Text = "Dark Souls - 2016.03.05.00"
         '
         'btnReconnect
         '
