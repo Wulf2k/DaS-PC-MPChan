@@ -28,6 +28,7 @@ Public Class Form1
 
     Dim ctrlHeld As Boolean
     Dim oneHeld As Boolean
+    Dim twoheld As Boolean
 
     Dim beta As Boolean
     Dim debug As Boolean
@@ -72,6 +73,7 @@ Public Class Form1
             End Try
         End If
     End Sub
+
     Public Function ReadInt16(ByVal addr As IntPtr) As Int16
         Dim _rtnBytes(1) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 2, vbNull)
@@ -141,25 +143,6 @@ Public Class Form1
         WriteProcessMemory(_targetProcessHandle, addr, val, val.Length, Nothing)
     End Sub
 
-    Private Sub nmbMPChannel_ValueChanged(sender As Object, e As EventArgs) Handles nmbMPChannel.ValueChanged
-        Dim dbgboost As Integer = 0
-        Dim tmpptr As Integer
-        If debug Then dbgboost = &H41C0
-        tmpptr = ReadUInt32(&H137E204 + dbgboost)
-        WriteBytes(tmpptr + &HB69, {nmbMPChannel.Value})
-    End Sub
-    Private Sub chkDebugDrawing_CheckedChanged(sender As Object, e As EventArgs) Handles chkDebugDrawing.MouseClick
-        Dim dbgboost As Integer = 0
-
-        If debug Then dbgboost = &H3C20
-
-        If chkDebugDrawing.Checked Then
-            WriteBytes(&HFA256C + dbgboost, {&H1})
-        Else
-            WriteBytes(&HFA256C + dbgboost, {&H0})
-        End If
-    End Sub
-
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         refTimer = New System.Windows.Forms.Timer
         refTimer.Interval = 200
@@ -186,34 +169,31 @@ Public Class Form1
         If debug Then dbgboost = &H3C20
         chkDebugDrawing.Checked = (ReadBytes(&HFA256C + dbgboost, 1)(0) = 1)
 
-
         If debug Then dbgboost = &H41C0
         tmpptr = ReadUInt32(&H137E204 + dbgboost)
         nmbMPChannel.Value = ReadBytes(tmpptr + &HB69, 1)(0)
 
+        chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &H81)
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
         Dim oneKey As Boolean
+        Dim twoKey As Boolean
 
         ctrlkey = GetAsyncKeyState(Keys.ControlKey)
         oneKey = GetAsyncKeyState(Keys.D1)
+        twoKey = GetAsyncKeyState(Keys.D2)
 
         If (ctrlkey And oneKey) And Not (Form1.ctrlHeld And Form1.oneHeld) Then
             Form1.chkDebugDrawing.Checked = Not Form1.chkDebugDrawing.Checked
-            Dim dbgboost As Integer = 0
-
-            If Form1.debug Then dbgboost = &H3C20
-
-            If Form1.chkDebugDrawing.Checked Then
-                Form1.WriteBytes(&HFA256C + dbgboost, {&H1})
-            Else
-                Form1.WriteBytes(&HFA256C + dbgboost, {&H0})
-            End If
+        End If
+        If (ctrlkey And twoKey) And Not (Form1.ctrlHeld And Form1.twoheld) Then
+            Form1.chkNamedNodes.Checked = Not Form1.chkNamedNodes.Checked
         End If
 
         Form1.ctrlHeld = ctrlkey
         Form1.oneHeld = oneKey
+        Form1.twoheld = twoKey
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
@@ -224,5 +204,59 @@ Public Class Form1
             MsgBox("Beta version detected.  Disconnecting from process.")
             DetachFromProcess()
         End If
+    End Sub
+
+    Private Sub chkNamedNodes_CheckedChanged(sender As Object, e As EventArgs) Handles chkNamedNodes.CheckedChanged
+        Dim TargetBufferSize = 1024
+        Dim insertPtr As Integer
+        Dim dbgboost As Integer = 0
+
+        Dim bytes() As Byte
+        Dim bytes2() As Byte
+
+        Dim bytjmp As Integer = &H32
+
+        If chkNamedNodes.Checked Then
+            If debug Then
+                MsgBox("This function is not currently available in debug.")
+                chkNamedNodes.Checked = False
+            Else
+                insertPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+
+                bytes = {&H81, &HFC, 0, &HFC, &H18, 0, &H8B, &H44, &H24, &H10, &H77, &H24, &H8B, &H5B,
+                         &HD0, &H8B, &H5B, &H14, &H83, &HC3, &H30, &H50, &HB8, 0, 0, 0, 0, &H83, &HF8,
+                         &H1E, &H74, &H9, &H8A, &H13, &H88, &H17, &H40, &H43, &H47, &HEB, &HF2, &H83,
+                         &HEB, &H1E, &H83, &HEF, &H1E, &H58, &H56, &HE9, 0, 0, 0, 0}
+                bytes2 = BitConverter.GetBytes((&H55A550 - &H31 + dbgboost) - insertPtr)
+                Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
+                WriteProcessMemory(_targetProcessHandle, insertPtr, bytes, TargetBufferSize, 0)
+
+                bytes = {&HE9, 0, 0, 0, 0}
+                bytes2 = BitConverter.GetBytes((insertPtr - (&H55A550 + dbgboost) - 5))
+                Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
+                WriteProcessMemory(_targetProcessHandle, (&H55A550 + dbgboost), bytes, bytes.Length, 0)
+            End If
+        Else
+            bytes = {&H8B, &H44, &H24, &H10, &H56}
+            WriteProcessMemory(_targetProcessHandle, (&H55A550 + dbgboost), bytes, bytes.Length, 0)
+        End If
+    End Sub
+    Private Sub chkDebugDrawing_CheckedChanged(sender As Object, e As EventArgs) Handles chkDebugDrawing.CheckedChanged
+        Dim dbgboost As Integer = 0
+
+        If debug Then dbgboost = &H3C20
+
+        If chkDebugDrawing.Checked Then
+            WriteBytes(&HFA256C + dbgboost, {&H1})
+        Else
+            WriteBytes(&HFA256C + dbgboost, {&H0})
+        End If
+    End Sub
+    Private Sub nmbMPChannel_ValueChanged(sender As Object, e As EventArgs) Handles nmbMPChannel.ValueChanged
+        Dim dbgboost As Integer = 0
+        Dim tmpptr As Integer
+        If debug Then dbgboost = &H41C0
+        tmpptr = ReadUInt32(&H137E204 + dbgboost)
+        WriteBytes(tmpptr + &HB69, {nmbMPChannel.Value})
     End Sub
 End Class
