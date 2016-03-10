@@ -173,7 +173,7 @@ Public Class Form1
         tmpptr = ReadUInt32(&H137E204 + dbgboost)
         nmbMPChannel.Value = ReadBytes(tmpptr + &HB69, 1)(0)
 
-        chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &H81)
+        chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &HE9)
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
