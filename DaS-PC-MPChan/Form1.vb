@@ -214,7 +214,7 @@ Public Class Form1
         Dim bytes() As Byte
         Dim bytes2() As Byte
 
-        Dim bytjmp As Integer = &H32
+        Dim bytjmp As Integer = &H6B
 
         If chkNamedNodes.Checked Then
             If debug Then
@@ -223,14 +223,18 @@ Public Class Form1
             Else
                 insertPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
 
-                bytes = {&H81, &HFC, 0, &HFC, &H18, 0, &H8B, &H44, &H24, &H10, &H77, &H24, &H8B, &H5B,
-                         &HD0, &H8B, &H5B, &H14, &H83, &HC3, &H30, &H50, &HB8, 0, 0, 0, 0, &H83, &HF8,
-                         &H1E, &H74, &H9, &H8A, &H13, &H88, &H17, &H40, &H43, &H47, &HEB, &HF2, &H83,
-                         &HEB, &H1E, &H83, &HEF, &H1E, &H58, &H56, &HE9, 0, 0, 0, 0}
-                bytes2 = BitConverter.GetBytes((&H55A550 - &H31 + dbgboost) - insertPtr)
+                bytes = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H00, &HFB, &H00, &H00, &H81,
+                        &HFB, &H00, &HFB, &H00, &H00, &H8B, &HD8, &H0F, &H84, &H05, &H00, &H00, &H00, &HE9, &H46, &H00,
+                        &H00, &H00, &H8B, &H5B, &HD0, &H83, &HFB, &H00, &H0F, &H84, &H14, &H00, &H00, &H00, &H8B, &H5B,
+                        &H14, &H83, &HFB, &H00, &H0F, &H84, &H08, &H00, &H00, &H00, &H83, &HC3, &H30, &HE9, &H07, &H00,
+                        &H00, &H00, &H8B, &HD8, &HE9, &H1F, &H00, &H00, &H00, &H50, &HB8, &H00, &H00, &H00, &H00, &H83,
+                        &HF8, &H20, &H0F, &H84, &H09, &H00, &H00, &H00, &H8A, &H13, &H88, &H17, &H40, &H43, &H47, &HEB,
+                        &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H00, &H00, &H00, &H00}
+                bytes2 = BitConverter.GetBytes((&H55A550 - &H6A + dbgboost) - insertPtr)
                 Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
                 WriteProcessMemory(_targetProcessHandle, insertPtr, bytes, TargetBufferSize, 0)
 
+                'MsgBox(Hex(insertPtr))
                 bytes = {&HE9, 0, 0, 0, 0}
                 bytes2 = BitConverter.GetBytes((insertPtr - (&H55A550 + dbgboost) - 5))
                 Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
