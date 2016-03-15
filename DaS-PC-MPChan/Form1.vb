@@ -36,7 +36,8 @@ Public Class Form1
     Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
         Dim _allProcesses() As Process = Process.GetProcesses
         For Each pp As Process In _allProcesses
-            If pp.MainWindowTitle.ToLower.Equals(windowCaption.ToLower) Then
+            'If pp.MainWindowTitle.ToLower.Equals(windowCaption.ToLower) Then
+            If pp.ProcessName.ToLower.Equals(windowCaption.ToLower) Then
                 'found it! proceed.
                 Return TryAttachToProcess(pp)
             End If
@@ -154,7 +155,7 @@ Public Class Form1
         hotkeyTimer.Start()
 
 
-        TryAttachToProcess("DARK SOULS")
+        TryAttachToProcess("darksouls")
         beta = (ReadUInt32(&H400080) = &HE91B11E2&)
         If beta Then
             MsgBox("Beta version detected.  Disconnecting from process.")
@@ -171,6 +172,7 @@ Public Class Form1
 
         If debug Then dbgboost = &H41C0
         tmpptr = ReadUInt32(&H137E204 + dbgboost)
+        chkMPEnabled.Checked = (ReadBytes(tmpptr + &HB68, 1)(0) = 1)
         nmbMPChannel.Value = ReadBytes(tmpptr + &HB69, 1)(0)
 
         chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &HE9)
@@ -198,7 +200,7 @@ Public Class Form1
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
         DetachFromProcess()
-        TryAttachToProcess("DARK SOULS")
+        TryAttachToProcess("darksouls")
         beta = (ReadUInt32(&H400080) = &HE91B11E2&)
         If beta Then
             MsgBox("Beta version detected.  Disconnecting from process.")
@@ -262,5 +264,17 @@ Public Class Form1
         If debug Then dbgboost = &H41C0
         tmpptr = ReadUInt32(&H137E204 + dbgboost)
         WriteBytes(tmpptr + &HB69, {nmbMPChannel.Value})
+    End Sub
+
+    Private Sub chkMPEnabled_CheckedChanged(sender As Object, e As EventArgs) Handles chkMPEnabled.CheckedChanged
+        Dim dbgboost As Integer = 0
+        Dim tmpptr As Integer
+        If debug Then dbgboost = &H41C0
+        tmpptr = ReadUInt32(&H137E204 + dbgboost)
+        If chkMPEnabled.Checked Then
+            WriteBytes(tmpptr + &HB68, {1})
+        Else
+            WriteBytes(tmpptr + &HB68, {0})
+        End If
     End Sub
 End Class

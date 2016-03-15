@@ -28,6 +28,7 @@ Partial Class Form1
         Me.Label1 = New System.Windows.Forms.Label()
         Me.btnReconnect = New System.Windows.Forms.Button()
         Me.chkNamedNodes = New System.Windows.Forms.CheckBox()
+        Me.chkMPEnabled = New System.Windows.Forms.CheckBox()
         CType(Me.nmbMPChannel, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
@@ -56,7 +57,7 @@ Partial Class Form1
         Me.chkDebugDrawing.AutoSize = True
         Me.chkDebugDrawing.BackColor = System.Drawing.Color.LightGray
         Me.chkDebugDrawing.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkDebugDrawing.Location = New System.Drawing.Point(81, 37)
+        Me.chkDebugDrawing.Location = New System.Drawing.Point(81, 61)
         Me.chkDebugDrawing.Name = "chkDebugDrawing"
         Me.chkDebugDrawing.Size = New System.Drawing.Size(113, 20)
         Me.chkDebugDrawing.TabIndex = 46
@@ -68,15 +69,15 @@ Partial Class Form1
         Me.Label1.AutoSize = True
         Me.Label1.BackColor = System.Drawing.Color.LightGray
         Me.Label1.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label1.Location = New System.Drawing.Point(186, 98)
+        Me.Label1.Location = New System.Drawing.Point(186, 122)
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(137, 13)
         Me.Label1.TabIndex = 49
-        Me.Label1.Text = "Dark Souls - 2016.03.10.22"
+        Me.Label1.Text = "Dark Souls - 2016.03.14.23"
         '
         'btnReconnect
         '
-        Me.btnReconnect.Location = New System.Drawing.Point(1, 89)
+        Me.btnReconnect.Location = New System.Drawing.Point(1, 113)
         Me.btnReconnect.Name = "btnReconnect"
         Me.btnReconnect.Size = New System.Drawing.Size(69, 23)
         Me.btnReconnect.TabIndex = 50
@@ -88,18 +89,33 @@ Partial Class Form1
         Me.chkNamedNodes.AutoSize = True
         Me.chkNamedNodes.BackColor = System.Drawing.Color.LightGray
         Me.chkNamedNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkNamedNodes.Location = New System.Drawing.Point(81, 63)
+        Me.chkNamedNodes.Location = New System.Drawing.Point(81, 87)
         Me.chkNamedNodes.Name = "chkNamedNodes"
         Me.chkNamedNodes.Size = New System.Drawing.Size(205, 20)
         Me.chkNamedNodes.TabIndex = 51
         Me.chkNamedNodes.Text = "Named Nodes (Experimental)"
         Me.chkNamedNodes.UseVisualStyleBackColor = False
         '
+        'chkMPEnabled
+        '
+        Me.chkMPEnabled.AutoSize = True
+        Me.chkMPEnabled.BackColor = System.Drawing.Color.LightGray
+        Me.chkMPEnabled.Enabled = False
+        Me.chkMPEnabled.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.chkMPEnabled.Location = New System.Drawing.Point(81, 35)
+        Me.chkMPEnabled.Name = "chkMPEnabled"
+        Me.chkMPEnabled.Size = New System.Drawing.Size(101, 20)
+        Me.chkMPEnabled.TabIndex = 52
+        Me.chkMPEnabled.Text = "MP Enabled"
+        Me.chkMPEnabled.UseVisualStyleBackColor = False
+        Me.chkMPEnabled.Visible = False
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(325, 116)
+        Me.ClientSize = New System.Drawing.Size(325, 139)
+        Me.Controls.Add(Me.chkMPEnabled)
         Me.Controls.Add(Me.chkNamedNodes)
         Me.Controls.Add(Me.btnReconnect)
         Me.Controls.Add(Me.Label1)
@@ -119,4 +135,5 @@ Partial Class Form1
     Friend WithEvents Label1 As Label
     Friend WithEvents btnReconnect As Button
     Friend WithEvents chkNamedNodes As System.Windows.Forms.CheckBox
+    Friend WithEvents chkMPEnabled As CheckBox
 End Class
