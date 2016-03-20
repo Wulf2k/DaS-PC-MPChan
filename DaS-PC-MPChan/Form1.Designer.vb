@@ -75,7 +75,7 @@ Partial Class Form1
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(137, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "Dark Souls - 2016.03.18.17"
+        Me.lblVer.Text = "Dark Souls - 2016.03.20.02"
         '
         'btnReconnect
         '

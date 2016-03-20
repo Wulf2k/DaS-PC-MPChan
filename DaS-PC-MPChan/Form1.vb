@@ -234,11 +234,6 @@ Public Class Form1
         dgvMPNodes.Columns.Add("World", "World")
         dgvMPNodes.Columns(5).Width = 150
 
-
-
-
-
-
     End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
@@ -260,11 +255,6 @@ Public Class Form1
         If Not tmpptr = 0 Then
             dgvMPNodes.Rows(0).Cells(4).Value = ReadInt32(tmpptr + &HA14)
         End If
-
-
-
-
-
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
@@ -285,6 +275,13 @@ Public Class Form1
         Form1.ctrlHeld = ctrlkey
         Form1.oneHeld = oneKey
         Form1.twoheld = twoKey
+    End Sub
+    Private Sub frmResize() Handles Me.Resize
+        dgvMPNodes.Width = Me.Width - 50
+        dgvMPNodes.Height = Me.Height - 200
+
+        btnReconnect.Location = New Point(1, Me.Height - 50)
+        lblVer.Location = New Point(Me.Width - 150, Me.Height - 40)
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
@@ -532,10 +529,6 @@ Public Class Form1
                 Me.Height = 530
                 dgvMPNodes.Visible = True
                 dgvMPNodes.Location = New Point(25, 125)
-                btnReconnect.Location = New Point(1, 465)
-                lblVer.Location = New Point(420, 475)
-
-
             End If
         Else
             bytes = {&H66, &H0F, &HD6, &H46, &H14}
@@ -545,8 +538,6 @@ Public Class Form1
             Me.Width = 341
             Me.Height = 177
             dgvMPNodes.Visible = False
-            btnReconnect.Location = New Point(1, 113)
-            lblVer.Location = New Point(186, 122)
 
         End If
     End Sub
