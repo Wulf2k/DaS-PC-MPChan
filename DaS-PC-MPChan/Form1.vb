@@ -2,7 +2,7 @@
 Imports System.Threading
 
 Public Class Form1
-
+    Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
     Public Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Integer) As Short
@@ -32,6 +32,9 @@ Public Class Form1
 
     Dim beta As Boolean
     Dim debug As Boolean
+
+    Dim nodeDumpPtr As Integer
+
 
     Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
         Dim _allProcesses() As Process = Process.GetProcesses
@@ -75,6 +78,11 @@ Public Class Form1
         End If
     End Sub
 
+    Public Function ReadInt8(ByVal addr As IntPtr) As SByte
+        Dim _rtnBytes(0) As Byte
+        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 1, vbNull)
+        Return _rtnBytes(0)
+    End Function
     Public Function ReadInt16(ByVal addr As IntPtr) As Int16
         Dim _rtnBytes(1) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 2, vbNull)
@@ -130,6 +138,51 @@ Public Class Form1
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, size, vbNull)
         Return _rtnBytes
     End Function
+    Private Function ReadAsciiStr(ByVal addr As UInteger) As String
+        Dim Str As String = ""
+        Dim cont As Boolean = True
+        Dim loc As Integer = 0
+
+        Dim bytes(&H10) As Byte
+
+        ReadProcessMemory(_targetProcessHandle, addr, bytes, &H10, vbNull)
+
+        While (cont And loc < &H10)
+            If bytes(loc) > 0 Then
+
+                Str = Str + Convert.ToChar(bytes(loc))
+
+                loc += 1
+            Else
+                cont = False
+            End If
+        End While
+
+        Return Str
+    End Function
+    Private Function ReadUnicodeStr(ByVal addr As UInteger) As String
+        Dim Str As String = ""
+        Dim cont As Boolean = True
+        Dim loc As Integer = 0
+
+        Dim bytes(&H20) As Byte
+
+
+        ReadProcessMemory(_targetProcessHandle, addr, bytes, &H20, vbNull)
+
+        While (cont And loc < &H20)
+            If bytes(loc) > 0 Then
+
+                Str = Str + Convert.ToChar(bytes(loc))
+
+                loc += 2
+            Else
+                cont = False
+            End If
+        End While
+
+        Return Str
+    End Function
 
     Public Sub WriteInt32(ByVal addr As IntPtr, val As Int32)
         WriteProcessMemory(_targetProcessHandle, addr, BitConverter.GetBytes(val), 4, Nothing)
@@ -154,6 +207,9 @@ Public Class Form1
         hotkeyTimer.Interval = 10
         hotkeyTimer.Start()
 
+        refMpData = New System.Windows.Forms.Timer
+        refMpData.Interval = 10000
+        refTimer.Enabled = True
 
         TryAttachToProcess("darksouls")
         beta = (ReadUInt32(&H400080) = &HE91B11E2&)
@@ -161,6 +217,28 @@ Public Class Form1
             MsgBox("Beta version detected.  Disconnecting from process.")
             DetachFromProcess()
         End If
+
+
+
+        dgvMPNodes.Columns.Add("Name", "Name")
+        dgvMPNodes.Columns(0).Width = 140
+        dgvMPNodes.Columns.Add("Steam ID", "Steam ID")
+        dgvMPNodes.Columns(1).Width = 140
+        dgvMPNodes.Columns(1).Visible = False
+        dgvMPNodes.Columns.Add("SL", "SL")
+        dgvMPNodes.Columns(2).Width = 60
+        dgvMPNodes.Columns.Add("Phantom Type", "Phantom Type")
+        dgvMPNodes.Columns(3).Width = 60
+        dgvMPNodes.Columns.Add("MP Area", "MP Area")
+        dgvMPNodes.Columns(4).Width = 60
+        dgvMPNodes.Columns.Add("World", "World")
+        dgvMPNodes.Columns(5).Width = 150
+
+
+
+
+
+
     End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
@@ -172,10 +250,21 @@ Public Class Form1
 
         If debug Then dbgboost = &H41C0
         tmpptr = ReadUInt32(&H137E204 + dbgboost)
-        chkMPEnabled.Checked = (ReadBytes(tmpptr + &HB68, 1)(0) = 1)
         nmbMPChannel.Value = ReadBytes(tmpptr + &HB69, 1)(0)
 
         chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &HE9)
+
+
+
+        tmpptr = ReadInt32(&H137E204)
+        If Not tmpptr = 0 Then
+            dgvMPNodes.Rows(0).Cells(4).Value = ReadInt32(tmpptr + &HA14)
+        End If
+
+
+
+
+
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
@@ -266,15 +355,199 @@ Public Class Form1
         WriteBytes(tmpptr + &HB69, {nmbMPChannel.Value})
     End Sub
 
-    Private Sub chkMPEnabled_CheckedChanged(sender As Object, e As EventArgs) Handles chkMPEnabled.CheckedChanged
+    Private Sub refMpData_Tick() Handles refMpData.Tick
+
+
+        Dim nodeCount As Integer
+        Dim row(9) As String
+
+        Dim SteamNodesPtr As Integer
+        Dim SteamNodeList As Integer
+        Dim SteamData1 As Integer
+        Dim SteamData2 As Integer
+
+
+        nodeCount = ReadInt32(&H1362DD0)
+        SteamNodeList = ReadInt32(&H1362DCC)
+        SteamNodesPtr = ReadInt32(SteamNodeList)
+
+
+        dgvMPNodes.Rows.Clear()
+
+
+
+        For i = 0 To nodeCount - 1
+            SteamData1 = ReadInt32(SteamNodesPtr + &HC)
+            SteamData2 = ReadInt32(SteamData1 + &HC)
+            row(0) = ReadUnicodeStr(SteamData1 + &H30)
+            row(1) = ReadUnicodeStr(SteamData2 + &H30)
+
+            SteamNodesPtr = ReadInt32(SteamNodesPtr)
+
+            dgvMPNodes.Rows.Add(row)
+        Next
+
+        Dim tmpptr As Integer = ReadInt32(&H137E204)
+        dgvMPNodes.Rows(0).Cells(2).Value = ReadInt32(tmpptr + &HA30)
+        dgvMPNodes.Rows(0).Cells(3).Value = ReadInt32(tmpptr + &HA28)
+        dgvMPNodes.Rows(0).Cells(4).Value = ReadInt32(tmpptr + &HA14)
+        dgvMPNodes.Rows(0).Cells(5).Value = ReadInt8(tmpptr + &HA13) & "-" & ReadInt8(tmpptr + &HA12)
+
+
+        Dim cont = True
+        Dim tmpid As String
+
+        tmpptr = nodeDumpPtr + &H200
+
+        While cont
+            tmpid = ReadAsciiStr(tmpptr)
+            cont = Not (tmpid = Nothing)
+
+            For i = 1 To dgvMPNodes.Rows.Count - 1
+                If (dgvMPNodes.Rows(i).Cells(1).Value = tmpid) And cont Then
+
+                    'SL
+                    dgvMPNodes.Rows(i).Cells(2).Value = ReadInt16(tmpptr + &H26)
+
+                    'Phantom
+                    dgvMPNodes.Rows(i).Cells(3).Value = ReadInt8(tmpptr + &H24)
+
+
+
+                    'Mp Area ID
+                    dgvMPNodes.Rows(i).Cells(4).Value = ReadInt32(tmpptr + &H28)
+
+                    'World
+                    tmpid = ReadInt8(tmpptr + &H13) & "-" & ReadInt8(tmpptr + &H12)
+
+                    dgvMPNodes.Rows(i).Cells(5).Value = tmpid
+                End If
+                WriteInt32(tmpptr, 0)
+            Next
+            tmpptr += &H30
+        End While
+
+
+        For i = 0 To dgvMPNodes.Rows.Count - 1
+            tmpid = dgvMPNodes.Rows(i).Cells(3).Value
+            Select Case tmpid
+                Case "0"
+                    tmpid = "Human"
+                Case "1"
+                    tmpid = "Co-op"
+                Case "2"
+                    tmpid = "Invader"
+                Case "8"
+                    tmpid = "Hollow"
+            End Select
+            dgvMPNodes.Rows(i).Cells(3).Value = tmpid
+
+            tmpid = dgvMPNodes.Rows(i).Cells(5).Value
+            Select Case tmpid
+                Case "-1--1"
+                    tmpid = "None"
+                Case "10-0"
+                    tmpid = "Depths"
+                Case "10-1"
+                    tmpid = "Undead Burg/Parish"
+                Case "10-2"
+                    tmpid = "Firelink Shrine"
+                Case "11-0"
+                    tmpid = "Painted World"
+                Case "12-0"
+                    tmpid = "Darkroot Garden"
+                Case "12-1"
+                    tmpid = "Oolacile"
+                Case "13-0"
+                    tmpid = "Catacombs"
+                Case "13-1"
+                    tmpid = "Tomb of the Giants"
+                Case "13-2"
+                    tmpid = "Ash Lake"
+                Case "14-0"
+                    tmpid = "Blighttown"
+                Case "14-1"
+                    tmpid = "Demon Ruins"
+                Case "15-0"
+                    tmpid = "Sen's Fortress"
+                Case "15-1"
+                    tmpid = "Anor Londo"
+                Case "16-0"
+                    tmpid = "New Londo Ruins"
+                Case "17-0"
+                    tmpid = "Duke's Archives / Caves"
+                Case "18-0"
+                    tmpid = "Kiln"
+                Case "18-1"
+                    tmpid = "Undead Asylum"
+            End Select
+            dgvMPNodes.Rows(i).Cells(5).Value = tmpid
+        Next
+    End Sub
+
+    Private Sub chkExpand_CheckedChanged(sender As Object, e As EventArgs) Handles chkExpand.CheckedChanged
+
+        Dim TargetBufferSize = 4096
+        Dim insertPtr As Integer
         Dim dbgboost As Integer = 0
-        Dim tmpptr As Integer
-        If debug Then dbgboost = &H41C0
-        tmpptr = ReadUInt32(&H137E204 + dbgboost)
-        If chkMPEnabled.Checked Then
-            WriteBytes(tmpptr + &HB68, {1})
+
+        Dim bytes() As Byte
+        Dim bytes2() As Byte
+
+        Dim bytjmp As Integer = &H78
+
+        If chkExpand.Checked Then
+            If debug Then
+                MsgBox("This function is not currently available in debug.")
+                chkExpand.Checked = False
+            Else
+                insertPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                nodeDumpPtr = insertPtr
+
+                bytes = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H00, &H00, &H00, &H00, &HB8, &H00, &H00, &H00, &H00,
+                            &HBB, &H00, &H00, &H00, &H00, &HB9, &H00, &H00, &H00, &H00, &HBA, &H00, &H00, &H00, &H00, &H8A,
+                            &H1F, &H80, &HFB, &H00, &H0F, &H84, &H30, &H00, &H00, &H00, &H8A, &H06, &H8A, &H1F, &H46, &H47,
+                            &H41, &H38, &HD8, &H0F, &H85, &H13, &H00, &H00, &H00, &H83, &HF9, &H11, &H75, &HEC, &H29, &HCE,
+                            &H29, &HCF, &HB9, &H00, &H00, &H00, &H00, &HE9, &H0E, &H00, &H00, &H00, &H29, &HCE, &H29, &HCF,
+                            &HB9, &H00, &H00, &H00, &H00, &H83, &HC7, &H30, &HEB, &HC5, &H8A, &H1E, &H88, &H1F, &H46, &H47,
+                            &H41, &H83, &HF9, &H30, &H0F, &H84, &H02, &H00, &H00, &H00, &HEB, &HEE, &H5F, &H5E, &H5A, &H59,
+                            &H5B, &H58, &H66, &H0F, &HD6, &H46, &H14, &HE9, &H00, &H00, &H00, &H00}
+
+                'Adjust EDI
+                bytes2 = BitConverter.GetBytes(nodeDumpPtr + &H200)
+                Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
+
+                'Adjust the jump home
+                bytes2 = BitConverter.GetBytes((&HBE637E - &H77 + dbgboost) - insertPtr)
+                Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
+                WriteProcessMemory(_targetProcessHandle, insertPtr, bytes, TargetBufferSize, 0)
+
+                bytes = {&HE9, 0, 0, 0, 0}
+                bytes2 = BitConverter.GetBytes((insertPtr - (&HBE637E + dbgboost) - 5))
+                Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
+                WriteProcessMemory(_targetProcessHandle, (&HBE637E + dbgboost), bytes, bytes.Length, 0)
+                refMpData.Start()
+
+                Me.Width = 575
+                Me.Height = 530
+                dgvMPNodes.Visible = True
+                dgvMPNodes.Location = New Point(25, 125)
+                btnReconnect.Location = New Point(1, 465)
+                lblVer.Location = New Point(420, 475)
+
+
+            End If
         Else
-            WriteBytes(tmpptr + &HB68, {0})
+            bytes = {&H66, &H0F, &HD6, &H46, &H14}
+            WriteProcessMemory(_targetProcessHandle, (&HBE637E + dbgboost), bytes, bytes.Length, 0)
+            refMpData.Stop()
+
+            Me.Width = 341
+            Me.Height = 177
+            dgvMPNodes.Visible = False
+            btnReconnect.Location = New Point(1, 113)
+            lblVer.Location = New Point(186, 122)
+
         End If
     End Sub
 End Class
