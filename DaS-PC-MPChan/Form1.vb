@@ -252,7 +252,7 @@ Public Class Form1
 
 
         tmpptr = ReadInt32(&H137E204)
-        If Not tmpptr = 0 Then
+        If Not tmpptr = 0 And Not beta Then
             dgvMPNodes.Rows(0).Cells(4).Value = ReadInt32(tmpptr + &HA14)
         End If
     End Sub
@@ -280,8 +280,8 @@ Public Class Form1
         dgvMPNodes.Width = Me.Width - 50
         dgvMPNodes.Height = Me.Height - 200
 
-        btnReconnect.Location = New Point(1, Me.Height - 50)
-        lblVer.Location = New Point(Me.Width - 150, Me.Height - 40)
+        btnReconnect.Location = New Point(1, Me.Height - 65)
+        lblVer.Location = New Point(Me.Width - 150, Me.Height - 55)
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
