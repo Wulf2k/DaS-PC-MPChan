@@ -75,7 +75,7 @@ Partial Class Form1
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(137, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "Dark Souls - 2016.03.27.01"
+        Me.lblVer.Text = "Dark Souls - 2016.03.28.20"
         '
         'btnReconnect
         '
@@ -115,6 +115,8 @@ Partial Class Form1
         Me.dgvMPNodes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         Me.dgvMPNodes.Location = New System.Drawing.Point(319, 8)
         Me.dgvMPNodes.Name = "dgvMPNodes"
+        Me.dgvMPNodes.ReadOnly = True
+        Me.dgvMPNodes.RowHeadersVisible = False
         Me.dgvMPNodes.Size = New System.Drawing.Size(518, 328)
         Me.dgvMPNodes.TabIndex = 53
         Me.dgvMPNodes.Visible = False

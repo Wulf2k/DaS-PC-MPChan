@@ -197,6 +197,14 @@ Public Class Form1
         WriteProcessMemory(_targetProcessHandle, addr, val, val.Length, Nothing)
     End Sub
 
+    Private Sub Form1_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
+        chkDebugDrawing.Checked = False
+        chkNamedNodes.Checked = False
+        chkExpand.Checked = False
+
+
+    End Sub
+
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         refTimer = New System.Windows.Forms.Timer
         refTimer.Interval = 200
@@ -292,6 +300,7 @@ Public Class Form1
             MsgBox("Beta version detected.  Disconnecting from process.")
             DetachFromProcess()
         End If
+        chkExpand.Checked = False
     End Sub
 
     Private Sub chkNamedNodes_CheckedChanged(sender As Object, e As EventArgs) Handles chkNamedNodes.CheckedChanged
@@ -525,8 +534,8 @@ Public Class Form1
                 WriteProcessMemory(_targetProcessHandle, (&HBE637E + dbgboost), bytes, bytes.Length, 0)
                 refMpData.Start()
 
-                Me.Width = 575
-                Me.Height = 530
+                Me.Width = 525
+                Me.Height = 680
                 dgvMPNodes.Visible = True
                 dgvMPNodes.Location = New Point(25, 125)
             End If
