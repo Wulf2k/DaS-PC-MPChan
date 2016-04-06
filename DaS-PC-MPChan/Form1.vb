@@ -14,6 +14,9 @@ Public Class Form1
     Private Declare Function VirtualAllocEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal dwSize As IntPtr, ByVal flAllocationType As Integer, ByVal flProtect As Integer) As IntPtr
     Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As Integer, ByVal lpThreadAttributes As Integer, ByVal dwStackSize As Integer, ByVal lpStartAddress As Integer, ByVal lpParameter As Integer, ByVal dwCreationFlags As Integer, ByRef lpThreadId As Integer) As Integer
 
+
+
+
     Public Const PROCESS_VM_READ = &H10
     Public Const TH32CS_SNAPPROCESS = &H2
     Public Const MEM_COMMIT = 4096
@@ -33,7 +36,10 @@ Public Class Form1
     Dim beta As Boolean
     Dim debug As Boolean
 
+    Dim namedNodePtr As Integer
     Dim nodeDumpPtr As Integer
+    Dim forceIdPtr As Integer
+
 
 
     Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
@@ -196,6 +202,9 @@ Public Class Form1
     Public Sub WriteBytes(ByVal addr As IntPtr, val As Byte())
         WriteProcessMemory(_targetProcessHandle, addr, val, val.Length, Nothing)
     End Sub
+    Public Sub WriteAsciiStr(addr As UInteger, str As String)
+        WriteProcessMemory(_targetProcessHandle, addr, System.Text.Encoding.ASCII.GetBytes(str), str.Length, Nothing)
+    End Sub
 
     Private Sub Form1_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
         chkDebugDrawing.Checked = False
@@ -257,12 +266,36 @@ Public Class Form1
 
         chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &HE9)
 
+        tmpptr = ReadInt32(&H137F834)
+        tmpptr = ReadInt32(tmpptr + &H38)
+        If Not tmpptr = 0 And Not beta Then
+            Dim maxnodes = ReadInt32(tmpptr + &H70)
+            If maxnodes >= nmbMaxNodes.Minimum And maxnodes <= nmbMaxNodes.Maximum Then
+                nmbMaxNodes.Value = maxnodes
+            End If
+        End If
 
+        If Not txtSelfSteamID.Focused Then
+            txtSelfSteamID.Text = ReadAsciiStr(ReadInt32(&H137E204) + &HA00)
+        End If
 
         tmpptr = ReadInt32(&H137E204)
         If Not tmpptr = 0 And Not beta Then
-            dgvMPNodes.Rows(0).Cells(4).Value = ReadInt32(tmpptr + &HA14)
+            txtCurrNodes.Text = ReadInt32(tmpptr + &HAE0)
+
+            For i = 0 To dgvMPNodes.Rows.Count - 1
+                If dgvMPNodes.Rows(i).Cells(1).Value = txtSelfSteamID.Text Then
+                    dgvMPNodes.Rows(i).Cells(4).Value = ReadInt32(tmpptr + &HA14)
+                End If
+            Next
         End If
+
+        If forceIdPtr > 0 Then
+            lblAttemptCount.Text = "Attempts: " & ReadInt32(forceIdPtr + &H120)
+        End If
+
+        If lblAttemptCount.Text = "Attempts: 6" Then chkForce.Checked = False
+
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
@@ -293,6 +326,10 @@ Public Class Form1
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
+        namedNodePtr = 0
+        forceIdPtr = 0
+        nodeDumpPtr = 0
+
         DetachFromProcess()
         TryAttachToProcess("darksouls")
         beta = (ReadUInt32(&H400080) = &HE91B11E2&)
@@ -318,7 +355,10 @@ Public Class Form1
                 MsgBox("This function is not currently available in debug.")
                 chkNamedNodes.Checked = False
             Else
-                insertPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                If namedNodePtr = 0 Then
+                    insertPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                End If
+
 
                 bytes = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H00, &HFB, &H00, &H00, &H81,
                         &HFB, &H00, &HFB, &H00, &H00, &H8B, &HD8, &H0F, &H84, &H05, &H00, &H00, &H00, &HE9, &H46, &H00,
@@ -377,9 +417,9 @@ Public Class Form1
         SteamNodeList = ReadInt32(&H1362DCC)
         SteamNodesPtr = ReadInt32(SteamNodeList)
 
-
-        dgvMPNodes.Rows.Clear()
-
+        For i = 0 To dgvMPNodes.Rows.Count - 1
+            dgvMPNodes.Rows(i).Cells(5).Value = ""
+        Next
 
 
         For i = 0 To nodeCount - 1
@@ -390,14 +430,22 @@ Public Class Form1
 
             SteamNodesPtr = ReadInt32(SteamNodesPtr)
 
-            dgvMPNodes.Rows.Add(row)
+            Dim notexist As Boolean = True
+            For j = 0 To dgvMPNodes.Rows.Count - 1
+                If row(1) = dgvMPNodes.Rows(j).Cells(1).Value Then notexist = False
+            Next
+            If notexist Then dgvMPNodes.Rows.Add(row)
         Next
 
         Dim tmpptr As Integer = ReadInt32(&H137E204)
-        dgvMPNodes.Rows(0).Cells(2).Value = ReadInt32(tmpptr + &HA30)
-        dgvMPNodes.Rows(0).Cells(3).Value = ReadInt32(tmpptr + &HA28)
-        dgvMPNodes.Rows(0).Cells(4).Value = ReadInt32(tmpptr + &HA14)
-        dgvMPNodes.Rows(0).Cells(5).Value = ReadInt8(tmpptr + &HA13) & "-" & ReadInt8(tmpptr + &HA12)
+        For i = 0 To dgvMPNodes.Rows.Count - 1
+            If dgvMPNodes.Rows(i).Cells(1).Value = txtSelfSteamID.Text Then
+                dgvMPNodes.Rows(i).Cells(2).Value = ReadInt32(tmpptr + &HA30)
+                dgvMPNodes.Rows(i).Cells(3).Value = ReadInt32(tmpptr + &HA28)
+                dgvMPNodes.Rows(i).Cells(4).Value = ReadInt32(tmpptr + &HA14)
+                dgvMPNodes.Rows(i).Cells(5).Value = ReadInt8(tmpptr + &HA13) & "-" & ReadInt8(tmpptr + &HA12)
+            End If
+        Next
 
 
         Dim cont = True
@@ -409,7 +457,7 @@ Public Class Form1
             tmpid = ReadAsciiStr(tmpptr)
             cont = Not (tmpid = Nothing)
 
-            For i = 1 To dgvMPNodes.Rows.Count - 1
+            For i = 0 To dgvMPNodes.Rows.Count - 1
                 If (dgvMPNodes.Rows(i).Cells(1).Value = tmpid) And cont Then
 
                     'SL
@@ -489,12 +537,15 @@ Public Class Form1
             End Select
             dgvMPNodes.Rows(i).Cells(5).Value = tmpid
         Next
+
+        For i = dgvMPNodes.Rows.Count - 1 To 0 Step -1
+            If dgvMPNodes.Rows(i).Cells(5).Value = "" Then dgvMPNodes.Rows.Remove(dgvMPNodes.Rows(i))
+        Next
     End Sub
 
     Private Sub chkExpand_CheckedChanged(sender As Object, e As EventArgs) Handles chkExpand.CheckedChanged
 
         Dim TargetBufferSize = 4096
-        Dim insertPtr As Integer
         Dim dbgboost As Integer = 0
 
         Dim bytes() As Byte
@@ -507,8 +558,10 @@ Public Class Form1
                 MsgBox("This function is not currently available in debug.")
                 chkExpand.Checked = False
             Else
-                insertPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                nodeDumpPtr = insertPtr
+                If nodeDumpPtr = 0 Then
+                    nodeDumpPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                End If
+
 
                 bytes = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H00, &H00, &H00, &H00, &HB8, &H00, &H00, &H00, &H00,
                             &HBB, &H00, &H00, &H00, &H00, &HB9, &H00, &H00, &H00, &H00, &HBA, &H00, &H00, &H00, &H00, &H8A,
@@ -524,12 +577,12 @@ Public Class Form1
                 Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
 
                 'Adjust the jump home
-                bytes2 = BitConverter.GetBytes((&HBE637E - &H77 + dbgboost) - insertPtr)
+                bytes2 = BitConverter.GetBytes((&HBE637E - &H77 + dbgboost) - nodeDumpPtr)
                 Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
-                WriteProcessMemory(_targetProcessHandle, insertPtr, bytes, TargetBufferSize, 0)
+                WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
 
                 bytes = {&HE9, 0, 0, 0, 0}
-                bytes2 = BitConverter.GetBytes((insertPtr - (&HBE637E + dbgboost) - 5))
+                bytes2 = BitConverter.GetBytes((nodeDumpPtr - (&HBE637E + dbgboost) - 5))
                 Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                 WriteProcessMemory(_targetProcessHandle, (&HBE637E + dbgboost), bytes, bytes.Length, 0)
                 refMpData.Start()
@@ -544,9 +597,72 @@ Public Class Form1
             WriteProcessMemory(_targetProcessHandle, (&HBE637E + dbgboost), bytes, bytes.Length, 0)
             refMpData.Stop()
 
-            Me.Width = 341
+            Me.Width = 525
             Me.Height = 177
             dgvMPNodes.Visible = False
+
+        End If
+    End Sub
+
+    Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
+        Dim tmpptr As Integer
+
+        tmpptr = ReadInt32(&H137F834)
+        tmpptr = ReadInt32(tmpptr + &H38)
+        WriteInt32(tmpptr + &H70, nmbMaxNodes.Value)
+    End Sub
+
+    Private Sub chkForce_CheckedChanged(sender As Object, e As EventArgs) Handles chkForce.CheckedChanged
+        Dim TargetBufferSize = 1024
+        Dim dbgboost As Integer = 0
+        Dim bytes() As Byte
+        Dim bytes2() As Byte
+
+        'mov ESI,val = BE xx xx xx xx
+        If chkForce.Checked Then
+            txtTargetSteamID.Enabled = False
+            If forceIdPtr = 0 Then
+                forceIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+            End If
+
+
+            bytes = {&H50, &H53, &H51, &H52, &HB8, 0, 0, 0, 0,
+                &H8B, &HD0, &H84, &HC0, &H0F, &H84, 0, 0, 0, 0,
+                &H8B, &H08, &H89, &H0B,
+                &H83, &HC0, &H04, &H83, &HC3, &H4, &H8B, &H08, &H89, &H0B,
+                &H83, &HC0, &H04, &H83, &HC3, &H4, &H8B, &H08, &H89, &H0B,
+                &H83, &HC0, &H04, &H83, &HC3, &H4, &H8B, &H08, &H89, &H0B,
+                &H83, &HC2, &H20, &H8A, &H02, &HFE, &HC0, &H88, &H02, &H90, &H90, &H90,
+                &H5A, &H59, &H5B, &H58,
+                &HE8, 0, 0, 0, 0,
+                &HE9, 0, 0, 0, 0}
+            bytes2 = BitConverter.GetBytes(forceIdPtr + &H100)
+            Array.Copy(bytes2, 0, bytes, &H5, bytes2.Length)
+
+            'Handle original call
+            bytes2 = BitConverter.GetBytes((&HBE3C70 - &H4A + dbgboost) - forceIdPtr)
+            Array.Copy(bytes2, 0, bytes, &H46, bytes2.Length)
+
+            'Handle return jump
+            bytes2 = BitConverter.GetBytes((&HFA1839 - &H4A + dbgboost) - forceIdPtr)
+            Array.Copy(bytes2, 0, bytes, &H4B, bytes2.Length)
+
+            WriteAsciiStr(forceIdPtr + &H100, txtTargetSteamID.Text)
+            WriteProcessMemory(_targetProcessHandle, (forceIdPtr + dbgboost), bytes, bytes.Length, 0)
+
+            bytes = {0, 0, 0, 0}
+            WriteProcessMemory(_targetProcessHandle, (forceIdPtr + dbgboost + &H120), bytes, bytes.Length, 0)
+
+            'Handle jump to new code
+            bytes = {&HE9, 0, 0, 0, 0}
+            bytes2 = BitConverter.GetBytes((forceIdPtr - (&HFA1839 + dbgboost) - 5))
+            Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
+            WriteProcessMemory(_targetProcessHandle, (&HFA1839 + dbgboost), bytes, bytes.Length, 0)
+
+        Else
+            bytes = {&HE8, &H32, &H24, &HC4, &HFF}
+            WriteProcessMemory(_targetProcessHandle, (&HFA1839 + dbgboost), bytes, bytes.Length, 0)
+            txtTargetSteamID.Enabled = True
 
         End If
     End Sub
