@@ -34,12 +34,12 @@ Partial Class Form1
         Me.Label1 = New System.Windows.Forms.Label()
         Me.Label2 = New System.Windows.Forms.Label()
         Me.nmbMaxNodes = New System.Windows.Forms.NumericUpDown()
-        Me.lblAttemptCount = New System.Windows.Forms.Label()
         Me.txtTargetSteamID = New System.Windows.Forms.TextBox()
-        Me.chkForce = New System.Windows.Forms.CheckBox()
         Me.Label3 = New System.Windows.Forms.Label()
         Me.txtSelfSteamID = New System.Windows.Forms.TextBox()
         Me.Label4 = New System.Windows.Forms.Label()
+        Me.btnAttemptId = New System.Windows.Forms.Button()
+        Me.lblNewVersion = New System.Windows.Forms.Label()
         CType(Me.nmbMPChannel, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.nmbMaxNodes, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -48,7 +48,7 @@ Partial Class Form1
         'Label6
         '
         Me.Label6.AutoSize = True
-        Me.Label6.BackColor = System.Drawing.Color.LightGray
+        Me.Label6.BackColor = System.Drawing.SystemColors.Control
         Me.Label6.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Label6.Location = New System.Drawing.Point(13, 9)
         Me.Label6.Name = "Label6"
@@ -68,7 +68,7 @@ Partial Class Form1
         'chkDebugDrawing
         '
         Me.chkDebugDrawing.AutoSize = True
-        Me.chkDebugDrawing.BackColor = System.Drawing.Color.LightGray
+        Me.chkDebugDrawing.BackColor = System.Drawing.SystemColors.Control
         Me.chkDebugDrawing.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkDebugDrawing.Location = New System.Drawing.Point(16, 35)
         Me.chkDebugDrawing.Name = "chkDebugDrawing"
@@ -80,17 +80,17 @@ Partial Class Form1
         'lblVer
         '
         Me.lblVer.AutoSize = True
-        Me.lblVer.BackColor = System.Drawing.Color.LightGray
+        Me.lblVer.BackColor = System.Drawing.SystemColors.Control
         Me.lblVer.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblVer.Location = New System.Drawing.Point(369, 123)
+        Me.lblVer.Location = New System.Drawing.Point(701, 136)
         Me.lblVer.Name = "lblVer"
-        Me.lblVer.Size = New System.Drawing.Size(137, 13)
+        Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "Dark Souls - 2016.04.05.22"
+        Me.lblVer.Text = "2016.04.09.03"
         '
         'btnReconnect
         '
-        Me.btnReconnect.Location = New System.Drawing.Point(1, 113)
+        Me.btnReconnect.Location = New System.Drawing.Point(1, 131)
         Me.btnReconnect.Name = "btnReconnect"
         Me.btnReconnect.Size = New System.Drawing.Size(69, 23)
         Me.btnReconnect.TabIndex = 50
@@ -100,7 +100,7 @@ Partial Class Form1
         'chkNamedNodes
         '
         Me.chkNamedNodes.AutoSize = True
-        Me.chkNamedNodes.BackColor = System.Drawing.Color.LightGray
+        Me.chkNamedNodes.BackColor = System.Drawing.SystemColors.Control
         Me.chkNamedNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkNamedNodes.Location = New System.Drawing.Point(16, 61)
         Me.chkNamedNodes.Name = "chkNamedNodes"
@@ -112,7 +112,7 @@ Partial Class Form1
         'chkExpand
         '
         Me.chkExpand.AutoSize = True
-        Me.chkExpand.BackColor = System.Drawing.Color.LightGray
+        Me.chkExpand.BackColor = System.Drawing.SystemColors.Control
         Me.chkExpand.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkExpand.Location = New System.Drawing.Point(16, 87)
         Me.chkExpand.Name = "chkExpand"
@@ -126,7 +126,7 @@ Partial Class Form1
         Me.dgvMPNodes.AllowUserToAddRows = False
         Me.dgvMPNodes.AllowUserToDeleteRows = False
         Me.dgvMPNodes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.dgvMPNodes.Location = New System.Drawing.Point(493, 122)
+        Me.dgvMPNodes.Location = New System.Drawing.Point(-500, 122)
         Me.dgvMPNodes.Name = "dgvMPNodes"
         Me.dgvMPNodes.ReadOnly = True
         Me.dgvMPNodes.RowHeadersVisible = False
@@ -136,7 +136,7 @@ Partial Class Form1
         '
         'txtCurrNodes
         '
-        Me.txtCurrNodes.Location = New System.Drawing.Point(318, 8)
+        Me.txtCurrNodes.Location = New System.Drawing.Point(688, 5)
         Me.txtCurrNodes.Name = "txtCurrNodes"
         Me.txtCurrNodes.Size = New System.Drawing.Size(38, 20)
         Me.txtCurrNodes.TabIndex = 54
@@ -145,7 +145,7 @@ Partial Class Form1
         '
         Me.Label1.AutoSize = True
         Me.Label1.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label1.Location = New System.Drawing.Point(263, 9)
+        Me.Label1.Location = New System.Drawing.Point(633, 6)
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(49, 16)
         Me.Label1.TabIndex = 55
@@ -155,7 +155,7 @@ Partial Class Form1
         '
         Me.Label2.AutoSize = True
         Me.Label2.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label2.Location = New System.Drawing.Point(356, 9)
+        Me.Label2.Location = New System.Drawing.Point(726, 6)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(12, 16)
         Me.Label2.TabIndex = 56
@@ -164,7 +164,7 @@ Partial Class Form1
         'nmbMaxNodes
         '
         Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.nmbMaxNodes.Location = New System.Drawing.Point(367, 6)
+        Me.nmbMaxNodes.Location = New System.Drawing.Point(737, 3)
         Me.nmbMaxNodes.Maximum = New Decimal(New Integer() {32, 0, 0, 0})
         Me.nmbMaxNodes.Minimum = New Decimal(New Integer() {10, 0, 0, 0})
         Me.nmbMaxNodes.Name = "nmbMaxNodes"
@@ -172,41 +172,19 @@ Partial Class Form1
         Me.nmbMaxNodes.TabIndex = 57
         Me.nmbMaxNodes.Value = New Decimal(New Integer() {20, 0, 0, 0})
         '
-        'lblAttemptCount
-        '
-        Me.lblAttemptCount.AutoSize = True
-        Me.lblAttemptCount.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblAttemptCount.Location = New System.Drawing.Point(421, 88)
-        Me.lblAttemptCount.Name = "lblAttemptCount"
-        Me.lblAttemptCount.Size = New System.Drawing.Size(73, 16)
-        Me.lblAttemptCount.TabIndex = 60
-        Me.lblAttemptCount.Text = "Attempts: 0"
-        '
         'txtTargetSteamID
         '
-        Me.txtTargetSteamID.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.txtTargetSteamID.Location = New System.Drawing.Point(377, 59)
+        Me.txtTargetSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.txtTargetSteamID.Location = New System.Drawing.Point(645, 58)
         Me.txtTargetSteamID.Name = "txtTargetSteamID"
-        Me.txtTargetSteamID.Size = New System.Drawing.Size(120, 22)
+        Me.txtTargetSteamID.Size = New System.Drawing.Size(132, 23)
         Me.txtTargetSteamID.TabIndex = 59
-        '
-        'chkForce
-        '
-        Me.chkForce.AutoSize = True
-        Me.chkForce.BackColor = System.Drawing.Color.LightGray
-        Me.chkForce.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkForce.Location = New System.Drawing.Point(254, 87)
-        Me.chkForce.Name = "chkForce"
-        Me.chkForce.Size = New System.Drawing.Size(162, 20)
-        Me.chkForce.TabIndex = 58
-        Me.chkForce.Text = "Force Next Connection"
-        Me.chkForce.UseVisualStyleBackColor = False
         '
         'Label3
         '
         Me.Label3.AutoSize = True
         Me.Label3.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label3.Location = New System.Drawing.Point(263, 36)
+        Me.Label3.Location = New System.Drawing.Point(531, 35)
         Me.Label3.Name = "Label3"
         Me.Label3.Size = New System.Drawing.Size(111, 16)
         Me.Label3.TabIndex = 61
@@ -214,33 +192,55 @@ Partial Class Form1
         '
         'txtSelfSteamID
         '
-        Me.txtSelfSteamID.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.txtSelfSteamID.Location = New System.Drawing.Point(377, 33)
+        Me.txtSelfSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.txtSelfSteamID.Location = New System.Drawing.Point(645, 32)
         Me.txtSelfSteamID.Name = "txtSelfSteamID"
-        Me.txtSelfSteamID.Size = New System.Drawing.Size(120, 22)
+        Me.txtSelfSteamID.Size = New System.Drawing.Size(132, 23)
         Me.txtSelfSteamID.TabIndex = 62
         '
         'Label4
         '
         Me.Label4.AutoSize = True
         Me.Label4.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label4.Location = New System.Drawing.Point(251, 62)
+        Me.Label4.Location = New System.Drawing.Point(519, 61)
         Me.Label4.Name = "Label4"
         Me.Label4.Size = New System.Drawing.Size(123, 16)
         Me.Label4.TabIndex = 63
         Me.Label4.Text = "Target Steam64 ID:"
         '
+        'btnAttemptId
+        '
+        Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnAttemptId.Location = New System.Drawing.Point(645, 85)
+        Me.btnAttemptId.Name = "btnAttemptId"
+        Me.btnAttemptId.Size = New System.Drawing.Size(134, 23)
+        Me.btnAttemptId.TabIndex = 65
+        Me.btnAttemptId.Text = "Attempt Connection"
+        Me.btnAttemptId.UseVisualStyleBackColor = True
+        '
+        'lblNewVersion
+        '
+        Me.lblNewVersion.AutoSize = True
+        Me.lblNewVersion.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblNewVersion.ForeColor = System.Drawing.Color.Red
+        Me.lblNewVersion.Location = New System.Drawing.Point(226, 6)
+        Me.lblNewVersion.Name = "lblNewVersion"
+        Me.lblNewVersion.Size = New System.Drawing.Size(270, 16)
+        Me.lblNewVersion.TabIndex = 66
+        Me.lblNewVersion.Text = "Updated version available at http://wulf2k.ca"
+        Me.lblNewVersion.Visible = False
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(509, 139)
+        Me.ClientSize = New System.Drawing.Size(792, 163)
+        Me.Controls.Add(Me.lblNewVersion)
+        Me.Controls.Add(Me.btnAttemptId)
         Me.Controls.Add(Me.Label4)
         Me.Controls.Add(Me.txtSelfSteamID)
         Me.Controls.Add(Me.Label3)
-        Me.Controls.Add(Me.lblAttemptCount)
         Me.Controls.Add(Me.txtTargetSteamID)
-        Me.Controls.Add(Me.chkForce)
         Me.Controls.Add(Me.nmbMaxNodes)
         Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.Label1)
@@ -274,10 +274,10 @@ Partial Class Form1
     Friend WithEvents Label1 As Label
     Friend WithEvents Label2 As Label
     Friend WithEvents nmbMaxNodes As NumericUpDown
-    Friend WithEvents lblAttemptCount As Label
     Friend WithEvents txtTargetSteamID As TextBox
-    Friend WithEvents chkForce As CheckBox
     Friend WithEvents Label3 As Label
     Friend WithEvents txtSelfSteamID As TextBox
     Friend WithEvents Label4 As Label
+    Friend WithEvents btnAttemptId As System.Windows.Forms.Button
+    Friend WithEvents lblNewVersion As System.Windows.Forms.Label
 End Class
