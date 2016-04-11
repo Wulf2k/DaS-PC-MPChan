@@ -51,6 +51,5 @@ Temporary Items
 *.Cache
 *.dll
 *.suo
-*.suo
-*.suo
-DaS-PC-MPChan/bin/Debug/DaS-PC-MPChan.xml
+**/bin
+**/obj
