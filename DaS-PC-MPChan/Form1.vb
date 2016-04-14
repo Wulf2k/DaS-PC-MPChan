@@ -301,7 +301,7 @@ Public Class Form1
         Dim tmpptr As Integer = 0
         debug = (ReadUInt32(&H400080) = &HCE9634B4&)
 
-        lblNewVersion.Visible = newver
+        lblNewVersion.Visible = (newver And Not chkExpand.Checked)
 
         If debug Then dbgboost = &H3C20
         chkDebugDrawing.Checked = (ReadBytes(&HFA256C + dbgboost, 1)(0) = 1)
@@ -362,6 +362,16 @@ Public Class Form1
 
         btnReconnect.Location = New Point(1, Me.Height - 65)
         lblVer.Location = New Point(Me.Width - 100, Me.Height - 55)
+
+        lblNodes.Location = New Point(Me.Width - 167, 6)
+        txtCurrNodes.Location = New Point(Me.Width - 112, 5)
+        lblNodeDiv.Location = New Point(Me.Width - 74, 6)
+        nmbMaxNodes.Location = New Point(Me.Width - 63, 3)
+        lblYourId.Location = New Point(Me.Width - 267, 35)
+        txtSelfSteamID.Location = New Point(Me.Width - 155, 32)
+        lblTargetId.Location = New Point(Me.Width - 281, 61)
+        txtTargetSteamID.Location = New Point(Me.Width - 155, 58)
+        btnAttemptId.Location = New Point(Me.Width - 155, 85)
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
@@ -635,13 +645,14 @@ Public Class Form1
                 Me.Height = 680
                 dgvMPNodes.Visible = True
                 dgvMPNodes.Location = New Point(25, 125)
+                lblNewVersion.Visible = False
             End If
         Else
             bytes = {&H66, &HF, &HD6, &H46, &H14}
             WriteProcessMemory(_targetProcessHandle, (&HBE637E + dbgboost), bytes, bytes.Length, 0)
             refMpData.Stop()
 
-            Me.Width = 800
+            Me.Width = 450
             Me.Height = 190
             dgvMPNodes.Visible = False
 
@@ -667,52 +678,60 @@ Public Class Form1
     End Sub
 
     Private Sub chkAttemptConn_CheckedChanged(sender As Object, e As EventArgs) Handles btnAttemptId.Click
+        Try
+            Dim steamApiBase As Integer = CType(steamApiDllModule.BaseAddress, Int32)
+            Dim steamApiNetworking As Integer = steamApiBase + &H2F70
 
-        Dim steamApiBase As Integer = CType(steamApiDllModule.BaseAddress, Int32)
-        Dim steamApiNetworking As Integer = steamApiBase + &H2F70
+            If steamApiBase = 0 Then
+                MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
+            Else
+                Dim DataPacket1 As Integer
 
-        Dim DataPacket1 As Integer
+                Dim TargetBufferSize = 1024
+                Dim dbgboost As Integer = 0
+                Dim bytes() As Byte
+                Dim bytes2() As Byte
 
-        Dim TargetBufferSize = 1024
-        Dim dbgboost As Integer = 0
-        Dim bytes() As Byte
-        Dim bytes2() As Byte
+                If attemptIdPtr = 0 Then
+                    attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                End If
+                DataPacket1 = attemptIdPtr + &H100
 
-        If attemptIdPtr = 0 Then
-            attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-        End If
-        DataPacket1 = attemptIdPtr + &H100
+                bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0, _
+                         &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0, _
+                         &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
-        bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0, _
-                 &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0, _
-                 &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
+                'Set steam_api.SteamNetworking call
+                bytes2 = BitConverter.GetBytes(steamApiNetworking - attemptIdPtr - 5)
+                Array.Copy(bytes2, 0, bytes, &H1, bytes2.Length)
 
-        'Set steam_api.SteamNetworking call
-        bytes2 = BitConverter.GetBytes(steamApiNetworking - attemptIdPtr - 5)
-        Array.Copy(bytes2, 0, bytes, &H1, bytes2.Length)
+                bytes2 = BitConverter.GetBytes(attemptIdPtr + &H100)
+                Array.Copy(bytes2, 0, bytes, &H14, bytes2.Length)
 
-        bytes2 = BitConverter.GetBytes(attemptIdPtr + &H100)
-        Array.Copy(bytes2, 0, bytes, &H14, bytes2.Length)
+                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(txtTargetSteamID.Text, 8), 16))
+                Array.Copy(bytes2, 0, bytes, &H1A, bytes2.Length)
 
-        bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(txtTargetSteamID.Text, 8), 16))
-        Array.Copy(bytes2, 0, bytes, &H1A, bytes2.Length)
+                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(txtTargetSteamID.Text, 8), 16))
+                Array.Copy(bytes2, 0, bytes, &H1F, bytes2.Length)
 
-        bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(txtTargetSteamID.Text, 8), 16))
-        Array.Copy(bytes2, 0, bytes, &H1F, bytes2.Length)
-
-        WriteProcessMemory(_targetProcessHandle, attemptIdPtr, bytes, bytes.Length, 0)
+                WriteProcessMemory(_targetProcessHandle, attemptIdPtr, bytes, bytes.Length, 0)
 
 
-        'Set up data packet
-        bytes = {&H1}
-        WriteProcessMemory(_targetProcessHandle, DataPacket1, bytes, bytes.Length, 0)
+                'Set up data packet
+                bytes = {&H1}
+                WriteProcessMemory(_targetProcessHandle, DataPacket1, bytes, bytes.Length, 0)
 
-        Dim selfSteamName As String
-        selfSteamName = ReadUnicodeStr(ReadInt32(&H1362DD4) + &H30)
+                Dim selfSteamName As String
+                selfSteamName = ReadUnicodeStr(ReadInt32(&H1362DD4) + &H30)
 
-        bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
-        WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
+                bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
+                WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
 
-        CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
+                CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
+            End If
+        Catch ex As Exception
+            MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " & _
+                   Environment.NewLine & Environment.NewLine & ex.Message)
+        End Try
     End Sub
 End Class
