@@ -3,7 +3,7 @@ Imports System.Threading
 Imports System.Net
 Imports System.IO
 
-Public Class Form1
+Public Class DSCM
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
@@ -345,16 +345,16 @@ Public Class Form1
         oneKey = GetAsyncKeyState(Keys.D1)
         twoKey = GetAsyncKeyState(Keys.D2)
 
-        If (ctrlkey And oneKey) And Not (Form1.ctrlHeld And Form1.oneHeld) Then
-            Form1.chkDebugDrawing.Checked = Not Form1.chkDebugDrawing.Checked
+        If (ctrlkey And oneKey) And Not (DSCM.ctrlHeld And DSCM.oneHeld) Then
+            DSCM.chkDebugDrawing.Checked = Not DSCM.chkDebugDrawing.Checked
         End If
-        If (ctrlkey And twoKey) And Not (Form1.ctrlHeld And Form1.twoheld) Then
-            Form1.chkNamedNodes.Checked = Not Form1.chkNamedNodes.Checked
+        If (ctrlkey And twoKey) And Not (DSCM.ctrlHeld And DSCM.twoheld) Then
+            DSCM.chkNamedNodes.Checked = Not DSCM.chkNamedNodes.Checked
         End If
 
-        Form1.ctrlHeld = ctrlkey
-        Form1.oneHeld = oneKey
-        Form1.twoheld = twoKey
+        DSCM.ctrlHeld = ctrlkey
+        DSCM.oneHeld = oneKey
+        DSCM.twoheld = twoKey
     End Sub
     Private Sub frmResize() Handles Me.Resize
         dgvMPNodes.Width = Me.Width - 50

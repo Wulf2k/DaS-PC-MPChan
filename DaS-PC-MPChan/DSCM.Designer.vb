@@ -1,5 +1,5 @@
 ﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
-Partial Class Form1
+Partial Class DSCM
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
@@ -86,7 +86,7 @@ Partial Class Form1
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.04.10.00"
+        Me.lblVer.Text = "2016.04.14.10"
         '
         'btnReconnect
         '
@@ -230,7 +230,7 @@ Partial Class Form1
         Me.lblNewVersion.Text = "Updated version available at http://wulf2k.ca"
         Me.lblNewVersion.Visible = False
         '
-        'Form1
+        'DSCM
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
@@ -253,7 +253,7 @@ Partial Class Form1
         Me.Controls.Add(Me.Label6)
         Me.Controls.Add(Me.nmbMPChannel)
         Me.Controls.Add(Me.chkDebugDrawing)
-        Me.Name = "Form1"
+        Me.Name = "DSCM"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
         CType(Me.nmbMPChannel, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).EndInit()
