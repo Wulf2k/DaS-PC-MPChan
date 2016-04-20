@@ -297,8 +297,6 @@ Public Class DSCM
         chkDebugDrawing.Checked = (ReadBytes(&HFA256C, 1)(0) = 1)
 
         tmpptr = ReadUInt32(&H137E204)
-        nmbMPChannel.Value = ReadBytes(tmpptr + &HB69, 1)(0)
-
 
         'If original code has been replaced with a JMP, then Named Node functionality is enabled
         chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &HE9)
@@ -435,11 +433,6 @@ Public Class DSCM
         Else
             WriteBytes(&HFA256C, {&H0})
         End If
-    End Sub
-    Private Sub nmbMPChannel_ValueChanged(sender As Object, e As EventArgs) Handles nmbMPChannel.ValueChanged
-        Dim tmpptr As Integer
-        tmpptr = ReadUInt32(&H137E204)
-        WriteBytes(tmpptr + &HB69, {nmbMPChannel.Value})
     End Sub
 
     Private Sub refMpData_Tick() Handles refMpData.Tick

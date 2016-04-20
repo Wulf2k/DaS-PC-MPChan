@@ -22,8 +22,6 @@ Partial Class DSCM
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Me.Label6 = New System.Windows.Forms.Label()
-        Me.nmbMPChannel = New System.Windows.Forms.NumericUpDown()
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
         Me.btnReconnect = New System.Windows.Forms.Button()
@@ -40,30 +38,9 @@ Partial Class DSCM
         Me.lblTargetId = New System.Windows.Forms.Label()
         Me.btnAttemptId = New System.Windows.Forms.Button()
         Me.lblNewVersion = New System.Windows.Forms.Label()
-        CType(Me.nmbMPChannel, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.nmbMaxNodes, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
-        '
-        'Label6
-        '
-        Me.Label6.AutoSize = True
-        Me.Label6.BackColor = System.Drawing.SystemColors.Control
-        Me.Label6.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Label6.Location = New System.Drawing.Point(13, 9)
-        Me.Label6.Name = "Label6"
-        Me.Label6.Size = New System.Drawing.Size(80, 16)
-        Me.Label6.TabIndex = 48
-        Me.Label6.Text = "MP Channel"
-        '
-        'nmbMPChannel
-        '
-        Me.nmbMPChannel.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.nmbMPChannel.Location = New System.Drawing.Point(109, 7)
-        Me.nmbMPChannel.Maximum = New Decimal(New Integer() {15, 0, 0, 0})
-        Me.nmbMPChannel.Name = "nmbMPChannel"
-        Me.nmbMPChannel.Size = New System.Drawing.Size(40, 22)
-        Me.nmbMPChannel.TabIndex = 47
         '
         'chkDebugDrawing
         '
@@ -86,7 +63,7 @@ Partial Class DSCM
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.04.14.10"
+        Me.lblVer.Text = "2016.04.19.22"
         '
         'btnReconnect
         '
@@ -250,20 +227,15 @@ Partial Class DSCM
         Me.Controls.Add(Me.chkNamedNodes)
         Me.Controls.Add(Me.btnReconnect)
         Me.Controls.Add(Me.lblVer)
-        Me.Controls.Add(Me.Label6)
-        Me.Controls.Add(Me.nmbMPChannel)
         Me.Controls.Add(Me.chkDebugDrawing)
         Me.Name = "DSCM"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
-        CType(Me.nmbMPChannel, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.nmbMaxNodes, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
     End Sub
-    Friend WithEvents Label6 As System.Windows.Forms.Label
-    Friend WithEvents nmbMPChannel As System.Windows.Forms.NumericUpDown
     Friend WithEvents chkDebugDrawing As System.Windows.Forms.CheckBox
     Friend WithEvents lblVer As Label
     Friend WithEvents btnReconnect As Button
