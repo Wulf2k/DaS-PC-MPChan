@@ -2,6 +2,7 @@
 Imports System.Threading
 Imports System.Net
 Imports System.IO
+Imports System.Text.RegularExpressions
 
 Public Class DSCM
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
@@ -659,8 +660,14 @@ Public Class DSCM
 
         Dim steamIdInt As Int64
         If txtTargetSteamID.Text.Length > 1 Then
-            If txtTargetSteamID.Text(0) = "7" Then
+            Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
+            Dim m As Match = r.Match(txtTargetSteamID.Text)
+            If m.Success Then
+                steamIdInt = m.Groups.Item(1).Value
+            ElseIf txtTargetSteamID.Text(0) = "7" Then
                 steamIdInt = txtTargetSteamID.Text
+            End If
+            If steamIdInt Then
                 txtTargetSteamID.Text = "0" & Hex(steamIdInt).ToLower
             End If
         End If
