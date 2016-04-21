@@ -5,20 +5,21 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 
 Public Class DSCM
+    'Timers
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
+
+    'For hotkey support
     Public Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Integer) As Short
 
+    'Process/Memory Manipulation
     Private Declare Function OpenProcess Lib "kernel32.dll" (ByVal dwDesiredAcess As UInt32, ByVal bInheritHandle As Boolean, ByVal dwProcessId As Int32) As IntPtr
     Private Declare Function ReadProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesRead As Integer) As Boolean
     Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByVal lpNumberOfBytesWritten As Integer) As Boolean
     Private Declare Function CloseHandle Lib "kernel32.dll" (ByVal hObject As IntPtr) As Boolean
     Private Declare Function VirtualAllocEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal dwSize As IntPtr, ByVal flAllocationType As Integer, ByVal flProtect As Integer) As IntPtr
     Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As Integer, ByVal lpThreadAttributes As Integer, ByVal dwStackSize As Integer, ByVal lpStartAddress As Integer, ByVal lpParameter As Integer, ByVal dwCreationFlags As Integer, ByRef lpThreadId As Integer) As Integer
-
-
-
 
     Public Const PROCESS_VM_READ = &H10
     Public Const TH32CS_SNAPPROCESS = &H2
@@ -32,6 +33,7 @@ Public Class DSCM
     Private _targetProcess As Process = Nothing
     Private _targetProcessHandle As IntPtr = IntPtr.Zero
 
+    'Thread to check for updates
     Private updTrd As Thread
 
     'Hotkeys
@@ -39,16 +41,20 @@ Public Class DSCM
     Dim oneHeld As Boolean
     Dim twoheld As Boolean
 
+    'Check for Dark Souls beta EXE, fail if true
     Dim beta As Boolean
 
+    'Addresses of the various inserted functions
     Dim namedNodePtr As Integer
     Dim nodeDumpPtr As Integer
     Dim forceIdPtr As Integer
     Dim attemptIdPtr As Integer
 
+    'For locating the Steam matchmaking functions
     Dim steamApiDllPtr As IntPtr = 0
     Dim steamApiDllModule As ProcessModule
 
+    'New version of DSCM available?
     Dim newver As Boolean = False
 
 
@@ -98,129 +104,6 @@ Public Class DSCM
         End If
     End Sub
 
-    Public Function ReadInt8(ByVal addr As IntPtr) As SByte
-        Dim _rtnBytes(0) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 1, vbNull)
-        Return _rtnBytes(0)
-    End Function
-    Public Function ReadInt16(ByVal addr As IntPtr) As Int16
-        Dim _rtnBytes(1) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 2, vbNull)
-        Return BitConverter.ToInt16(_rtnBytes, 0)
-    End Function
-    Public Function ReadInt32(ByVal addr As IntPtr) As Int32
-        Dim _rtnBytes(3) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 4, vbNull)
-
-        Return BitConverter.ToInt32(_rtnBytes, 0)
-    End Function
-    Public Function ReadInt64(ByVal addr As IntPtr) As Int64
-        Dim _rtnBytes(7) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 8, vbNull)
-        Return BitConverter.ToInt64(_rtnBytes, 0)
-    End Function
-    Public Function ReadUInt16(ByVal addr As IntPtr) As UInt16
-        Dim _rtnBytes(1) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 2, vbNull)
-        Return BitConverter.ToUInt16(_rtnBytes, 0)
-    End Function
-    Public Function ReadUInt32(ByVal addr As IntPtr) As UInt32
-        Dim _rtnBytes(3) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 4, vbNull)
-        Return BitConverter.ToUInt32(_rtnBytes, 0)
-    End Function
-    Public Function ReadUInt64(ByVal addr As IntPtr) As UInt64
-        Dim _rtnBytes(7) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 8, vbNull)
-        Return BitConverter.ToUInt64(_rtnBytes, 0)
-    End Function
-    Public Function ReadFloat(ByVal addr As IntPtr) As Single
-        Dim _rtnBytes(3) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 4, vbNull)
-        Return BitConverter.ToSingle(_rtnBytes, 0)
-    End Function
-    Public Function ReadDouble(ByVal addr As IntPtr) As Double
-        Dim _rtnBytes(7) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 8, vbNull)
-        Return BitConverter.ToDouble(_rtnBytes, 0)
-    End Function
-    Public Function ReadIntPtr(ByVal addr As IntPtr) As IntPtr
-        Dim _rtnBytes(IntPtr.Size - 1) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, IntPtr.Size, Nothing)
-        If IntPtr.Size = 4 Then
-            Return New IntPtr(BitConverter.ToUInt32(_rtnBytes, 0))
-        Else
-            Return New IntPtr(BitConverter.ToInt64(_rtnBytes, 0))
-        End If
-    End Function
-    Public Function ReadBytes(ByVal addr As IntPtr, ByVal size As Int32) As Byte()
-        Dim _rtnBytes(size - 1) As Byte
-        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, size, vbNull)
-        Return _rtnBytes
-    End Function
-    Private Function ReadAsciiStr(ByVal addr As UInteger) As String
-        Dim Str As String = ""
-        Dim cont As Boolean = True
-        Dim loc As Integer = 0
-
-        Dim bytes(&H10) As Byte
-
-        ReadProcessMemory(_targetProcessHandle, addr, bytes, &H10, vbNull)
-
-        While (cont And loc < &H10)
-            If bytes(loc) > 0 Then
-
-                Str = Str + Convert.ToChar(bytes(loc))
-
-                loc += 1
-            Else
-                cont = False
-            End If
-        End While
-
-        Return Str
-    End Function
-    Private Function ReadUnicodeStr(ByVal addr As UInteger) As String
-
-        'Doesn't understand Unicode, just treat it as an ASCII string with 0's between bytes
-
-        Dim Str As String = ""
-        Dim cont As Boolean = True
-        Dim loc As Integer = 0
-
-        Dim bytes(&H20) As Byte
-
-        ReadProcessMemory(_targetProcessHandle, addr, bytes, &H20, vbNull)
-
-        While (cont And loc < &H20)
-            If bytes(loc) > 0 Then
-
-                Str = Str + Convert.ToChar(bytes(loc))
-
-                loc += 2
-            Else
-                cont = False
-            End If
-        End While
-
-        Return Str
-    End Function
-
-    Public Sub WriteInt32(ByVal addr As IntPtr, val As Int32)
-        WriteProcessMemory(_targetProcessHandle, addr, BitConverter.GetBytes(val), 4, Nothing)
-    End Sub
-    Public Sub WriteUInt32(ByVal addr As IntPtr, val As UInt32)
-        WriteProcessMemory(_targetProcessHandle, addr, BitConverter.GetBytes(val), 4, Nothing)
-    End Sub
-    Public Sub WriteFloat(ByVal addr As IntPtr, val As Single)
-        WriteProcessMemory(_targetProcessHandle, addr, BitConverter.GetBytes(val), 4, Nothing)
-    End Sub
-    Public Sub WriteBytes(ByVal addr As IntPtr, val As Byte())
-        WriteProcessMemory(_targetProcessHandle, addr, val, val.Length, Nothing)
-    End Sub
-    Public Sub WriteAsciiStr(addr As UInteger, str As String)
-        WriteProcessMemory(_targetProcessHandle, addr, System.Text.Encoding.ASCII.GetBytes(str), str.Length, Nothing)
-    End Sub
 
     Private Sub DSCM_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
         chkDebugDrawing.Checked = False
@@ -229,6 +112,7 @@ Public Class DSCM
     End Sub
 
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        'Start Refresh timer
         refTimer = New System.Windows.Forms.Timer
         refTimer.Interval = 200
         refTimer.Enabled = True
@@ -249,6 +133,9 @@ Public Class DSCM
             DetachFromProcess()
         End If
 
+        'Set initial form size to non-expanded
+        Me.Width = 450
+        Me.Height = 190
 
 
         dgvMPNodes.Columns.Add("Name", "Name")
@@ -280,12 +167,13 @@ Public Class DSCM
     End Sub
     Private Sub updatecheck()
         Try
+            'Update level is contents of remote text file compared to version label on main form.
             My.Computer.Network.DownloadFile("http://wulf2k.ca/pc/das/dscm-ver.txt", Path.GetTempPath & "\dscm-ver.txt", "", "", False, 9800, True)
             Dim ver = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(0)
 
             newver = (ver > lblVer.Text.Replace(".", ""))
         Catch ex As Exception
-
+            'Fail silently since nobody wants to be bothered for an update check.
         End Try
     End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
@@ -295,6 +183,7 @@ Public Class DSCM
         'Text indicating new version is hidden if DSCM is expanded, only care if it's seen at the start anyway.
         lblNewVersion.Visible = (newver And Not chkExpand.Checked)
 
+        'Node display
         chkDebugDrawing.Checked = (ReadBytes(&HFA256C, 1)(0) = 1)
 
         tmpptr = ReadUInt32(&H137E204)
@@ -302,6 +191,8 @@ Public Class DSCM
         'If original code has been replaced with a JMP, then Named Node functionality is enabled
         chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &HE9)
 
+
+        'Note to self, update these addresses to be relative to darksouls process instead of hardcoded values.
         tmpptr = ReadInt32(&H137F834)
         tmpptr = ReadInt32(tmpptr + &H38)
         If Not tmpptr = 0 And Not beta Then
@@ -369,6 +260,8 @@ Public Class DSCM
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
+        'Forget about all previously allocated memory for functions on reconnect, allocate fresh if called again.
+        'Yeah, it's a memory leak, so don't do this hundreds of thousands of times.
         namedNodePtr = 0
         forceIdPtr = 0
         nodeDumpPtr = 0
@@ -392,6 +285,7 @@ Public Class DSCM
         Dim bytes() As Byte
         Dim bytes2() As Byte
 
+        'Location in bytearray to insert jump location
         Dim bytjmp As Integer = &H6B
 
         If chkNamedNodes.Checked Then
@@ -453,7 +347,7 @@ Public Class DSCM
         Dim SteamData1 As Integer
         Dim SteamData2 As Integer
 
-
+        'Note to self, update to relative addresses
         nodeCount = ReadInt32(&H1362DD0)
         SteamNodeList = ReadInt32(&H1362DCC)
         SteamNodesPtr = ReadInt32(SteamNodeList)
@@ -649,6 +543,7 @@ Public Class DSCM
     Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
         Dim tmpptr As Integer
 
+        'Note to self, convert to relative address
         tmpptr = ReadInt32(&H137F834)
         tmpptr = ReadInt32(tmpptr + &H38)
         WriteInt32(tmpptr + &H70, nmbMaxNodes.Value)
@@ -656,15 +551,19 @@ Public Class DSCM
 
     Private Sub txtTargetSteamID_LostFocus(sender As Object, e As EventArgs) Handles txtTargetSteamID.LostFocus
         'Auto-convert Steam ID after clicking out of the textbox
-        'If it starts with a 7, assume it's the Steam64 ID in int64 form.
+
+
 
         Dim steamIdInt As Int64
         If txtTargetSteamID.Text.Length > 1 Then
+            'Regex code contributed by Chronial
+            'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
             Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
             Dim m As Match = r.Match(txtTargetSteamID.Text)
             If m.Success Then
                 steamIdInt = m.Groups.Item(1).Value
             ElseIf txtTargetSteamID.Text(0) = "7" Then
+                'If it starts with a 7, assume it's the Steam64 ID in int64 form.
                 steamIdInt = txtTargetSteamID.Text
             End If
             If steamIdInt Then
@@ -691,6 +590,7 @@ Public Class DSCM
                 Dim bytes() As Byte
                 Dim bytes2() As Byte
 
+                'If 0 then allocate memory, otherwise use previously allocated memory.
                 If attemptIdPtr = 0 Then
                     attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
                 End If
@@ -724,6 +624,7 @@ Public Class DSCM
                 Dim selfSteamName As String
                 selfSteamName = ReadUnicodeStr(ReadInt32(&H1362DD4) + &H30)
 
+                'Note to self, confirm this section.  "ReadUnictodeStr" should actually return it in ASCII form.
                 bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
                 WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
 

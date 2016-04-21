@@ -47,7 +47,7 @@ Partial Class DSCM
         Me.chkDebugDrawing.AutoSize = True
         Me.chkDebugDrawing.BackColor = System.Drawing.SystemColors.Control
         Me.chkDebugDrawing.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkDebugDrawing.Location = New System.Drawing.Point(16, 35)
+        Me.chkDebugDrawing.Location = New System.Drawing.Point(12, 4)
         Me.chkDebugDrawing.Name = "chkDebugDrawing"
         Me.chkDebugDrawing.Size = New System.Drawing.Size(113, 20)
         Me.chkDebugDrawing.TabIndex = 46
@@ -59,15 +59,15 @@ Partial Class DSCM
         Me.lblVer.AutoSize = True
         Me.lblVer.BackColor = System.Drawing.SystemColors.Control
         Me.lblVer.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblVer.Location = New System.Drawing.Point(351, 136)
+        Me.lblVer.Location = New System.Drawing.Point(700, 625)
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.04.19.22"
+        Me.lblVer.Text = "2016.04.21.16"
         '
         'btnReconnect
         '
-        Me.btnReconnect.Location = New System.Drawing.Point(1, 131)
+        Me.btnReconnect.Location = New System.Drawing.Point(1, 615)
         Me.btnReconnect.Name = "btnReconnect"
         Me.btnReconnect.Size = New System.Drawing.Size(69, 23)
         Me.btnReconnect.TabIndex = 50
@@ -79,7 +79,7 @@ Partial Class DSCM
         Me.chkNamedNodes.AutoSize = True
         Me.chkNamedNodes.BackColor = System.Drawing.SystemColors.Control
         Me.chkNamedNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkNamedNodes.Location = New System.Drawing.Point(16, 61)
+        Me.chkNamedNodes.Location = New System.Drawing.Point(12, 30)
         Me.chkNamedNodes.Name = "chkNamedNodes"
         Me.chkNamedNodes.Size = New System.Drawing.Size(116, 20)
         Me.chkNamedNodes.TabIndex = 51
@@ -91,7 +91,7 @@ Partial Class DSCM
         Me.chkExpand.AutoSize = True
         Me.chkExpand.BackColor = System.Drawing.SystemColors.Control
         Me.chkExpand.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkExpand.Location = New System.Drawing.Point(16, 87)
+        Me.chkExpand.Location = New System.Drawing.Point(12, 56)
         Me.chkExpand.Name = "chkExpand"
         Me.chkExpand.Size = New System.Drawing.Size(115, 20)
         Me.chkExpand.TabIndex = 52
@@ -103,17 +103,17 @@ Partial Class DSCM
         Me.dgvMPNodes.AllowUserToAddRows = False
         Me.dgvMPNodes.AllowUserToDeleteRows = False
         Me.dgvMPNodes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.dgvMPNodes.Location = New System.Drawing.Point(-500, 122)
+        Me.dgvMPNodes.Location = New System.Drawing.Point(25, 125)
         Me.dgvMPNodes.Name = "dgvMPNodes"
         Me.dgvMPNodes.ReadOnly = True
         Me.dgvMPNodes.RowHeadersVisible = False
-        Me.dgvMPNodes.Size = New System.Drawing.Size(518, 328)
+        Me.dgvMPNodes.Size = New System.Drawing.Size(750, 480)
         Me.dgvMPNodes.TabIndex = 53
         Me.dgvMPNodes.Visible = False
         '
         'txtCurrNodes
         '
-        Me.txtCurrNodes.Location = New System.Drawing.Point(338, 5)
+        Me.txtCurrNodes.Location = New System.Drawing.Point(688, 5)
         Me.txtCurrNodes.Name = "txtCurrNodes"
         Me.txtCurrNodes.Size = New System.Drawing.Size(38, 20)
         Me.txtCurrNodes.TabIndex = 54
@@ -122,7 +122,7 @@ Partial Class DSCM
         '
         Me.lblNodes.AutoSize = True
         Me.lblNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblNodes.Location = New System.Drawing.Point(283, 6)
+        Me.lblNodes.Location = New System.Drawing.Point(633, 6)
         Me.lblNodes.Name = "lblNodes"
         Me.lblNodes.Size = New System.Drawing.Size(49, 16)
         Me.lblNodes.TabIndex = 55
@@ -132,7 +132,7 @@ Partial Class DSCM
         '
         Me.lblNodeDiv.AutoSize = True
         Me.lblNodeDiv.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblNodeDiv.Location = New System.Drawing.Point(376, 6)
+        Me.lblNodeDiv.Location = New System.Drawing.Point(726, 6)
         Me.lblNodeDiv.Name = "lblNodeDiv"
         Me.lblNodeDiv.Size = New System.Drawing.Size(12, 16)
         Me.lblNodeDiv.TabIndex = 56
@@ -141,7 +141,7 @@ Partial Class DSCM
         'nmbMaxNodes
         '
         Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.nmbMaxNodes.Location = New System.Drawing.Point(387, 3)
+        Me.nmbMaxNodes.Location = New System.Drawing.Point(737, 3)
         Me.nmbMaxNodes.Maximum = New Decimal(New Integer() {32, 0, 0, 0})
         Me.nmbMaxNodes.Minimum = New Decimal(New Integer() {10, 0, 0, 0})
         Me.nmbMaxNodes.Name = "nmbMaxNodes"
@@ -152,7 +152,7 @@ Partial Class DSCM
         'txtTargetSteamID
         '
         Me.txtTargetSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.txtTargetSteamID.Location = New System.Drawing.Point(295, 58)
+        Me.txtTargetSteamID.Location = New System.Drawing.Point(645, 58)
         Me.txtTargetSteamID.Name = "txtTargetSteamID"
         Me.txtTargetSteamID.Size = New System.Drawing.Size(132, 23)
         Me.txtTargetSteamID.TabIndex = 59
@@ -161,7 +161,7 @@ Partial Class DSCM
         '
         Me.lblYourId.AutoSize = True
         Me.lblYourId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblYourId.Location = New System.Drawing.Point(181, 35)
+        Me.lblYourId.Location = New System.Drawing.Point(531, 35)
         Me.lblYourId.Name = "lblYourId"
         Me.lblYourId.Size = New System.Drawing.Size(111, 16)
         Me.lblYourId.TabIndex = 61
@@ -170,7 +170,7 @@ Partial Class DSCM
         'txtSelfSteamID
         '
         Me.txtSelfSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.txtSelfSteamID.Location = New System.Drawing.Point(295, 32)
+        Me.txtSelfSteamID.Location = New System.Drawing.Point(645, 32)
         Me.txtSelfSteamID.Name = "txtSelfSteamID"
         Me.txtSelfSteamID.Size = New System.Drawing.Size(132, 23)
         Me.txtSelfSteamID.TabIndex = 62
@@ -179,7 +179,7 @@ Partial Class DSCM
         '
         Me.lblTargetId.AutoSize = True
         Me.lblTargetId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.lblTargetId.Location = New System.Drawing.Point(169, 61)
+        Me.lblTargetId.Location = New System.Drawing.Point(519, 61)
         Me.lblTargetId.Name = "lblTargetId"
         Me.lblTargetId.Size = New System.Drawing.Size(123, 16)
         Me.lblTargetId.TabIndex = 63
@@ -188,7 +188,7 @@ Partial Class DSCM
         'btnAttemptId
         '
         Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.btnAttemptId.Location = New System.Drawing.Point(295, 85)
+        Me.btnAttemptId.Location = New System.Drawing.Point(645, 85)
         Me.btnAttemptId.Name = "btnAttemptId"
         Me.btnAttemptId.Size = New System.Drawing.Size(134, 23)
         Me.btnAttemptId.TabIndex = 65
@@ -200,7 +200,7 @@ Partial Class DSCM
         Me.lblNewVersion.AutoSize = True
         Me.lblNewVersion.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblNewVersion.ForeColor = System.Drawing.Color.Red
-        Me.lblNewVersion.Location = New System.Drawing.Point(76, 134)
+        Me.lblNewVersion.Location = New System.Drawing.Point(9, 88)
         Me.lblNewVersion.Name = "lblNewVersion"
         Me.lblNewVersion.Size = New System.Drawing.Size(270, 16)
         Me.lblNewVersion.TabIndex = 66
@@ -211,7 +211,7 @@ Partial Class DSCM
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(442, 163)
+        Me.ClientSize = New System.Drawing.Size(784, 642)
         Me.Controls.Add(Me.lblNewVersion)
         Me.Controls.Add(Me.btnAttemptId)
         Me.Controls.Add(Me.lblTargetId)
