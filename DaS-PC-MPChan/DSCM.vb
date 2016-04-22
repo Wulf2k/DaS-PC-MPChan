@@ -1,6 +1,4 @@
-﻿Imports System.Runtime.InteropServices
-Imports System.Threading
-Imports System.Net
+﻿Imports System.Threading
 Imports System.IO
 Imports System.Text.RegularExpressions
 
@@ -45,18 +43,24 @@ Public Class DSCM
     Dim beta As Boolean
 
     'Addresses of the various inserted functions
-    Dim namedNodePtr As Integer
-    Dim nodeDumpPtr As Integer
-    Dim forceIdPtr As Integer
-    Dim attemptIdPtr As Integer
+    Dim namedNodePtr As Integer = 0
+    Dim nodeDumpPtr As Integer = 0
+    Dim forceIdPtr As Integer = 0
+    Dim attemptIdPtr As Integer = 0
+
+    Dim dsBasePtr As IntPtr
+    Dim dsBase As Integer
 
     'For locating the Steam matchmaking functions
-    Dim steamApiDllPtr As IntPtr = 0
+    Dim steamApiBasePtr As IntPtr
+    Dim steamApiBase As Integer = 0
+
     Dim steamApiDllModule As ProcessModule
 
     'New version of DSCM available?
     Dim newver As Boolean = False
 
+    Dim recentNodeID As Integer = 0
 
     Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
         Dim _allProcesses() As Process = Process.GetProcesses
@@ -74,18 +78,29 @@ Public Class DSCM
             _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
             If _targetProcessHandle = 0 Then
                 TryAttachToProcess = False
-                steamApiDllPtr = 0
+                steamApiBase = 0
                 MessageBox.Show("OpenProcess() FAIL! Are you Administrator??")
             Else
                 TryAttachToProcess = True
 
-                'Find steam_api.dll for ability to directly add SteamIDs as nodes
+                'Map various base addresses
                 For Each dll In _targetProcess.Modules
-                    If dll.modulename.tolower = "steam_api.dll" Then
-                        steamApiDllPtr = dll.baseaddress
-                        steamApiDllModule = dll
-                    End If
 
+                    Select Case dll.modulename.tolower
+
+                        Case "darksouls.exe"
+                            'Note to self, extra variables due to issues with conversion.  Fix "some day".
+                            dsBasePtr = dll.BaseAddress
+                            dsBase = dsBasePtr
+
+
+                        'Find steam_api.dll for ability to directly add SteamIDs as nodes
+                        Case "steam_api.dll"
+                            steamApiBasePtr = dll.baseaddress
+                            steamApiBase = steamApiBasePtr
+                            steamApiDllModule = dll
+
+                    End Select
                 Next
             End If
         Else
@@ -104,13 +119,11 @@ Public Class DSCM
         End If
     End Sub
 
-
     Private Sub DSCM_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
         chkDebugDrawing.Checked = False
         chkNamedNodes.Checked = False
         chkExpand.Checked = False
     End Sub
-
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'Start Refresh timer
         refTimer = New System.Windows.Forms.Timer
@@ -127,7 +140,7 @@ Public Class DSCM
         refTimer.Enabled = True
 
         TryAttachToProcess("darksouls")
-        beta = (ReadUInt32(&H400080) = &HE91B11E2&)
+        beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
         If beta Then
             MsgBox("Beta version detected.  Disconnecting from process.")
             DetachFromProcess()
@@ -136,7 +149,6 @@ Public Class DSCM
         'Set initial form size to non-expanded
         Me.Width = 450
         Me.Height = 190
-
 
         dgvMPNodes.Columns.Add("Name", "Name")
         dgvMPNodes.Columns(0).Width = 180
@@ -156,14 +168,66 @@ Public Class DSCM
         dgvMPNodes.Columns.Add("World", "World")
         dgvMPNodes.Columns(5).Width = 200
         dgvMPNodes.Columns(5).ValueType = GetType(String)
-
         dgvMPNodes.Font = New Font("Consolas", 10)
+
+        dgvFavoriteNodes.Columns.Add("Name", "Name")
+        dgvFavoriteNodes.Columns(0).Width = 180
+        dgvFavoriteNodes.Columns(0).ValueType = GetType(String)
+        dgvFavoriteNodes.Columns.Add("Steam ID", "Steam ID")
+        dgvFavoriteNodes.Columns(1).Width = 145
+        dgvFavoriteNodes.Columns(1).ValueType = GetType(String)
+        dgvFavoriteNodes.Font = New Font("Consolas", 10)
+
+        dgvRecentNodes.Columns.Add("Name", "Name")
+        dgvRecentNodes.Columns(0).Width = 180
+        dgvRecentNodes.Columns(0).ValueType = GetType(String)
+        dgvRecentNodes.Columns.Add("Steam ID", "Steam ID")
+        dgvRecentNodes.Columns(1).Width = 145
+        dgvRecentNodes.Columns(1).ValueType = GetType(String)
+        dgvRecentNodes.Columns.Add("Order ID", "Order ID")
+        dgvRecentNodes.Columns(2).Visible = False
+        dgvRecentNodes.Font = New Font("Consolas", 10)
 
         'Check version number in new thread, so main thread isn't delayed.
         'Compares value on server to date in label on main form
         updTrd = New Thread(AddressOf updatecheck)
         updTrd.IsBackground = True
         updTrd.Start()
+
+        'Create regkeys if they don't exist
+        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
+        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
+
+        'Load favorite node list from registry
+        loadFavoriteNodes()
+        loadRecentNodes()
+
+    End Sub
+    Private Sub loadFavoriteNodes()
+        Dim key As Microsoft.Win32.RegistryKey
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
+
+        For Each id As String In key.GetValueNames()
+            dgvFavoriteNodes.Rows.Add(key.GetValue(id), id)
+        Next
+    End Sub
+    Private Sub loadRecentNodes()
+        Dim key As Microsoft.Win32.RegistryKey
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\RecentNodes", True)
+
+        Dim name As String
+        Dim tmpRecentID As Integer
+
+
+        For Each id As String In key.GetValueNames()
+            name = key.GetValue(id)
+            tmpRecentID = name.Split("|")(0)
+            name = name.Split("|")(1)
+            dgvRecentNodes.Rows.Add(name, id, tmpRecentID)
+            If tmpRecentID > recentNodeID Then
+                recentNodeID = tmpRecentID
+            End If
+        Next
     End Sub
     Private Sub updatecheck()
         Try
@@ -184,16 +248,16 @@ Public Class DSCM
         lblNewVersion.Visible = (newver And Not chkExpand.Checked)
 
         'Node display
-        chkDebugDrawing.Checked = (ReadBytes(&HFA256C, 1)(0) = 1)
+        'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
+        chkDebugDrawing.Checked = (ReadBytes(dsBase + &HBA256C, 1)(0) = 1)
 
-        tmpptr = ReadUInt32(&H137E204)
+        tmpptr = ReadUInt32(dsBase + &HF7E204)
 
         'If original code has been replaced with a JMP, then Named Node functionality is enabled
-        chkNamedNodes.Checked = (ReadBytes(&H55A550, 1)(0) = &HE9)
+        chkNamedNodes.Checked = (ReadBytes(dsBase + &H15A550, 1)(0) = &HE9)
 
 
-        'Note to self, update these addresses to be relative to darksouls process instead of hardcoded values.
-        tmpptr = ReadInt32(&H137F834)
+        tmpptr = ReadInt32(dsBase + &HF7F834)
         tmpptr = ReadInt32(tmpptr + &H38)
         If Not tmpptr = 0 And Not beta Then
             Dim maxnodes = ReadInt32(tmpptr + &H70)
@@ -206,10 +270,10 @@ Public Class DSCM
         'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.
         'Probably don't need to update this more than once anyway, but why not?
         If Not txtSelfSteamID.Focused Then
-            txtSelfSteamID.Text = ReadAsciiStr(ReadInt32(&H137E204) + &HA00)
+            txtSelfSteamID.Text = ReadAsciiStr(ReadInt32(dsBase + &HF7E204) + &HA00)
         End If
 
-        tmpptr = ReadInt32(&H137E204)
+        tmpptr = ReadInt32(dsBase + &HF7E204)
         If Not tmpptr = 0 And Not beta Then
             txtCurrNodes.Text = ReadInt32(tmpptr + &HAE0)
 
@@ -242,8 +306,14 @@ Public Class DSCM
         DSCM.twoheld = twoKey
     End Sub
     Private Sub frmResize() Handles Me.Resize
+
+        tabs.Width = Me.Width - 35
+        tabs.Height = Me.Height - 190
         dgvMPNodes.Width = Me.Width - 50
-        dgvMPNodes.Height = Me.Height - 200
+        dgvMPNodes.Height = Me.Height - 225
+
+        dgvFavoriteNodes.Height = Me.Height - 225
+        dgvRecentNodes.Height = Me.Height - 225
 
         btnReconnect.Location = New Point(1, Me.Height - 65)
         lblVer.Location = New Point(Me.Width - 100, Me.Height - 55)
@@ -257,6 +327,9 @@ Public Class DSCM
         lblTargetId.Location = New Point(Me.Width - 281, 61)
         txtTargetSteamID.Location = New Point(Me.Width - 155, 58)
         btnAttemptId.Location = New Point(Me.Width - 155, 85)
+
+        btnAddFavorite.Location = New Point(250, Me.Height - 65)
+        btnRemFavorite.Location = New Point(400, Me.Height - 65)
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
@@ -271,7 +344,7 @@ Public Class DSCM
         TryAttachToProcess("darksouls")
 
         'Note to self, push beta & debug check out to its own sub.
-        beta = (ReadUInt32(&H400080) = &HE91B11E2&)
+        beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
         If beta Then
             MsgBox("Beta version detected.  Disconnecting from process.")
             DetachFromProcess()
@@ -287,6 +360,7 @@ Public Class DSCM
 
         'Location in bytearray to insert jump location
         Dim bytjmp As Integer = &H6B
+        Dim hookLoc As Integer = dsBase + &H15A550
 
         If chkNamedNodes.Checked Then
 
@@ -297,7 +371,6 @@ Public Class DSCM
             End If
 
             'Note to self, comment in the actual ASM code that's being injected here before it gets lost
-
             bytes = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H0, &HFB, &H0, &H0, &H81,
                     &HFB, &H0, &HFB, &H0, &H0, &H8B, &HD8, &HF, &H84, &H5, &H0, &H0, &H0, &HE9, &H46, &H0,
                     &H0, &H0, &H8B, &H5B, &HD0, &H83, &HFB, &H0, &HF, &H84, &H14, &H0, &H0, &H0, &H8B, &H5B,
@@ -307,26 +380,29 @@ Public Class DSCM
                     &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
 
             'Modify final JMP above to return to instruction after original hook
-            bytes2 = BitConverter.GetBytes((&H55A550 - &H6A) - namedNodePtr)
+            bytes2 = BitConverter.GetBytes((hookLoc - &H6A) - namedNodePtr)
             Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, namedNodePtr, bytes, TargetBufferSize, 0)
 
             'Insert hook to jump to allocated memory above
             bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes((namedNodePtr - (&H55A550) - 5))
+            bytes2 = BitConverter.GetBytes((namedNodePtr - hookLoc - 5))
             Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-            WriteProcessMemory(_targetProcessHandle, (&H55A550), bytes, bytes.Length, 0)
+            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
         Else
             'Remove hook, restore original isntruction
             bytes = {&H8B, &H44, &H24, &H10, &H56}
-            WriteProcessMemory(_targetProcessHandle, (&H55A550), bytes, bytes.Length, 0)
+            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
         End If
     End Sub
     Private Sub chkDebugDrawing_CheckedChanged(sender As Object, e As EventArgs) Handles chkDebugDrawing.CheckedChanged
+        Dim cmpLoc As Integer = dsBase + &HBA256C
+
+        'Changes instruction doing the compare rather than changing the value it compares against
         If chkDebugDrawing.Checked Then
-            WriteBytes(&HFA256C, {&H1})
+            WriteBytes(cmpLoc, {&H1})
         Else
-            WriteBytes(&HFA256C, {&H0})
+            WriteBytes(cmpLoc, {&H0})
         End If
     End Sub
 
@@ -340,24 +416,20 @@ Public Class DSCM
         Dim rowMPArea As Integer = 0
         Dim rowWorld As String = ""
 
-
-
         Dim SteamNodesPtr As Integer
         Dim SteamNodeList As Integer
         Dim SteamData1 As Integer
         Dim SteamData2 As Integer
 
         'Note to self, update to relative addresses
-        nodeCount = ReadInt32(&H1362DD0)
-        SteamNodeList = ReadInt32(&H1362DCC)
+        nodeCount = ReadInt32(dsBase + &HF62DD0)
+        SteamNodeList = ReadInt32(dsBase + &HF62DCC)
         SteamNodesPtr = ReadInt32(SteamNodeList)
-
 
         'Erase world value for all entries, if world value not updated later entry will be deleted.
         For i = 0 To dgvMPNodes.Rows.Count - 1
             dgvMPNodes.Rows(i).Cells(5).Value = ""
         Next
-
 
         For i = 0 To nodeCount - 1
             SteamData1 = ReadInt32(SteamNodesPtr + &HC)
@@ -374,7 +446,7 @@ Public Class DSCM
             If notexist Then dgvMPNodes.Rows.Add({rowName, rowSteamID, rowSL, rowPhantomType, rowMPArea, rowWorld})
         Next
 
-        Dim tmpptr As Integer = ReadInt32(&H137E204)
+        Dim tmpptr As Integer = ReadInt32(dsBase + &HF7E204)
         For i = 0 To dgvMPNodes.Rows.Count - 1
             If dgvMPNodes.Rows(i).Cells(1).Value = txtSelfSteamID.Text Then
                 dgvMPNodes.Rows(i).Cells(2).Value = ReadInt32(tmpptr + &HA30)
@@ -383,7 +455,6 @@ Public Class DSCM
                 dgvMPNodes.Rows(i).Cells(5).Value = (ReadInt8(tmpptr + &HA13) & "-" & ReadInt8(tmpptr + &HA12)).ToString
             End If
         Next
-
 
         Dim cont = True
         Dim tmpid As String
@@ -415,7 +486,6 @@ Public Class DSCM
             tmpptr += &H30
         End While
 
-
         For i = 0 To dgvMPNodes.Rows.Count - 1
             tmpid = dgvMPNodes.Rows(i).Cells(3).Value
             Select Case tmpid
@@ -429,7 +499,6 @@ Public Class DSCM
                     tmpid = "Hollow"
             End Select
             dgvMPNodes.Rows(i).Cells(3).Value = tmpid
-
 
             'Note to self, should probably convert this to a pretty form of lookup some day.
             tmpid = dgvMPNodes.Rows(i).Cells(5).Value
@@ -478,8 +547,42 @@ Public Class DSCM
         For i = dgvMPNodes.Rows.Count - 1 To 0 Step -1
             If dgvMPNodes.Rows(i).Cells(5).Value = "" Then dgvMPNodes.Rows.Remove(dgvMPNodes.Rows(i))
         Next
-    End Sub
 
+        updateRecentNodes()
+    End Sub
+    Private Sub updateRecentNodes()
+        Dim key As Microsoft.Win32.RegistryKey
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\RecentNodes", True)
+
+        Dim id As String
+        Dim name As String
+
+        For i = dgvMPNodes.Rows.Count - 1 To 0 Step -1
+            name = dgvMPNodes.Rows(i).Cells(0).Value
+            id = dgvMPNodes.Rows(i).Cells(1).Value
+            Dim tmpID As String
+
+            If key.GetValue(id) Is Nothing And Not id = txtSelfSteamID.Text Then
+                tmpID = recentNodeID
+                tmpID = tmpID.PadLeft(5, "0"c)
+                key.SetValue(id, tmpID & "|" & name)
+                dgvRecentNodes.Rows.Add(name, id, recentNodeID)
+                recentNodeID += 1
+            End If
+        Next
+
+        'Flush recent nodes down to 30 once it hits 40
+        If dgvRecentNodes.Rows.Count > 40 Then
+            For i = 0 To 10
+                id = dgvRecentNodes.Rows(0).Cells(1).Value
+                dgvRecentNodes.Rows.Remove(dgvRecentNodes.Rows(0))
+
+                If Not key.GetValue(id) Is Nothing Then
+                    key.DeleteValue(id)
+                End If
+            Next
+        End If
+    End Sub
     Private Sub chkExpand_CheckedChanged(sender As Object, e As EventArgs) Handles chkExpand.CheckedChanged
 
         'Note to self, buffer is overly large.  Trim down some day.
@@ -489,6 +592,7 @@ Public Class DSCM
         Dim bytes2() As Byte
 
         Dim bytjmp As Integer = &H78
+        Dim hookLoc As Integer = dsBase + &H7E637E
 
         If chkExpand.Checked Then
 
@@ -511,48 +615,46 @@ Public Class DSCM
             Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
 
             'Adjust the jump home
-            bytes2 = BitConverter.GetBytes((&HBE637E - &H77) - nodeDumpPtr)
+            bytes2 = BitConverter.GetBytes((hookLoc - &H77) - nodeDumpPtr)
             Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
 
             'Insert the hook
             bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes((nodeDumpPtr - (&HBE637E) - 5))
+            bytes2 = BitConverter.GetBytes((nodeDumpPtr - hookLoc - 5))
             Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-            WriteProcessMemory(_targetProcessHandle, (&HBE637E), bytes, bytes.Length, 0)
+            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
             refMpData.Start()
 
             Me.Width = 800
             Me.Height = 680
-            dgvMPNodes.Visible = True
-            dgvMPNodes.Location = New Point(25, 125)
+            tabs.Visible = True
             lblNewVersion.Visible = False
+            btnAddFavorite.Visible = True
+            btnRemFavorite.Visible = True
 
         Else
             'Restore original instruction
             bytes = {&H66, &HF, &HD6, &H46, &H14}
-            WriteProcessMemory(_targetProcessHandle, (&HBE637E), bytes, bytes.Length, 0)
+            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
             refMpData.Stop()
 
             Me.Width = 450
             Me.Height = 190
-            dgvMPNodes.Visible = False
+            tabs.Visible = False
+            btnAddFavorite.Visible = False
+            btnRemFavorite.Visible = False
         End If
     End Sub
-
     Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
         Dim tmpptr As Integer
 
-        'Note to self, convert to relative address
-        tmpptr = ReadInt32(&H137F834)
+        tmpptr = ReadInt32(dsBase + &HF7F834)
         tmpptr = ReadInt32(tmpptr + &H38)
         WriteInt32(tmpptr + &H70, nmbMaxNodes.Value)
     End Sub
-
     Private Sub txtTargetSteamID_LostFocus(sender As Object, e As EventArgs) Handles txtTargetSteamID.LostFocus
         'Auto-convert Steam ID after clicking out of the textbox
-
-
 
         Dim steamIdInt As Int64
         If txtTargetSteamID.Text.Length > 1 Then
@@ -571,15 +673,19 @@ Public Class DSCM
             End If
         End If
     End Sub
-
     Private Sub chkAttemptConn_CheckedChanged(sender As Object, e As EventArgs) Handles btnAttemptId.Click
         Try
-            Dim steamApiBase As Integer = CType(steamApiDllModule.BaseAddress, Int32)
-
             'Note to self, find a better way of confirming that this is the correct address for this function.
             'If nothing else, just compare the bytes at the address.
             'Some people have reported crashes.
             Dim steamApiNetworking As Integer = steamApiBase + &H2F70
+
+            'Extremely weak check to be sure we're at the right spot
+            If Not ReadUInt8(steamApiNetworking) = &HA1& Then
+                MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
+                       Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
+            End If
+
 
             If steamApiBase = 0 Then
                 MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
@@ -597,8 +703,8 @@ Public Class DSCM
                 DataPacket1 = attemptIdPtr + &H100
 
                 'Note to self, as usual, comment in the actual ASM before it gets lost.
-                bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0, _
-                         &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0, _
+                bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0,
+                         &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
                          &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
                 'Set steam_api.SteamNetworking call
@@ -622,17 +728,126 @@ Public Class DSCM
                 WriteProcessMemory(_targetProcessHandle, DataPacket1, bytes, bytes.Length, 0)
 
                 Dim selfSteamName As String
-                selfSteamName = ReadUnicodeStr(ReadInt32(&H1362DD4) + &H30)
+                selfSteamName = ReadUnicodeStr(ReadInt32(dsBase + &HF62DD4) + &H30)
 
-                'Note to self, confirm this section.  "ReadUnictodeStr" should actually return it in ASCII form.
                 bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
                 WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
 
                 CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
             End If
         Catch ex As Exception
-            MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " & _
+            MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " &
                    Environment.NewLine & Environment.NewLine & ex.Message)
         End Try
+    End Sub
+    Private Sub dgvFavoriteNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
+            dgvRecentNodes.CellEnter
+        If sender.SelectedCells.Count > 0 Then
+            Dim rowindex As Integer = sender.SelectedCells(0).RowIndex
+            Dim id As String = sender.Rows(rowindex).Cells(1).Value
+
+            txtTargetSteamID.Text = id
+        End If
+    End Sub
+    Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
+        Dim key As Microsoft.Win32.RegistryKey
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
+
+        Select Case tabs.SelectedIndex
+            'Active nodes selected
+            Case 0
+                If dgvMPNodes.SelectedCells.Count > 0 Then
+                    Dim rowindex As Integer = dgvMPNodes.SelectedCells(0).RowIndex
+                    Dim name As String = dgvMPNodes.Rows(rowindex).Cells(0).Value
+                    Dim id As String = dgvMPNodes.Rows(rowindex).Cells(1).Value
+
+                    If key.GetValue(id) Is Nothing Then
+                        key.SetValue(id, name)
+                        dgvFavoriteNodes.Rows.Add(name, id)
+                    End If
+                Else
+                    MsgBox("No selection detected.")
+                End If
+
+            'Recent nodes selected
+            Case 2
+                If dgvRecentNodes.SelectedCells.Count > 0 Then
+                    Dim rowindex As Integer = dgvRecentNodes.SelectedCells(0).RowIndex
+                    Dim name As String = dgvRecentNodes.Rows(rowindex).Cells(0).Value
+                    Dim id As String = dgvRecentNodes.Rows(rowindex).Cells(1).Value
+
+                    If key.GetValue(id) Is Nothing Then
+                        key.SetValue(id, name)
+                        dgvFavoriteNodes.Rows.Add(name, id)
+                    End If
+                Else
+                    MsgBox("No selection detected.")
+                End If
+        End Select
+    End Sub
+    Private Sub btnRemFavorite_Click(sender As Object, e As EventArgs) Handles btnRemFavorite.Click
+        Dim key As Microsoft.Win32.RegistryKey
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
+
+        Select Case tabs.SelectedIndex
+
+            'Active nodes selected
+            Case 0
+                If dgvMPNodes.SelectedCells.Count > 0 Then
+                    Dim rowindex As Integer = dgvMPNodes.SelectedCells(0).RowIndex
+                    Dim id As String = dgvMPNodes.Rows(rowindex).Cells(1).Value
+
+                    If Not key.GetValue(id) Is Nothing Then
+                        key.DeleteValue(id)
+                    End If
+
+                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
+                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
+                        End If
+                    Next
+                Else
+                    MsgBox("No selection detected.")
+                End If
+
+            'Favorite nodes selected
+            Case 1
+                If dgvFavoriteNodes.SelectedCells.Count > 0 Then
+                    Dim rowindex As Integer = dgvFavoriteNodes.SelectedCells(0).RowIndex
+                    Dim id As String = dgvFavoriteNodes.Rows(rowindex).Cells(1).Value
+
+                    If Not key.GetValue(id) Is Nothing Then
+                        key.DeleteValue(id)
+                    End If
+
+                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
+                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
+                        End If
+                    Next
+                Else
+                    MsgBox("No selection detected.")
+                End If
+
+            'Recent nodes selected
+            Case 2
+                If dgvRecentNodes.SelectedCells.Count > 0 Then
+                    Dim rowindex As Integer = dgvRecentNodes.SelectedCells(0).RowIndex
+                    Dim id As String = dgvRecentNodes.Rows(rowindex).Cells(1).Value
+
+                    If Not key.GetValue(id) Is Nothing Then
+                        key.DeleteValue(id)
+                    End If
+
+                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
+                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
+                        End If
+                    Next
+                Else
+                    MsgBox("No selection detected.")
+                End If
+
+        End Select
     End Sub
 End Class

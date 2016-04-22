@@ -22,6 +22,11 @@
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 8, vbNull)
         Return BitConverter.ToInt64(_rtnBytes, 0)
     End Function
+    Public Function ReadUInt8(ByVal addr As IntPtr) As Byte
+        Dim _rtnBytes(0) As Byte
+        ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 1, vbNull)
+        Return _rtnBytes(0)
+    End Function
     Public Function ReadUInt16(ByVal addr As IntPtr) As UInt16
         Dim _rtnBytes(1) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 2, vbNull)
