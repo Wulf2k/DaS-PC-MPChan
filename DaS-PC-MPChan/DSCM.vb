@@ -218,7 +218,6 @@ Public Class DSCM
         Dim name As String
         Dim tmpRecentID As Integer
 
-
         For Each id As String In key.GetValueNames()
             name = key.GetValue(id)
             tmpRecentID = name.Split("|")(0)
@@ -256,7 +255,6 @@ Public Class DSCM
         'If original code has been replaced with a JMP, then Named Node functionality is enabled
         chkNamedNodes.Checked = (ReadBytes(dsBase + &H15A550, 1)(0) = &HE9)
 
-
         tmpptr = ReadInt32(dsBase + &HF7F834)
         tmpptr = ReadInt32(tmpptr + &H38)
         If Not tmpptr = 0 And Not beta Then
@@ -265,7 +263,6 @@ Public Class DSCM
                 nmbMaxNodes.Value = maxnodes
             End If
         End If
-
 
         'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.
         'Probably don't need to update this more than once anyway, but why not?
@@ -740,12 +737,10 @@ Public Class DSCM
                    Environment.NewLine & Environment.NewLine & ex.Message)
         End Try
     End Sub
-    Private Sub dgvFavoriteNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
-            dgvRecentNodes.CellEnter
+    Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter, dgvRecentNodes.CellEnter
         If sender.SelectedCells.Count > 0 Then
             Dim rowindex As Integer = sender.SelectedCells(0).RowIndex
             Dim id As String = sender.Rows(rowindex).Cells(1).Value
-
             txtTargetSteamID.Text = id
         End If
     End Sub
@@ -847,7 +842,6 @@ Public Class DSCM
                 Else
                     MsgBox("No selection detected.")
                 End If
-
         End Select
     End Sub
 End Class
