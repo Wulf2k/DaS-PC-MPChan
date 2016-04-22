@@ -367,7 +367,8 @@ Public Class DSCM
                 namedNodePtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
             End If
 
-            'Note to self, comment in the actual ASM code that's being injected here before it gets lost
+
+            'ASM in Resources\ASM-NamedNodes.txt
             bytes = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H0, &HFB, &H0, &H0, &H81,
                     &HFB, &H0, &HFB, &H0, &H0, &H8B, &HD8, &HF, &H84, &H5, &H0, &H0, &H0, &HE9, &H46, &H0,
                     &H0, &H0, &H8B, &H5B, &HD0, &H83, &HFB, &H0, &HF, &H84, &H14, &H0, &H0, &H0, &H8B, &H5B,
@@ -597,7 +598,7 @@ Public Class DSCM
                 nodeDumpPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
             End If
 
-            'Note to self, comment in actual ASM code here before it gets lost
+            'ASM in Resources\ASM-NodeDump.txt
             bytes = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H0, &H0, &H0, &H0, &HB8, &H0, &H0, &H0, &H0,
                         &HBB, &H0, &H0, &H0, &H0, &HB9, &H0, &H0, &H0, &H0, &HBA, &H0, &H0, &H0, &H0, &H8A,
                         &H1F, &H80, &HFB, &H0, &HF, &H84, &H30, &H0, &H0, &H0, &H8A, &H6, &H8A, &H1F, &H46, &H47,
@@ -682,7 +683,6 @@ Public Class DSCM
                 MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
                        Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
             End If
-
 
             If steamApiBase = 0 Then
                 MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")

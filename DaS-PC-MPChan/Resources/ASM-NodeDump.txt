@@ -1,0 +1,59 @@
+NodeDump:
+push eax
+push ebx
+push ecx
+push edx
+push esi
+push edi
+mov edi,NodeDump+200
+mov eax,0
+mov ebx,0
+mov ecx,0
+mov edx,0
+
+StartLoop:
+mov bl,[edi]
+cmp bl,0
+je CopyLoop
+
+CmpLoop:
+mov al,[esi]
+mov bl,[edi]
+inc esi
+inc edi
+inc ecx
+cmp al,bl
+jne FailCmpLoop
+cmp ecx,11
+jne CmpLoop
+sub esi,ecx
+sub edi,ecx
+mov ecx,0
+jmp CopyLoop
+
+FailCmpLoop:
+sub esi,ecx
+sub edi,ecx
+mov ecx,0
+add edi,30
+jmp StartLoop
+
+CopyLoop:
+mov bl,[esi]
+mov [edi],bl
+inc esi
+inc edi
+inc ecx
+cmp ecx,30
+je ExitLoop
+jmp CopyLoop
+
+ExitLoop:
+pop edi
+pop esi
+pop edx
+pop ecx
+pop ebx
+pop eax
+movq [esi+14],xmm0
+jmp darksouls.exe+7E6383
