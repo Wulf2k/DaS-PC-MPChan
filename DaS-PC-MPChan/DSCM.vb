@@ -17,17 +17,20 @@ Public Class DSCM
     Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByVal lpNumberOfBytesWritten As Integer) As Boolean
     Private Declare Function CloseHandle Lib "kernel32.dll" (ByVal hObject As IntPtr) As Boolean
     Private Declare Function VirtualAllocEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal dwSize As IntPtr, ByVal flAllocationType As Integer, ByVal flProtect As Integer) As IntPtr
+    Private Declare Function VirtualProtectEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal lpSize As IntPtr, ByVal dwNewProtect As UInt32, ByRef dwOldProtect As UInt32) As Boolean
     Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As Integer, ByVal lpThreadAttributes As Integer, ByVal dwStackSize As Integer, ByVal lpStartAddress As Integer, ByVal lpParameter As Integer, ByVal dwCreationFlags As Integer, ByRef lpThreadId As Integer) As Integer
 
     Public Const PROCESS_VM_READ = &H10
     Public Const TH32CS_SNAPPROCESS = &H2
     Public Const MEM_COMMIT = 4096
     Public Const PAGE_READWRITE = 4
-    Public Const PROCESS_CREATE_THREAD = (&H2)
-    Public Const PROCESS_VM_OPERATION = (&H8)
-    Public Const PROCESS_VM_WRITE = (&H20)
+    Public Const PAGE_EXECUTE_READWRITE = &H40
+    Public Const PROCESS_CREATE_THREAD = &H2
+    Public Const PROCESS_VM_OPERATION = &H8
+    Public Const PROCESS_VM_WRITE = &H20
     Public Const PROCESS_ALL_ACCESS = &H1F0FFF
 
+    Private _oldPageProtection As Integer = 0
     Private _targetProcess As Process = Nothing
     Private _targetProcessHandle As IntPtr = IntPtr.Zero
 
@@ -250,11 +253,6 @@ Public Class DSCM
         'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
         chkDebugDrawing.Checked = (ReadBytes(dsBase + &HBA256C, 1)(0) = 1)
 
-        tmpptr = ReadUInt32(dsBase + &HF7E204)
-
-        'If original code has been replaced with a JMP, then Named Node functionality is enabled
-        chkNamedNodes.Checked = (ReadBytes(dsBase + &H15A550, 1)(0) = &HE9)
-
         tmpptr = ReadInt32(dsBase + &HF7F834)
         tmpptr = ReadInt32(tmpptr + &H38)
         If Not tmpptr = 0 And Not beta Then
@@ -359,34 +357,40 @@ Public Class DSCM
         Dim bytjmp As Integer = &H6B
         Dim hookLoc As Integer = dsBase + &H15A550
 
-        If chkNamedNodes.Checked Then
 
+        If chkNamedNodes.Checked Then
             'If memory has not previously been allocated then allocate, otherwise use previous allocation
             'Memory leaks still exists if somebody were to repeatedly reattach to the process, so...  don't do that.
             If namedNodePtr = 0 Then
                 namedNodePtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                VirtualProtectEx(_targetProcessHandle, namedNodePtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
             End If
-
 
             'ASM in Resources\ASM-NamedNodes.txt
             bytes = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H0, &HFB, &H0, &H0, &H81,
-                    &HFB, &H0, &HFB, &H0, &H0, &H8B, &HD8, &HF, &H84, &H5, &H0, &H0, &H0, &HE9, &H46, &H0,
-                    &H0, &H0, &H8B, &H5B, &HD0, &H83, &HFB, &H0, &HF, &H84, &H14, &H0, &H0, &H0, &H8B, &H5B,
-                    &H14, &H83, &HFB, &H0, &HF, &H84, &H8, &H0, &H0, &H0, &H83, &HC3, &H30, &HE9, &H7, &H0,
-                    &H0, &H0, &H8B, &HD8, &HE9, &H1F, &H0, &H0, &H0, &H50, &HB8, &H0, &H0, &H0, &H0, &H83,
-                    &HF8, &H20, &HF, &H84, &H9, &H0, &H0, &H0, &H8A, &H13, &H88, &H17, &H40, &H43, &H47, &HEB,
-                    &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
+                        &HFB, &H0, &HFB, &H0, &H0, &H8B, &HD8, &HF, &H84, &H5, &H0, &H0, &H0, &HE9, &H46, &H0,
+                        &H0, &H0, &H8B, &H5B, &HD0, &H83, &HFB, &H0, &HF, &H84, &H14, &H0, &H0, &H0, &H8B, &H5B,
+                        &H14, &H83, &HFB, &H0, &HF, &H84, &H8, &H0, &H0, &H0, &H83, &HC3, &H30, &HE9, &H7, &H0,
+                        &H0, &H0, &H8B, &HD8, &HE9, &H1F, &H0, &H0, &H0, &H50, &HB8, &H0, &H0, &H0, &H0, &H83,
+                        &HF8, &H20, &HF, &H84, &H9, &H0, &H0, &H0, &H8A, &H13, &H88, &H17, &H40, &H43, &H47, &HEB,
+                        &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
 
             'Modify final JMP above to return to instruction after original hook
             bytes2 = BitConverter.GetBytes((hookLoc - &H6A) - namedNodePtr)
             Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, namedNodePtr, bytes, TargetBufferSize, 0)
 
-            'Insert hook to jump to allocated memory above
-            bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes((namedNodePtr - hookLoc - 5))
-            Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
+            If ReadUInt8(namedNodePtr) = &H8B& Then
+                'Insert hook to jump to allocated memory above
+                bytes = {&HE9, 0, 0, 0, 0}
+                bytes2 = BitConverter.GetBytes((namedNodePtr - hookLoc - 5))
+                Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
+                WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
+            Else
+                MsgBox("Code insertion appears to have failed.  Try again.")
+                namedNodePtr = 0
+                chkNamedNodes.Checked = False
+            End If
         Else
             'Remove hook, restore original isntruction
             bytes = {&H8B, &H44, &H24, &H10, &H56}
@@ -596,6 +600,7 @@ Public Class DSCM
 
             If nodeDumpPtr = 0 Then
                 nodeDumpPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                VirtualProtectEx(_targetProcessHandle, nodeDumpPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
             End If
 
             'ASM in Resources\ASM-NodeDump.txt
@@ -617,20 +622,25 @@ Public Class DSCM
             Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
 
-            'Insert the hook
-            bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes((nodeDumpPtr - hookLoc - 5))
-            Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-            refMpData.Start()
+            If ReadUInt8(nodeDumpPtr) = &H50& Then
+                'Insert the hook
+                bytes = {&HE9, 0, 0, 0, 0}
+                bytes2 = BitConverter.GetBytes((nodeDumpPtr - hookLoc - 5))
+                Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
+                WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
+                refMpData.Start()
 
-            Me.Width = 800
-            Me.Height = 680
-            tabs.Visible = True
-            lblNewVersion.Visible = False
-            btnAddFavorite.Visible = True
-            btnRemFavorite.Visible = True
-
+                Me.Width = 800
+                Me.Height = 680
+                tabs.Visible = True
+                lblNewVersion.Visible = False
+                btnAddFavorite.Visible = True
+                btnRemFavorite.Visible = True
+            Else
+                MsgBox("Code insertion appears to have failed.  Try again.")
+                nodeDumpPtr = 0
+                chkExpand.Checked = False
+            End If
         Else
             'Restore original instruction
             bytes = {&H66, &HF, &HD6, &H46, &H14}
@@ -696,6 +706,7 @@ Public Class DSCM
                 'If 0 then allocate memory, otherwise use previously allocated memory.
                 If attemptIdPtr = 0 Then
                     attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                    VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
                 End If
                 DataPacket1 = attemptIdPtr + &H100
 
