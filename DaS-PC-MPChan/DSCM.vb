@@ -125,7 +125,6 @@ Public Class DSCM
 
     Private Sub DSCM_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
         chkDebugDrawing.Checked = False
-        chkNamedNodes.Checked = False
         chkExpand.Checked = False
     End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -244,9 +243,12 @@ Public Class DSCM
         Next
     End Sub
     Private Sub onlineTimer_Tick() Handles onlineTimer.Tick
+        'Contributed by Chronial
         updateOnlinestate()
     End Sub
     Private Sub updateOnlinestate()
+        'Contributed by Chronial
+        'Remote server set up and maintained by Chronial
         Dim steamIds = New HashSet(Of String)
         For Each Row In dgvRecentNodes.Rows
             steamIds.Add(Row.Cells("steamId").Value)
@@ -338,8 +340,8 @@ Public Class DSCM
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
-        Dim oneKey As Boolean
-        Dim twoKey As Boolean
+        Dim oneKey As Boolean 'Toggle Node Display
+        Dim twoKey As Boolean 'Previously toggled NamedNodes, now a free hotkey.
 
         ctrlkey = GetAsyncKeyState(Keys.ControlKey)
         oneKey = GetAsyncKeyState(Keys.D1)
@@ -348,8 +350,10 @@ Public Class DSCM
         If (ctrlkey And oneKey) And Not (DSCM.ctrlHeld And DSCM.oneHeld) Then
             DSCM.chkDebugDrawing.Checked = Not DSCM.chkDebugDrawing.Checked
         End If
+
+
         If (ctrlkey And twoKey) And Not (DSCM.ctrlHeld And DSCM.twoheld) Then
-            DSCM.chkNamedNodes.Checked = Not DSCM.chkNamedNodes.Checked
+            'Hotkey available
         End If
 
         DSCM.ctrlHeld = ctrlkey
@@ -403,7 +407,8 @@ Public Class DSCM
         chkExpand.Checked = False
     End Sub
 
-    Private Sub chkNamedNodes_CheckedChanged(sender As Object, e As EventArgs) Handles chkNamedNodes.CheckedChanged
+    Private Sub chkDebugDrawing_CheckedChanged(sender As Object, e As EventArgs) Handles chkDebugDrawing.CheckedChanged
+        Dim cmpLoc As Integer = dsBase + &HBA256C
         Dim TargetBufferSize = 1024
 
         Dim bytes() As Byte
@@ -414,7 +419,11 @@ Public Class DSCM
         Dim hookLoc As Integer = dsBase + &H15A550
 
 
-        If chkNamedNodes.Checked Then
+        If chkDebugDrawing.Checked Then
+            'Changes instruction doing the compare rather than changing the value it compares against
+            WriteBytes(cmpLoc, {&H1})
+
+
             'If memory has not previously been allocated then allocate, otherwise use previous allocation
             'Memory leaks still exists if somebody were to repeatedly reattach to the process, so...  don't do that.
             If namedNodePtr = 0 Then
@@ -445,21 +454,14 @@ Public Class DSCM
             Else
                 MsgBox("Code insertion appears to have failed.  Try again.")
                 namedNodePtr = 0
-                chkNamedNodes.Checked = False
+                chkDebugDrawing.Checked = False
             End If
         Else
-            'Remove hook, restore original isntruction
+            'Remove Named Node hook, restore original instruction
             bytes = {&H8B, &H44, &H24, &H10, &H56}
             WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-        End If
-    End Sub
-    Private Sub chkDebugDrawing_CheckedChanged(sender As Object, e As EventArgs) Handles chkDebugDrawing.CheckedChanged
-        Dim cmpLoc As Integer = dsBase + &HBA256C
 
-        'Changes instruction doing the compare rather than changing the value it compares against
-        If chkDebugDrawing.Checked Then
-            WriteBytes(cmpLoc, {&H1})
-        Else
+            'Disable Node Drawing
             WriteBytes(cmpLoc, {&H0})
         End If
     End Sub
@@ -629,8 +631,8 @@ Public Class DSCM
             End If
         Next
 
-        'Flush recent nodes down to 30 once it hits 40
-        If dgvRecentNodes.Rows.Count > 40 Then
+        'Flush recent nodes down to 100 once it hits 110
+        If dgvRecentNodes.Rows.Count > 110 Then
             For i = 0 To 10
                 id = dgvRecentNodes.Rows(0).Cells(1).Value
                 dgvRecentNodes.Rows.Remove(dgvRecentNodes.Rows(0))
@@ -737,11 +739,14 @@ Public Class DSCM
             End If
         End If
     End Sub
-    Private Sub chkAttemptConn_CheckedChanged(sender As Object, e As EventArgs) Handles btnAttemptId.Click
+    Private Sub btnAttemptId_MouseClick(sender As Object, e As EventArgs) Handles btnAttemptId.Click
+        'Added to make future automated connection attempts simpler
+        attemptConnSteamID(txtTargetSteamID.Text)
+    End Sub
+    Private Sub attemptConnSteamID(ByVal steamID As String)
         Try
             'Note to self, find a better way of confirming that this is the correct address for this function.
             'If nothing else, just compare the bytes at the address.
-            'Some people have reported crashes.
             Dim steamApiNetworking As Integer = steamApiBase + &H2F70
 
             'Extremely weak check to be sure we're at the right spot
@@ -778,10 +783,10 @@ Public Class DSCM
                 bytes2 = BitConverter.GetBytes(attemptIdPtr + &H100)
                 Array.Copy(bytes2, 0, bytes, &H14, bytes2.Length)
 
-                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(txtTargetSteamID.Text, 8), 16))
+                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
                 Array.Copy(bytes2, 0, bytes, &H1A, bytes2.Length)
 
-                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(txtTargetSteamID.Text, 8), 16))
+                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
                 Array.Copy(bytes2, 0, bytes, &H1F, bytes2.Length)
 
                 WriteProcessMemory(_targetProcessHandle, attemptIdPtr, bytes, bytes.Length, 0)

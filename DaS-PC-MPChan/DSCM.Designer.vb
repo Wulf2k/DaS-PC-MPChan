@@ -34,7 +34,6 @@ Partial Class DSCM
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
         Me.btnReconnect = New System.Windows.Forms.Button()
-        Me.chkNamedNodes = New System.Windows.Forms.CheckBox()
         Me.chkExpand = New System.Windows.Forms.CheckBox()
         Me.dgvMPNodes = New System.Windows.Forms.DataGridView()
         Me.txtCurrNodes = New System.Windows.Forms.TextBox()
@@ -86,7 +85,7 @@ Partial Class DSCM
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.04.23.03"
+        Me.lblVer.Text = "2016.04.25.17"
         '
         'btnReconnect
         '
@@ -97,24 +96,12 @@ Partial Class DSCM
         Me.btnReconnect.Text = "Reattach"
         Me.btnReconnect.UseVisualStyleBackColor = True
         '
-        'chkNamedNodes
-        '
-        Me.chkNamedNodes.AutoSize = True
-        Me.chkNamedNodes.BackColor = System.Drawing.SystemColors.Control
-        Me.chkNamedNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkNamedNodes.Location = New System.Drawing.Point(12, 24)
-        Me.chkNamedNodes.Name = "chkNamedNodes"
-        Me.chkNamedNodes.Size = New System.Drawing.Size(116, 20)
-        Me.chkNamedNodes.TabIndex = 51
-        Me.chkNamedNodes.Text = "Named Nodes"
-        Me.chkNamedNodes.UseVisualStyleBackColor = False
-        '
         'chkExpand
         '
         Me.chkExpand.AutoSize = True
         Me.chkExpand.BackColor = System.Drawing.SystemColors.Control
         Me.chkExpand.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.chkExpand.Location = New System.Drawing.Point(12, 44)
+        Me.chkExpand.Location = New System.Drawing.Point(12, 30)
         Me.chkExpand.Name = "chkExpand"
         Me.chkExpand.Size = New System.Drawing.Size(115, 20)
         Me.chkExpand.TabIndex = 52
@@ -411,7 +398,6 @@ Partial Class DSCM
         Me.Controls.Add(Me.lblNodes)
         Me.Controls.Add(Me.txtCurrNodes)
         Me.Controls.Add(Me.chkExpand)
-        Me.Controls.Add(Me.chkNamedNodes)
         Me.Controls.Add(Me.btnReconnect)
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
@@ -432,7 +418,6 @@ Partial Class DSCM
     Friend WithEvents chkDebugDrawing As System.Windows.Forms.CheckBox
     Friend WithEvents lblVer As Label
     Friend WithEvents btnReconnect As Button
-    Friend WithEvents chkNamedNodes As System.Windows.Forms.CheckBox
     Friend WithEvents chkExpand As CheckBox
     Friend WithEvents dgvMPNodes As DataGridView
     Friend WithEvents txtCurrNodes As TextBox
