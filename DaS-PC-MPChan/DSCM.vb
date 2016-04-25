@@ -624,7 +624,7 @@ Public Class DSCM
                 tmpID = recentNodeID
                 tmpID = tmpID.PadLeft(5, "0"c)
                 key.SetValue(id, tmpID & "|" & name)
-                dgvRecentNodes.Rows.Add(name, id, recentNodeID)
+                dgvRecentNodes.Rows.Add(name, id, recentNodeID, "Y")
                 recentNodeID += 1
             End If
         Next
