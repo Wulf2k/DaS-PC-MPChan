@@ -6,6 +6,7 @@ Public Class DSCM
     'Timers
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
+    Private WithEvents onlineTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
     'For hotkey support
@@ -153,42 +154,49 @@ Public Class DSCM
         Me.Width = 450
         Me.Height = 190
 
-        dgvMPNodes.Columns.Add("Name", "Name")
+        dgvMPNodes.Columns.Add("name", "Name")
         dgvMPNodes.Columns(0).Width = 180
         dgvMPNodes.Columns(0).ValueType = GetType(String)
-        dgvMPNodes.Columns.Add("Steam ID", "Steam ID")
+        dgvMPNodes.Columns.Add("steamId", "Steam ID")
         dgvMPNodes.Columns(1).Width = 145
         dgvMPNodes.Columns(1).ValueType = GetType(String)
-        dgvMPNodes.Columns.Add("SL", "SL")
+        dgvMPNodes.Columns.Add("soulLevel", "SL")
         dgvMPNodes.Columns(2).Width = 60
         dgvMPNodes.Columns(2).ValueType = GetType(Integer)
-        dgvMPNodes.Columns.Add("Phantom Type", "Phantom Type")
+        dgvMPNodes.Columns.Add("phantomType", "Phantom Type")
         dgvMPNodes.Columns(3).Width = 80
         dgvMPNodes.Columns(3).ValueType = GetType(String)
-        dgvMPNodes.Columns.Add("MP Area", "MP Area")
+        dgvMPNodes.Columns.Add("mpArea", "MP Area")
         dgvMPNodes.Columns(4).Width = 80
         dgvMPNodes.Columns(4).ValueType = GetType(Integer)
-        dgvMPNodes.Columns.Add("World", "World")
+        dgvMPNodes.Columns.Add("world", "World")
         dgvMPNodes.Columns(5).Width = 200
         dgvMPNodes.Columns(5).ValueType = GetType(String)
         dgvMPNodes.Font = New Font("Consolas", 10)
 
-        dgvFavoriteNodes.Columns.Add("Name", "Name")
+        dgvFavoriteNodes.Columns.Add("name", "Name")
         dgvFavoriteNodes.Columns(0).Width = 180
         dgvFavoriteNodes.Columns(0).ValueType = GetType(String)
-        dgvFavoriteNodes.Columns.Add("Steam ID", "Steam ID")
+        dgvFavoriteNodes.Columns.Add("steamId", "Steam ID")
         dgvFavoriteNodes.Columns(1).Width = 145
         dgvFavoriteNodes.Columns(1).ValueType = GetType(String)
+        dgvFavoriteNodes.Columns.Add("isOnline", "O")
+        dgvFavoriteNodes.Columns(2).Width = 20
+        dgvFavoriteNodes.Columns(2).ValueType = GetType(String)
         dgvFavoriteNodes.Font = New Font("Consolas", 10)
 
-        dgvRecentNodes.Columns.Add("Name", "Name")
+
+        dgvRecentNodes.Columns.Add("name", "Name")
         dgvRecentNodes.Columns(0).Width = 180
         dgvRecentNodes.Columns(0).ValueType = GetType(String)
-        dgvRecentNodes.Columns.Add("Steam ID", "Steam ID")
+        dgvRecentNodes.Columns.Add("steamId", "Steam ID")
         dgvRecentNodes.Columns(1).Width = 145
         dgvRecentNodes.Columns(1).ValueType = GetType(String)
-        dgvRecentNodes.Columns.Add("Order ID", "Order ID")
+        dgvRecentNodes.Columns.Add("orderId", "Order ID")
         dgvRecentNodes.Columns(2).Visible = False
+        dgvRecentNodes.Columns.Add("isOnline", "O")
+        dgvRecentNodes.Columns(3).Width = 20
+        dgvRecentNodes.Columns(3).ValueType = GetType(String)
         dgvRecentNodes.Font = New Font("Consolas", 10)
 
         'Check version number in new thread, so main thread isn't delayed.
@@ -204,7 +212,11 @@ Public Class DSCM
         'Load favorite node list from registry
         loadFavoriteNodes()
         loadRecentNodes()
+        updateOnlinestate()
 
+        onlineTimer.Enabled = True
+        onlineTimer.Interval = 10 * 60 * 1000
+        onlineTimer.Start()
     End Sub
     Private Sub loadFavoriteNodes()
         Dim key As Microsoft.Win32.RegistryKey
@@ -228,6 +240,50 @@ Public Class DSCM
             dgvRecentNodes.Rows.Add(name, id, tmpRecentID)
             If tmpRecentID > recentNodeID Then
                 recentNodeID = tmpRecentID
+            End If
+        Next
+    End Sub
+    Private Sub onlineTimer_Tick() Handles onlineTimer.Tick
+        updateOnlinestate()
+    End Sub
+    Private Sub updateOnlinestate()
+        Dim steamIds = New HashSet(Of String)
+        For Each Row In dgvRecentNodes.Rows
+            steamIds.Add(Row.Cells("steamId").Value)
+        Next
+        For Each Row In dgvFavoriteNodes.Rows
+            steamIds.Add(Row.Cells("steamId").Value)
+        Next
+        Dim converter = New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
+        Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
+        Dim url = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
+        Dim client = New Net.WebClient()
+        Dim onlineInfo = New Dictionary(Of Int64, Boolean)
+        Try
+            Dim stream = client.OpenRead(url)
+            Dim parser = New FileIO.TextFieldParser(stream)
+            parser.SetDelimiters({","})
+
+            While Not parser.EndOfData
+                Dim strings = parser.ReadFields()
+                onlineInfo(Int64.Parse(strings(0))) = Boolean.Parse(strings(1))
+            End While
+        Catch
+            Return
+        End Try
+
+        For Each Row In dgvRecentNodes.Rows
+            If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                Row.Cells("isOnline").Value = "Y"
+            Else
+                Row.Cells("isOnline").Value = "N"
+            End If
+        Next
+        For Each Row In dgvFavoriteNodes.Rows
+            If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                Row.Cells("isOnline").Value = "Y"
+            Else
+                Row.Cells("isOnline").Value = "N"
             End If
         Next
     End Sub
@@ -568,7 +624,7 @@ Public Class DSCM
                 tmpID = recentNodeID
                 tmpID = tmpID.PadLeft(5, "0"c)
                 key.SetValue(id, tmpID & "|" & name)
-                dgvRecentNodes.Rows.Add(name, id, recentNodeID)
+                dgvRecentNodes.Rows.Add(name, id, recentNodeID, "Y")
                 recentNodeID += 1
             End If
         Next
