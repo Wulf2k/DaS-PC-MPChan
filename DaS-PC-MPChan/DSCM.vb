@@ -755,6 +755,9 @@ Public Class DSCM
             txtTargetSteamID.Text = id
         End If
     End Sub
+    Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick, dgvRecentNodes.DoubleClick
+        btnAttemptId.PerformClick()
+    End Sub
     Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
