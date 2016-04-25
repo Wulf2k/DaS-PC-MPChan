@@ -322,7 +322,7 @@ Partial Class DSCM
         DataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvFavoriteNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle6
         Me.dgvFavoriteNodes.RowHeadersVisible = False
-        Me.dgvFavoriteNodes.Size = New System.Drawing.Size(350, 450)
+        Me.dgvFavoriteNodes.Size = New System.Drawing.Size(370, 450)
         Me.dgvFavoriteNodes.TabIndex = 54
         '
         'tabRecent
@@ -369,7 +369,7 @@ Partial Class DSCM
         DataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvRecentNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle9
         Me.dgvRecentNodes.RowHeadersVisible = False
-        Me.dgvRecentNodes.Size = New System.Drawing.Size(350, 450)
+        Me.dgvRecentNodes.Size = New System.Drawing.Size(370, 450)
         Me.dgvRecentNodes.TabIndex = 55
         '
         'btnAddFavorite

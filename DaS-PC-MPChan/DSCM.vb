@@ -6,6 +6,7 @@ Public Class DSCM
     'Timers
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
+    Private WithEvents onlineTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
     'For hotkey support
@@ -179,7 +180,11 @@ Public Class DSCM
         dgvFavoriteNodes.Columns.Add("Steam ID", "Steam ID")
         dgvFavoriteNodes.Columns(1).Width = 145
         dgvFavoriteNodes.Columns(1).ValueType = GetType(String)
+        dgvFavoriteNodes.Columns.Add("Is Online", "O")
+        dgvFavoriteNodes.Columns(2).Width = 20
+        dgvFavoriteNodes.Columns(2).ValueType = GetType(String)
         dgvFavoriteNodes.Font = New Font("Consolas", 10)
+
 
         dgvRecentNodes.Columns.Add("Name", "Name")
         dgvRecentNodes.Columns(0).Width = 180
@@ -189,6 +194,9 @@ Public Class DSCM
         dgvRecentNodes.Columns(1).ValueType = GetType(String)
         dgvRecentNodes.Columns.Add("Order ID", "Order ID")
         dgvRecentNodes.Columns(2).Visible = False
+        dgvRecentNodes.Columns.Add("Is Online", "O")
+        dgvRecentNodes.Columns(3).Width = 20
+        dgvRecentNodes.Columns(3).ValueType = GetType(String)
         dgvRecentNodes.Font = New Font("Consolas", 10)
 
         'Check version number in new thread, so main thread isn't delayed.
@@ -204,7 +212,11 @@ Public Class DSCM
         'Load favorite node list from registry
         loadFavoriteNodes()
         loadRecentNodes()
+        updateOnlinestate()
 
+        onlineTimer.Enabled = True
+        onlineTimer.Interval = 10 * 60 * 1000
+        onlineTimer.Start()
     End Sub
     Private Sub loadFavoriteNodes()
         Dim key As Microsoft.Win32.RegistryKey
@@ -228,6 +240,60 @@ Public Class DSCM
             dgvRecentNodes.Rows.Add(name, id, tmpRecentID)
             If tmpRecentID > recentNodeID Then
                 recentNodeID = tmpRecentID
+            End If
+        Next
+    End Sub
+    Private Sub onlineTimer_Tick() Handles onlineTimer.Tick
+        updateOnlinestate()
+    End Sub
+    Private Sub updateOnlinestate()
+        Dim id As String
+        Dim steamIdInt As Int64
+        Dim intIds(dgvRecentNodes.Rows.Count + dgvFavoriteNodes.Rows.Count) As Int64
+        For i = dgvRecentNodes.Rows.Count - 1 To 0 Step -1
+            id = dgvRecentNodes.Rows(i).Cells(1).Value
+            steamIdInt = Convert.ToInt64(id, 16)
+            intIds(i) = steamIdInt
+        Next
+        For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+            id = dgvFavoriteNodes.Rows(i).Cells(1).Value
+            steamIdInt = Convert.ToInt64(id, 16)
+            intIds(i) = steamIdInt
+        Next
+        Dim converter = New Converter(Of Int64, String)(Function(num) num.ToString)
+        Dim idQuery = String.Join(",", Array.ConvertAll(intIds, converter))
+        Dim url = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
+        Dim client = New Net.WebClient()
+        Dim onlineInfo = New Dictionary(Of Int64, Boolean)
+        Try
+            Dim stream = client.OpenRead(url)
+            Dim parser = New FileIO.TextFieldParser(stream)
+            parser.SetDelimiters({","})
+
+            While Not parser.EndOfData
+                Dim strings = parser.ReadFields()
+                onlineInfo(Int64.Parse(strings(0))) = Boolean.Parse(strings(1))
+            End While
+        Catch
+            Return
+        End Try
+
+        For i = dgvRecentNodes.Rows.Count - 1 To 0 Step -1
+            id = dgvRecentNodes.Rows(i).Cells(1).Value
+            steamIdInt = Convert.ToInt64(id, 16)
+            If onlineInfo(steamIdInt) Then
+                dgvRecentNodes.Rows(i).Cells(3).Value = "Y"
+            Else
+                dgvRecentNodes.Rows(i).Cells(3).Value = "N"
+            End If
+        Next
+        For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+            id = dgvFavoriteNodes.Rows(i).Cells(1).Value
+            steamIdInt = Convert.ToInt64(id, 16)
+            If onlineInfo(steamIdInt) Then
+                dgvFavoriteNodes.Rows(i).Cells(2).Value = "Y"
+            Else
+                dgvFavoriteNodes.Rows(i).Cells(2).Value = "N"
             End If
         Next
     End Sub
