@@ -254,7 +254,7 @@ Public Class DSCM
             steamIds.Add(Row.Cells("steamId").Value)
         Next
         For Each Row In dgvFavoriteNodes.Rows
-            steamIds.Add(Row.Cells("steamId").Value)
+            If steamIds.Count < 100 Then steamIds.Add(Row.Cells("steamId").Value)
         Next
         Dim converter = New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
         Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
