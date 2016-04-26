@@ -631,9 +631,9 @@ Public Class DSCM
             End If
         Next
 
-        'Flush recent nodes down to 100 once it hits 110
-        If dgvRecentNodes.Rows.Count > 110 Then
-            For i = 0 To 10
+        'Limit recent nodes to 70
+        If dgvRecentNodes.Rows.Count > 70 Then
+            For i = 0 To dgvRecentNodes.Rows.Count - 70
                 id = dgvRecentNodes.Rows(0).Cells(1).Value
                 dgvRecentNodes.Rows.Remove(dgvRecentNodes.Rows(0))
 
