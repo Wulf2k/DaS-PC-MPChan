@@ -271,18 +271,24 @@ Public Class DSCM
         End Try
 
         For Each Row In dgvRecentNodes.Rows
-            If onlineInfo(converter(Row.Cells("steamId").Value())) Then
-                Row.Cells("isOnline").Value = "Y"
-            Else
-                Row.Cells("isOnline").Value = "N"
-            End If
+            Try
+                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                    Row.Cells("isOnline").Value = "Y"
+                Else
+                    Row.Cells("isOnline").Value = "N"
+                End If
+            Catch ex As KeyNotFoundException
+            End Try
         Next
         For Each Row In dgvFavoriteNodes.Rows
-            If onlineInfo(converter(Row.Cells("steamId").Value())) Then
-                Row.Cells("isOnline").Value = "Y"
-            Else
-                Row.Cells("isOnline").Value = "N"
-            End If
+            Try
+                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                    Row.Cells("isOnline").Value = "Y"
+                Else
+                    Row.Cells("isOnline").Value = "N"
+                End If
+            Catch ex As KeyNotFoundException
+            End Try
         Next
     End Sub
     Private Sub updatecheck()
