@@ -46,11 +46,17 @@ Public Class DSCM
     'Check for Dark Souls beta EXE, fail if true
     Dim beta As Boolean
 
+    'Check for PVP Watchdog
+    Dim watchdog As Boolean
+
     'Addresses of the various inserted functions
     Dim namedNodePtr As Integer = 0
     Dim nodeDumpPtr As Integer = 0
     Dim forceIdPtr As Integer = 0
     Dim attemptIdPtr As Integer = 0
+
+    Dim dsPWPtr As IntPtr
+    Dim dsPWBase As Integer
 
     Dim dsBasePtr As IntPtr
     Dim dsBase As Integer
@@ -94,6 +100,17 @@ Public Class DSCM
                             'Note to self, extra variables due to issues with conversion.  Fix "some day".
                             dsBasePtr = dll.BaseAddress
                             dsBase = dsBasePtr
+
+                        Case "d3d9.dll"
+                            If watchdog = False Then
+                                dsPWPtr = dll.baseaddress
+                                dsPWBase = dsPWPtr
+
+                                If ReadUInt8(dsPWBase + &H6E41) = &HE8& Then
+                                    watchdog = True
+                                    WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
+                                End If
+                            End If
 
 
                         'Find steam_api.dll for ability to directly add SteamIDs as nodes
@@ -396,6 +413,13 @@ Public Class DSCM
         forceIdPtr = 0
         nodeDumpPtr = 0
         attemptIdPtr = 0
+
+        If watchdog Then
+            WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
+        End If
+
+        watchdog = False
+        beta = False
 
         DetachFromProcess()
         TryAttachToProcess("darksouls")
