@@ -249,7 +249,7 @@ Public Class DSCM
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\RecentNodes", True)
 
         Dim name As String
-        Dim tmpRecentID As Integer
+        Dim tmpRecentID As Long
 
         For Each id As String In key.GetValueNames()
             name = key.GetValue(id)
