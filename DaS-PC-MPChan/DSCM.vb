@@ -671,7 +671,9 @@ Public Class DSCM
             For Each row In dgvRecentNodes.Rows
                 recentNodes.Add(row)
             Next
-            recentNodes = recentNodes.OrderBy(Function(row) row.Cells("orderId").Value).ToList()
+
+            'Breaking this to fix int32 errors.  Fix later.
+            recentNodes = recentNodes.OrderBy(Function(row) CType(row.Cells("orderId").Value, Long)).ToList()
             For i  = 0 To dgvRecentNodes.Rows.Count - 70
                 id = recentNodes(i).Cells(1).Value
                 dgvRecentNodes.Rows.Remove(recentNodes(i))
