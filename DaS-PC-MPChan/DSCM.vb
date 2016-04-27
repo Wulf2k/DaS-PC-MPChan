@@ -237,8 +237,8 @@ Public Class DSCM
             tmpRecentID = name.Split("|")(0)
             name = name.Split("|")(1)
             dgvRecentNodes.Rows.Add(name, id, tmpRecentID)
-            If tmpRecentID > recentNodeID Then
-                recentNodeID = tmpRecentID
+            If tmpRecentID >= recentNodeID Then
+                recentNodeID = tmpRecentID + 1
             End If
         Next
     End Sub
@@ -633,9 +633,14 @@ Public Class DSCM
 
         'Limit recent nodes to 70
         If dgvRecentNodes.Rows.Count > 70 Then
-            For i = 0 To dgvRecentNodes.Rows.Count - 70
-                id = dgvRecentNodes.Rows(0).Cells(1).Value
-                dgvRecentNodes.Rows.Remove(dgvRecentNodes.Rows(0))
+            Dim recentNodes As New List(Of DataGridViewRow)
+            For Each row In dgvRecentNodes.Rows
+                recentNodes.Add(row)
+            Next
+            recentNodes = recentNodes.OrderBy(Function(row) row.Cells("orderId").Value).ToList()
+            For i  = 0 To dgvRecentNodes.Rows.Count - 70
+                id = recentNodes(i).Cells(1).Value
+                dgvRecentNodes.Rows.Remove(recentNodes(i))
 
                 If Not key.GetValue(id) Is Nothing Then
                     key.DeleteValue(id)
