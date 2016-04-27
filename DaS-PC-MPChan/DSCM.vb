@@ -141,6 +141,9 @@ Public Class DSCM
     Private Sub DSCM_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
         chkDebugDrawing.Checked = False
         chkExpand.Checked = False
+        If watchdog Then
+            WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
+        End If
     End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'Start Refresh timer
