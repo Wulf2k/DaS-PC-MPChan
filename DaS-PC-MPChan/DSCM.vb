@@ -64,8 +64,6 @@ Public Class DSCM
     'New version of DSCM available?
     Dim newver As Boolean = False
 
-    Dim recentNodeID As Integer = 0
-
     Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
         Dim _allProcesses() As Process = Process.GetProcesses
         For Each pp As Process In _allProcesses
@@ -193,6 +191,7 @@ Public Class DSCM
         dgvRecentNodes.Columns(1).ValueType = GetType(String)
         dgvRecentNodes.Columns.Add("orderId", "Order ID")
         dgvRecentNodes.Columns(2).Visible = False
+        dgvRecentNodes.Columns(2).ValueType = GetType(Long)
         dgvRecentNodes.Columns.Add("isOnline", "O")
         dgvRecentNodes.Columns(3).Width = 20
         dgvRecentNodes.Columns(3).ValueType = GetType(String)
@@ -237,9 +236,6 @@ Public Class DSCM
             tmpRecentID = name.Split("|")(0)
             name = name.Split("|")(1)
             dgvRecentNodes.Rows.Add(name, id, tmpRecentID)
-            If tmpRecentID >= recentNodeID Then
-                recentNodeID = tmpRecentID + 1
-            End If
         Next
     End Sub
     Private Sub onlineTimer_Tick() Handles onlineTimer.Tick
@@ -617,18 +613,23 @@ Public Class DSCM
         Dim id As String
         Dim name As String
 
-        For i = dgvMPNodes.Rows.Count - 1 To 0 Step -1
-            name = dgvMPNodes.Rows(i).Cells(0).Value
-            id = dgvMPNodes.Rows(i).Cells(1).Value
-            Dim tmpID As String
+        Dim recentNodeDict As New Dictionary(Of String, DataGridViewRow)
+        For Each row In dgvRecentNodes.Rows
+            recentNodeDict.Add(row.Cells("steamId").Value, row)
+        Next
 
-            If key.GetValue(id) Is Nothing And Not id = txtSelfSteamID.Text Then
-                tmpID = recentNodeID
-                tmpID = tmpID.PadLeft(5, "0"c)
-                key.SetValue(id, tmpID & "|" & name)
-                dgvRecentNodes.Rows.Add(name, id, recentNodeID, "Y")
-                recentNodeID += 1
+        Dim currentTime As Long = (DateTime.UtcNow - New DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds
+        For Each row In dgvMPNodes.Rows
+            name = row.Cells("name").Value
+            id = row.Cells("steamId").Value
+            If id <> txtSelfSteamID.Text Then
+                If Not recentNodeDict.ContainsKey(id)
+                    dgvRecentNodes.Rows.Add(name, id, currentTime, "Y")
+                Else
+                    recentNodeDict(id).Cells("orderId").Value = currentTime
+                End If
             End If
+            key.SetValue(id, currentTime.ToString() & "|" & name)
         Next
 
         'Limit recent nodes to 70
