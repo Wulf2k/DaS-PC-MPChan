@@ -68,7 +68,8 @@ Public Class DSCM
     Dim steamApiDllModule As ProcessModule
 
     'New version of DSCM available?
-    Dim newver As Boolean = False
+    Dim newstablever As Boolean = False
+    Dim newtestver As Boolean = False
 
     Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
         Dim _allProcesses() As Process = Process.GetProcesses
@@ -315,9 +316,11 @@ Public Class DSCM
         Try
             'Update level is contents of remote text file compared to version label on main form.
             My.Computer.Network.DownloadFile("http://wulf2k.ca/pc/das/dscm-ver.txt", Path.GetTempPath & "\dscm-ver.txt", "", "", False, 9800, True)
-            Dim ver = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(0)
+            Dim stablever = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(0)
+            Dim testver = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(1)
 
-            newver = (ver > lblVer.Text.Replace(".", ""))
+            newstablever = (stablever > lblVer.Text.Replace(".", ""))
+            newtestver = (testver > lblVer.Text.Replace(".", ""))
         Catch ex As Exception
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
@@ -327,7 +330,14 @@ Public Class DSCM
         Dim tmpptr As Integer = 0
 
         'Text indicating new version is hidden if DSCM is expanded, only care if it's seen at the start anyway.
-        lblNewVersion.Visible = (newver And Not chkExpand.Checked)
+        If newtestver Or newstablever Then
+            lblNewVersion.Visible = Not chkExpand.Checked
+            lblUrl.Visible = lblNewVersion.Visible
+            If newtestver Then lblNewVersion.Text = "New testing version available"
+            If newstablever Then lblNewVersion.Text = "New stable version available"
+        End If
+
+
 
         'Node display
         'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
@@ -765,6 +775,7 @@ Public Class DSCM
 
         Dim steamIdInt As Int64
         If txtTargetSteamID.Text.Length > 1 Then
+            txtTargetSteamID.Text = txtTargetSteamID.Text.Replace(" ", "")
             'Regex code contributed by Chronial
             'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
             Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
