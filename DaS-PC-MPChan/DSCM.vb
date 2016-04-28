@@ -109,7 +109,8 @@ Public Class DSCM
 
                                 If ReadUInt8(dsPWBase + &H6E41) = &HE8& Then
                                     watchdog = True
-                                    WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
+                                    'this is ineffective at disabling PVP Watchdog's node write
+                                    'WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
                                 End If
                             End If
 
@@ -143,7 +144,7 @@ Public Class DSCM
         chkDebugDrawing.Checked = False
         chkExpand.Checked = False
         If watchdog Then
-            WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
+            'WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
         End If
     End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
