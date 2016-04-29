@@ -1,11 +1,14 @@
 ﻿Imports System.Threading
 Imports System.IO
 Imports System.Text.RegularExpressions
+Imports System.Net.Sockets
+
 
 Public Class DSCM
     'Timers
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
+    Private WithEvents ircTimer As New System.Windows.Forms.Timer()
     Private WithEvents onlineTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
@@ -37,6 +40,27 @@ Public Class DSCM
 
     'Thread to check for updates
     Private updTrd As Thread
+    Private ircTrd As Thread
+
+    'IRC variables
+    Dim trdLock As New Object
+    Private Shared ircInQueue As New List(Of String)
+    Private Shared ircOutQueue As New List(Of String)
+    Private _tcpclientConnection As TcpClient = Nothing
+    Private _networkStream As NetworkStream = Nothing
+    Private _streamWriter As StreamWriter = Nothing
+    Private _streamReader As StreamReader = Nothing
+
+    Private Shared selfName As String = ""
+    Private Shared selfSteamID As String
+    Private Shared selfSL As Integer
+    Private Shared selfPhantomType As String
+    Private Shared selfMPZone As Integer
+    Private Shared selfWorld As String
+
+    Private Shared ircOnline As Boolean = False
+    Private Shared input
+    Private Shared output
 
     'Hotkeys
     Dim ctrlHeld As Boolean
@@ -219,6 +243,32 @@ Public Class DSCM
         dgvRecentNodes.Columns(3).ValueType = GetType(String)
         dgvRecentNodes.Font = New Font("Consolas", 10)
 
+
+        dgvDSCMNet.Columns.Add("name", "Name")
+        dgvDSCMNet.Columns(0).Width = 180
+        dgvDSCMNet.Columns(0).ValueType = GetType(String)
+        dgvDSCMNet.Columns.Add("steamId", "Steam ID")
+        dgvDSCMNet.Columns(1).Width = 145
+        dgvDSCMNet.Columns(1).ValueType = GetType(String)
+        dgvDSCMNet.Columns.Add("soulLevel", "SL")
+        dgvDSCMNet.Columns(2).Width = 60
+        dgvDSCMNet.Columns(2).ValueType = GetType(Integer)
+        dgvDSCMNet.Columns.Add("phantomType", "Phantom Type")
+        dgvDSCMNet.Columns(3).Width = 80
+        dgvDSCMNet.Columns(3).ValueType = GetType(String)
+        dgvDSCMNet.Columns.Add("mpArea", "MP Area")
+        dgvDSCMNet.Columns(4).Width = 80
+        dgvDSCMNet.Columns(4).ValueType = GetType(Integer)
+        dgvDSCMNet.Columns.Add("world", "World")
+        dgvDSCMNet.Columns(5).Width = 200
+        dgvDSCMNet.Columns(5).ValueType = GetType(String)
+        dgvDSCMNet.Columns.Add("lastReport", "Last Report")
+        dgvDSCMNet.Columns(6).Width = 10
+        dgvDSCMNet.Columns(6).ValueType = GetType(Integer)
+        dgvDSCMNet.Columns(6).Visible = False
+        dgvDSCMNet.Font = New Font("Consolas", 10)
+
+
         'Check version number in new thread, so main thread isn't delayed.
         'Compares value on server to date in label on main form
         updTrd = New Thread(AddressOf updatecheck)
@@ -326,6 +376,16 @@ Public Class DSCM
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
     End Sub
+    Private Sub ircTimer_Tick() Handles ircTimer.Tick
+        If Not selfName = "" Then
+            Dim str As String = "REPORT|"
+
+            str = str & selfSteamID & "," & selfSL & "," & selfPhantomType & "," & selfMPZone & "," & selfWorld
+            SyncLock trdLock
+                ircOutQueue.Add(str)
+            End SyncLock
+        End If
+    End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
         Dim tmpptr As Integer = 0
@@ -357,6 +417,7 @@ Public Class DSCM
         'Probably don't need to update this more than once anyway, but why not?
         If Not txtSelfSteamID.Focused Then
             txtSelfSteamID.Text = ReadAsciiStr(ReadInt32(dsBase + &HF7E204) + &HA00)
+            selfSteamID = txtSelfSteamID.Text
         End If
 
         tmpptr = ReadInt32(dsBase + &HF7E204)
@@ -370,6 +431,14 @@ Public Class DSCM
                 End If
             Next
         End If
+
+        'IRC related
+        SyncLock trdLock
+            If ircInQueue.Count > 0 Then
+                Console.Write(ircInQueue(0) & Environment.NewLine)
+                ircInQueue.Remove(ircInQueue(0))
+            End If
+        End SyncLock
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
@@ -394,11 +463,12 @@ Public Class DSCM
         DSCM.twoheld = twoKey
     End Sub
     Private Sub frmResize() Handles Me.Resize
-
         tabs.Width = Me.Width - 35
         tabs.Height = Me.Height - 190
         dgvMPNodes.Width = Me.Width - 50
         dgvMPNodes.Height = Me.Height - 225
+        dgvDSCMNet.Width = Me.Width - 50
+        dgvDSCMNet.Height = Me.Height - 225
 
         dgvFavoriteNodes.Height = Me.Height - 225
         dgvRecentNodes.Height = Me.Height - 225
@@ -427,6 +497,8 @@ Public Class DSCM
         forceIdPtr = 0
         nodeDumpPtr = 0
         attemptIdPtr = 0
+
+        chkDSCMNet.Checked = False
 
         If watchdog Then
             WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
@@ -521,7 +593,6 @@ Public Class DSCM
         Dim SteamData1 As Integer
         Dim SteamData2 As Integer
 
-        'Note to self, update to relative addresses
         nodeCount = ReadInt32(dsBase + &HF62DD0)
         SteamNodeList = ReadInt32(dsBase + &HF62DCC)
         SteamNodesPtr = ReadInt32(SteamNodeList)
@@ -546,13 +617,20 @@ Public Class DSCM
             If notexist Then dgvMPNodes.Rows.Add({rowName, rowSteamID, rowSL, rowPhantomType, rowMPArea, rowWorld})
         Next
 
+        Dim selfRow As Integer = 0
         Dim tmpptr As Integer = ReadInt32(dsBase + &HF7E204)
         For i = 0 To dgvMPNodes.Rows.Count - 1
             If dgvMPNodes.Rows(i).Cells(1).Value = txtSelfSteamID.Text Then
-                dgvMPNodes.Rows(i).Cells(2).Value = ReadInt32(tmpptr + &HA30)
-                dgvMPNodes.Rows(i).Cells(3).Value = ReadInt32(tmpptr + &HA28).ToString
-                dgvMPNodes.Rows(i).Cells(4).Value = ReadInt32(tmpptr + &HA14)
-                dgvMPNodes.Rows(i).Cells(5).Value = (ReadInt8(tmpptr + &HA13) & "-" & ReadInt8(tmpptr + &HA12)).ToString
+                selfName = dgvMPNodes.Rows(i).Cells("name").Value
+                selfSL = ReadInt32(tmpptr + &HA30)
+                selfPhantomType = ReadInt32(tmpptr + &HA28).ToString
+                selfMPZone = ReadInt32(tmpptr + &HA14)
+                selfWorld = (ReadInt8(tmpptr + &HA13) & "-" & ReadInt8(tmpptr + &HA12)).ToString
+                selfRow = i
+                dgvMPNodes.Rows(i).Cells(2).Value = selfSL
+                dgvMPNodes.Rows(i).Cells(3).Value = selfPhantomType
+                dgvMPNodes.Rows(i).Cells(4).Value = selfMPZone
+                dgvMPNodes.Rows(i).Cells(5).Value = selfWorld
             End If
         Next
 
@@ -642,6 +720,11 @@ Public Class DSCM
             End Select
             dgvMPNodes.Rows(i).Cells(5).Value = tmpid
         Next
+
+        'Ugly way to convert self values to strings after above
+        selfPhantomType = dgvMPNodes.Rows(selfRow).Cells("phantomtype").Value
+        selfWorld = dgvMPNodes.Rows(selfRow).Cells("world").Value
+
 
         'Delete old nodes.
         For i = dgvMPNodes.Rows.Count - 1 To 0 Step -1
@@ -862,14 +945,17 @@ Public Class DSCM
                    Environment.NewLine & Environment.NewLine & ex.Message)
         End Try
     End Sub
-    Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter, dgvRecentNodes.CellEnter
+    Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
+        dgvRecentNodes.CellEnter, dgvDSCMNet.CellEnter
+
         If sender.SelectedCells.Count > 0 Then
             Dim rowindex As Integer = sender.SelectedCells(0).RowIndex
             Dim id As String = sender.Rows(rowindex).Cells(1).Value
             txtTargetSteamID.Text = id
         End If
     End Sub
-    Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick, dgvRecentNodes.DoubleClick
+    Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
+        dgvRecentNodes.DoubleClick, dgvDSCMNet.DoubleClick
         btnAttemptId.PerformClick()
     End Sub
     Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
@@ -898,6 +984,19 @@ Public Class DSCM
                     Dim rowindex As Integer = dgvRecentNodes.SelectedCells(0).RowIndex
                     Dim name As String = dgvRecentNodes.Rows(rowindex).Cells(0).Value
                     Dim id As String = dgvRecentNodes.Rows(rowindex).Cells(1).Value
+
+                    If key.GetValue(id) Is Nothing Then
+                        key.SetValue(id, name)
+                        dgvFavoriteNodes.Rows.Add(name, id)
+                    End If
+                Else
+                    MsgBox("No selection detected.")
+                End If
+            Case 3
+                If dgvDSCMNet.SelectedCells.Count > 0 Then
+                    Dim rowindex As Integer = dgvDSCMNet.SelectedCells(0).RowIndex
+                    Dim name As String = dgvDSCMNet.Rows(rowindex).Cells(0).Value
+                    Dim id As String = dgvDSCMNet.Rows(rowindex).Cells(1).Value
 
                     If key.GetValue(id) Is Nothing Then
                         key.SetValue(id, name)
@@ -970,6 +1069,186 @@ Public Class DSCM
                 Else
                     MsgBox("No selection detected.")
                 End If
+
+            'DSCMNet selected
+            Case 3
+                If dgvDSCMNet.SelectedCells.Count > 0 Then
+                    Dim rowindex As Integer = dgvDSCMNet.SelectedCells(0).RowIndex
+                    Dim id As String = dgvDSCMNet.Rows(rowindex).Cells(1).Value
+
+                    If Not key.GetValue(id) Is Nothing Then
+                        key.DeleteValue(id)
+                    End If
+
+                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
+                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
+                        End If
+                    Next
+                Else
+                    MsgBox("No selection detected.")
+                End If
         End Select
+    End Sub
+
+    Private Sub chkDSCMNet_CheckedChanged(sender As Object, e As EventArgs) Handles chkDSCMNet.CheckedChanged
+        If chkDSCMNet.Checked Then
+            ircTrd = New Thread(AddressOf ircMain)
+            ircTrd.IsBackground = True
+            ircTrd.Start()
+
+
+            ircTimer = New System.Windows.Forms.Timer
+            ircTimer.Interval = 60 * 1000
+            ircTimer.Enabled = True
+            ircTimer.Start()
+
+
+        Else
+            SyncLock trdLock
+                ircOutQueue.Add("QUIT")
+            End SyncLock
+        End If
+
+    End Sub
+
+    Public Sub ircMain(args As String())
+        Dim port As Integer
+        Dim buf As String, nick As String, owner As String, server As String, chan As String
+        Dim sock As New System.Net.Sockets.TcpClient()
+
+        While selfName = ""
+
+        End While
+
+        nick = "DSCM-" & selfSteamID
+        owner = "DSCMbot"
+        server = "dscm.wulf2k.ca"
+        port = 8123
+        chan = "#DSCM-Main"
+
+        'Connect to irc server and get input and output text streams from TcpClient.
+        sock.Connect(server, port)
+        If Not sock.Connected Then
+            Console.WriteLine("Failed to connect!")
+            Return
+        End If
+        input = New System.IO.StreamReader(sock.GetStream())
+        output = New System.IO.StreamWriter(sock.GetStream())
+
+        'USER and NICK login commands 
+        output.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf & "NICK " & nick & vbCr & vbLf)
+        output.Flush()
+
+        output.Write("MODE " & nick & " +B" & vbCr & vbLf)
+        output.Flush()
+
+        ircOnline = False
+
+        'Join channel on start
+        While Not ircOnline
+            buf = input.ReadLine()
+            If Not buf Is Nothing Then
+                'Console.WriteLine(buf)
+                SyncLock trdLock
+                    ircInQueue.Add(buf)
+                End SyncLock
+
+                If buf.StartsWith("PING ") Then
+                    output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+                    output.Flush()
+                End If
+
+
+                If buf.Contains(":MOTD") Then
+                    output.write("JOIN " & chan & vbCr & vbLf)
+                    output.flush()
+                    ircOnline = True
+                End If
+            End If
+        End While
+
+
+        'Process each line received from irc server
+        While ircOnline
+            buf = input.ReadLine()
+            'Display received irc message
+
+            If Not buf Is Nothing Then
+                'Console.WriteLine(buf)
+                SyncLock trdLock
+                    ircInQueue.Add(buf)
+                End SyncLock
+
+                'Send pong reply to any ping messages
+                If buf.StartsWith("PING ") Then
+                    output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+                    output.Flush()
+                End If
+
+                'Parse report commands
+                If buf.Contains("REPORT|") Then
+                    Dim tmpName As String
+                    Dim tmpSteamID As String
+                    Dim tmpSL As Integer
+                    Dim tmpPhantom As String
+                    Dim tmpMPZone As Integer
+                    Dim tmpWorld As String
+                    Dim tmpUpdMinute As Integer
+
+                    Dim tmpFields()
+
+                    Dim tmpReport As String
+                    tmpReport = buf.Split("|")(1)
+
+                    tmpFields = tmpReport.Split(",")
+
+                    tmpName = tmpFields(0)
+                    tmpSteamID = tmpFields(1)
+                    tmpSL = tmpFields(2)
+                    tmpPhantom = tmpFields(3)
+                    tmpMPZone = tmpFields(4)
+                    tmpWorld = tmpFields(5)
+                    tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
+
+
+                    SyncLock trdLock
+                        Dim newID As Boolean = True
+                        For i = 0 To dgvDSCMNet.Rows.Count - 1
+                            If dgvDSCMNet.Rows(i).Cells(1).Value = tmpSteamID Then
+                                newID = False
+                                dgvDSCMNet.Rows(i).Cells(0).Value = tmpName
+                                dgvDSCMNet.Rows(i).Cells(2).Value = tmpSL
+                                dgvDSCMNet.Rows(i).Cells(3).Value = tmpPhantom
+                                dgvDSCMNet.Rows(i).Cells(4).Value = tmpMPZone
+                                dgvDSCMNet.Rows(i).Cells(5).Value = tmpWorld
+                                dgvDSCMNet.Rows(i).Cells(6).Value = tmpUpdMinute
+                            End If
+                        Next
+                        If newID Then dgvDSCMNet.Rows.Add(tmpName, tmpSteamID, tmpSL, tmpPhantom, tmpMPZone, tmpWorld, tmpUpdMinute)
+                    End SyncLock
+
+                End If
+            End If
+
+            'Parse commands from main form
+            SyncLock trdLock
+                If ircOutQueue.Count > 0 Then
+                    Dim cmd = ircOutQueue.Item(0)
+
+                    If cmd = "QUIT" Then
+                        ircOnline = False
+                        output.Write("QUIT" & vbCr & vbLf)
+                        output.Flush()
+
+                        dgvDSCMNet.Rows.Clear()
+                    Else
+                        output.write(cmd & vbCr & vbLf)
+                    End If
+                    ircOutQueue.Remove(cmd)
+                End If
+            End SyncLock
+
+        End While
     End Sub
 End Class
