@@ -377,6 +377,7 @@ Public Class DSCM
         End Try
     End Sub
     Private Sub ircTimer_Tick() Handles ircTimer.Tick
+        'Report your status
         If Not selfName = "" Then
             Dim str As String = "REPORT|"
 
@@ -385,6 +386,18 @@ Public Class DSCM
                 ircOutQueue.Add(str)
             End SyncLock
         End If
+
+        'Prune outdated entries
+        Dim tmpNow As Integer
+        Dim tmpThen As Integer
+        tmpNow = Now.Minute
+        For i = 0 To dgvDSCMNet.ColumnCount - 1
+            tmpThen = dgvDSCMNet.Rows(i).Cells(6).Value
+            If tmpThen > tmpNow Then tmpThen -= 60
+            If (tmpNow - tmpThen) > 5 Then
+                dgvDSCMNet.Rows.Remove(dgvDSCMNet.Rows(i))
+            End If
+        Next
     End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
