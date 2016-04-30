@@ -34,6 +34,7 @@ Partial Class DSCM
         Dim DataGridViewCellStyle10 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle11 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle12 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(DSCM))
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
         Me.btnReconnect = New System.Windows.Forms.Button()
@@ -54,13 +55,14 @@ Partial Class DSCM
         Me.dgvFavoriteNodes = New System.Windows.Forms.DataGridView()
         Me.tabRecent = New System.Windows.Forms.TabPage()
         Me.dgvRecentNodes = New System.Windows.Forms.DataGridView()
+        Me.tabDSCMNet = New System.Windows.Forms.TabPage()
+        Me.txtIRCDebug = New System.Windows.Forms.TextBox()
+        Me.dgvDSCMNet = New System.Windows.Forms.DataGridView()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
         Me.btnRemFavorite = New System.Windows.Forms.Button()
         Me.lblNewVersion = New System.Windows.Forms.Label()
         Me.lblUrl = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
-        Me.tabDSCMNet = New System.Windows.Forms.TabPage()
-        Me.dgvDSCMNet = New System.Windows.Forms.DataGridView()
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.nmbMaxNodes, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.tabs.SuspendLayout()
@@ -94,7 +96,7 @@ Partial Class DSCM
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.04.27.23"
+        Me.lblVer.Text = "2016.04.30.07"
         '
         'btnReconnect
         '
@@ -357,6 +359,61 @@ Partial Class DSCM
         Me.dgvRecentNodes.Size = New System.Drawing.Size(370, 450)
         Me.dgvRecentNodes.TabIndex = 55
         '
+        'tabDSCMNet
+        '
+        Me.tabDSCMNet.BackColor = System.Drawing.SystemColors.Control
+        Me.tabDSCMNet.Controls.Add(Me.txtIRCDebug)
+        Me.tabDSCMNet.Controls.Add(Me.dgvDSCMNet)
+        Me.tabDSCMNet.Location = New System.Drawing.Point(4, 22)
+        Me.tabDSCMNet.Name = "tabDSCMNet"
+        Me.tabDSCMNet.Size = New System.Drawing.Size(757, 464)
+        Me.tabDSCMNet.TabIndex = 3
+        Me.tabDSCMNet.Text = "DSCM-Net"
+        '
+        'txtIRCDebug
+        '
+        Me.txtIRCDebug.Location = New System.Drawing.Point(6, 438)
+        Me.txtIRCDebug.Name = "txtIRCDebug"
+        Me.txtIRCDebug.Size = New System.Drawing.Size(740, 20)
+        Me.txtIRCDebug.TabIndex = 55
+        '
+        'dgvDSCMNet
+        '
+        Me.dgvDSCMNet.AllowUserToAddRows = False
+        Me.dgvDSCMNet.AllowUserToDeleteRows = False
+        Me.dgvDSCMNet.AllowUserToResizeRows = False
+        DataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
+        DataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Control
+        DataGridViewCellStyle10.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        DataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.WindowText
+        DataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight
+        DataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText
+        DataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
+        Me.dgvDSCMNet.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle10
+        Me.dgvDSCMNet.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        DataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
+        DataGridViewCellStyle11.BackColor = System.Drawing.SystemColors.Window
+        DataGridViewCellStyle11.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        DataGridViewCellStyle11.ForeColor = System.Drawing.SystemColors.ControlText
+        DataGridViewCellStyle11.SelectionBackColor = System.Drawing.SystemColors.Highlight
+        DataGridViewCellStyle11.SelectionForeColor = System.Drawing.SystemColors.HighlightText
+        DataGridViewCellStyle11.WrapMode = System.Windows.Forms.DataGridViewTriState.[False]
+        Me.dgvDSCMNet.DefaultCellStyle = DataGridViewCellStyle11
+        Me.dgvDSCMNet.Location = New System.Drawing.Point(6, 6)
+        Me.dgvDSCMNet.Name = "dgvDSCMNet"
+        Me.dgvDSCMNet.ReadOnly = True
+        DataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
+        DataGridViewCellStyle12.BackColor = System.Drawing.SystemColors.Control
+        DataGridViewCellStyle12.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        DataGridViewCellStyle12.ForeColor = System.Drawing.SystemColors.WindowText
+        DataGridViewCellStyle12.SelectionBackColor = System.Drawing.SystemColors.Highlight
+        DataGridViewCellStyle12.SelectionForeColor = System.Drawing.SystemColors.HighlightText
+        DataGridViewCellStyle12.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
+        Me.dgvDSCMNet.RowHeadersDefaultCellStyle = DataGridViewCellStyle12
+        Me.dgvDSCMNet.RowHeadersVisible = False
+        Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 425)
+        Me.dgvDSCMNet.TabIndex = 54
+        '
         'btnAddFavorite
         '
         Me.btnAddFavorite.Location = New System.Drawing.Point(269, 615)
@@ -408,57 +465,10 @@ Partial Class DSCM
         Me.chkDSCMNet.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkDSCMNet.Location = New System.Drawing.Point(12, 56)
         Me.chkDSCMNet.Name = "chkDSCMNet"
-        Me.chkDSCMNet.Size = New System.Drawing.Size(146, 20)
+        Me.chkDSCMNet.Size = New System.Drawing.Size(119, 20)
         Me.chkDSCMNet.TabIndex = 73
-        Me.chkDSCMNet.Text = "Join DSCM Network"
+        Me.chkDSCMNet.Text = "Join DSCM-Net"
         Me.chkDSCMNet.UseVisualStyleBackColor = False
-        '
-        'tabDSCMNet
-        '
-        Me.tabDSCMNet.BackColor = System.Drawing.SystemColors.Control
-        Me.tabDSCMNet.Controls.Add(Me.dgvDSCMNet)
-        Me.tabDSCMNet.Location = New System.Drawing.Point(4, 22)
-        Me.tabDSCMNet.Name = "tabDSCMNet"
-        Me.tabDSCMNet.Size = New System.Drawing.Size(757, 464)
-        Me.tabDSCMNet.TabIndex = 3
-        Me.tabDSCMNet.Text = "DSCMNet"
-        '
-        'dgvDSCMNet
-        '
-        Me.dgvDSCMNet.AllowUserToAddRows = False
-        Me.dgvDSCMNet.AllowUserToDeleteRows = False
-        Me.dgvDSCMNet.AllowUserToResizeRows = False
-        DataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
-        DataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle10.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        DataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.WindowText
-        DataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight
-        DataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText
-        DataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
-        Me.dgvDSCMNet.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle10
-        Me.dgvDSCMNet.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        DataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
-        DataGridViewCellStyle11.BackColor = System.Drawing.SystemColors.Window
-        DataGridViewCellStyle11.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        DataGridViewCellStyle11.ForeColor = System.Drawing.SystemColors.ControlText
-        DataGridViewCellStyle11.SelectionBackColor = System.Drawing.SystemColors.Highlight
-        DataGridViewCellStyle11.SelectionForeColor = System.Drawing.SystemColors.HighlightText
-        DataGridViewCellStyle11.WrapMode = System.Windows.Forms.DataGridViewTriState.[False]
-        Me.dgvDSCMNet.DefaultCellStyle = DataGridViewCellStyle11
-        Me.dgvDSCMNet.Location = New System.Drawing.Point(6, 6)
-        Me.dgvDSCMNet.Name = "dgvDSCMNet"
-        Me.dgvDSCMNet.ReadOnly = True
-        DataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
-        DataGridViewCellStyle12.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle12.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        DataGridViewCellStyle12.ForeColor = System.Drawing.SystemColors.WindowText
-        DataGridViewCellStyle12.SelectionBackColor = System.Drawing.SystemColors.Highlight
-        DataGridViewCellStyle12.SelectionForeColor = System.Drawing.SystemColors.HighlightText
-        DataGridViewCellStyle12.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
-        Me.dgvDSCMNet.RowHeadersDefaultCellStyle = DataGridViewCellStyle12
-        Me.dgvDSCMNet.RowHeadersVisible = False
-        Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 450)
-        Me.dgvDSCMNet.TabIndex = 54
         '
         'DSCM
         '
@@ -484,6 +494,7 @@ Partial Class DSCM
         Me.Controls.Add(Me.btnReconnect)
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
+        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.Name = "DSCM"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).EndInit()
@@ -495,6 +506,7 @@ Partial Class DSCM
         Me.tabRecent.ResumeLayout(False)
         CType(Me.dgvRecentNodes, System.ComponentModel.ISupportInitialize).EndInit()
         Me.tabDSCMNet.ResumeLayout(False)
+        Me.tabDSCMNet.PerformLayout()
         CType(Me.dgvDSCMNet, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
@@ -527,4 +539,5 @@ Partial Class DSCM
     Friend WithEvents tabDSCMNet As TabPage
     Friend WithEvents dgvDSCMNet As DataGridView
     Friend WithEvents chkDSCMNet As CheckBox
+    Friend WithEvents txtIRCDebug As System.Windows.Forms.TextBox
 End Class
