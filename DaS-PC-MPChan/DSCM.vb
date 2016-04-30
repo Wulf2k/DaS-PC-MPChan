@@ -311,7 +311,7 @@ Public Class DSCM
         'Compares value on server to date in label on main form
         updTrd = New Thread(AddressOf updatecheck)
         updTrd.IsBackground = True
-                updTrd.Start()
+        updTrd.Start()
 
         'Create regkeys if they don't exist
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
@@ -419,7 +419,7 @@ Public Class DSCM
     Private Sub ircTimer_Tick() Handles ircTimer.Tick
         'Report your status
         Try
-            If Not selfName = "" Then
+            If Not (selfName = "" Or selfSteamID = "") Then
                 Dim str As String = "PRIVMSG #DSCM-Main REPORT|"
 
                 str = str & selfName & "," & selfSteamID & "," & selfSL & "," & selfPhantomType & "," & selfMPZone & "," & selfWorld
@@ -526,49 +526,52 @@ Public Class DSCM
                     tmpWorld = tmpFields(5)
                     tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
 
+                    If tmpSteamID.Length = 16 Then
 
-                    'Autoconnect to any nodes when Currnodes are under 4
-                    If Val(txtCurrNodes.Text) < 4 Then
-                        attemptConnSteamID(tmpSteamID)
 
-                        'Autoconnect to appropriate nodes when currNodes are 5 or more less than max
-                    ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > 4) Then
-                        If tmpWorld = selfWorld Then
-                            If Math.Abs(tmpSL - selfSL) < 11 Then
-                                attemptConnSteamID(tmpSteamID)
-                                ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
+                        'Autoconnect to any nodes when Currnodes are under 4
+                        If Val(txtCurrNodes.Text) < 4 Then
+                            attemptConnSteamID(tmpSteamID)
+
+                            'Autoconnect to appropriate nodes when currNodes are 5 or more less than max
+                        ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > 4) Then
+                            If tmpWorld = selfWorld Then
+                                If Math.Abs(tmpSL - selfSL) < 11 Then
+                                    attemptConnSteamID(tmpSteamID)
+                                    ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
+                                End If
                             End If
                         End If
+
+
+                        Try
+                            tmpPhantom = hshtPhantomType(tmpPhantom)
+                        Catch ex As Exception
+                            Console.WriteLine("Phantom type lookup failed on " & tmpPhantom)
+                        End Try
+                        Try
+                            tmpWorld = hshtWorld(tmpWorld)
+                        Catch ex As Exception
+                            Console.WriteLine("World name lookup failed on " & tmpWorld)
+                        End Try
+
+                        Dim newID As Boolean = True
+                        For i = 0 To dgvDSCMNet.Rows.Count - 1
+                            If dgvDSCMNet.Rows(i).Cells(1).Value = tmpSteamID Then
+                                newID = False
+                                dgvDSCMNet.Rows(i).Cells(0).Value = tmpName
+                                dgvDSCMNet.Rows(i).Cells(2).Value = tmpSL
+                                dgvDSCMNet.Rows(i).Cells(3).Value = tmpPhantom
+                                dgvDSCMNet.Rows(i).Cells(4).Value = tmpMPZone
+                                dgvDSCMNet.Rows(i).Cells(5).Value = tmpWorld
+                                dgvDSCMNet.Rows(i).Cells(6).Value = tmpUpdMinute
+                            End If
+                        Next
+                        If newID And Not tmpSteamID = selfSteamID Then dgvDSCMNet.Rows.Add(tmpName, tmpSteamID, tmpSL, tmpPhantom, tmpMPZone, tmpWorld, tmpUpdMinute)
                     End If
-
-
-            Try
-                tmpPhantom = hshtPhantomType(tmpPhantom)
-            Catch ex As Exception
-                Console.WriteLine("Phantom type lookup failed on " & tmpPhantom)
-            End Try
-            Try
-                tmpWorld = hshtWorld(tmpWorld)
-            Catch ex As Exception
-                Console.WriteLine("World name lookup failed on " & tmpWorld)
-            End Try
-
-            Dim newID As Boolean = True
-            For i = 0 To dgvDSCMNet.Rows.Count - 1
-                If dgvDSCMNet.Rows(i).Cells(1).Value = tmpSteamID Then
-                    newID = False
-                    dgvDSCMNet.Rows(i).Cells(0).Value = tmpName
-                    dgvDSCMNet.Rows(i).Cells(2).Value = tmpSL
-                    dgvDSCMNet.Rows(i).Cells(3).Value = tmpPhantom
-                    dgvDSCMNet.Rows(i).Cells(4).Value = tmpMPZone
-                    dgvDSCMNet.Rows(i).Cells(5).Value = tmpWorld
-                    dgvDSCMNet.Rows(i).Cells(6).Value = tmpUpdMinute
-                End If
-            Next
-            If newID And Not tmpSteamID = selfSteamID Then dgvDSCMNet.Rows.Add(tmpName, tmpSteamID, tmpSL, tmpPhantom, tmpMPZone, tmpWorld, tmpUpdMinute)
                 Catch ex As Exception
-                ircDebugWrite("Error processing player report - " & ex.Message)
-            End Try
+                    ircDebugWrite("Error processing player report - " & ex.Message)
+                End Try
             End If
 
             Console.WriteLine(ircIn)
@@ -986,64 +989,67 @@ Public Class DSCM
     End Sub
     Private Sub attemptConnSteamID(ByVal steamID As String)
         Try
-            'Note to self, find a better way of confirming that this is the correct address for this function.
-            'If nothing else, just compare the bytes at the address.
-            Dim steamApiNetworking As Integer = steamApiBase + &H2F70
+            If steamID.Length = 16 Then
 
-            'Extremely weak check to be sure we're at the right spot
-            If Not ReadUInt8(steamApiNetworking) = &HA1& Then
-                MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
-                       Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
-            End If
+                'Note to self, find a better way of confirming that this is the correct address for this function.
+                'If nothing else, just compare the bytes at the address.
+                Dim steamApiNetworking As Integer = steamApiBase + &H2F70
 
-            If steamApiBase = 0 Then
-                MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
-            Else
-                Dim DataPacket1 As Integer
-
-                Dim TargetBufferSize = 1024
-                Dim bytes() As Byte
-                Dim bytes2() As Byte
-
-                'If 0 then allocate memory, otherwise use previously allocated memory.
-                If attemptIdPtr = 0 Then
-                    attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                    VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
+                'Extremely weak check to be sure we're at the right spot
+                If Not ReadUInt8(steamApiNetworking) = &HA1& Then
+                    MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
+                           Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
                 End If
-                DataPacket1 = attemptIdPtr + &H100
 
-                'Note to self, as usual, comment in the actual ASM before it gets lost.
-                bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0,
-                         &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
-                         &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
+                If steamApiBase = 0 Then
+                    MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
+                Else
+                    Dim DataPacket1 As Integer
 
-                'Set steam_api.SteamNetworking call
-                bytes2 = BitConverter.GetBytes(steamApiNetworking - attemptIdPtr - 5)
-                Array.Copy(bytes2, 0, bytes, &H1, bytes2.Length)
+                    Dim TargetBufferSize = 1024
+                    Dim bytes() As Byte
+                    Dim bytes2() As Byte
 
-                bytes2 = BitConverter.GetBytes(attemptIdPtr + &H100)
-                Array.Copy(bytes2, 0, bytes, &H14, bytes2.Length)
+                    'If 0 then allocate memory, otherwise use previously allocated memory.
+                    If attemptIdPtr = 0 Then
+                        attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+                        VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
+                    End If
+                    DataPacket1 = attemptIdPtr + &H100
 
-                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
-                Array.Copy(bytes2, 0, bytes, &H1A, bytes2.Length)
+                    'Note to self, as usual, comment in the actual ASM before it gets lost.
+                    bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0,
+                             &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
+                             &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
-                bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
-                Array.Copy(bytes2, 0, bytes, &H1F, bytes2.Length)
+                    'Set steam_api.SteamNetworking call
+                    bytes2 = BitConverter.GetBytes(steamApiNetworking - attemptIdPtr - 5)
+                    Array.Copy(bytes2, 0, bytes, &H1, bytes2.Length)
 
-                WriteProcessMemory(_targetProcessHandle, attemptIdPtr, bytes, bytes.Length, 0)
+                    bytes2 = BitConverter.GetBytes(attemptIdPtr + &H100)
+                    Array.Copy(bytes2, 0, bytes, &H14, bytes2.Length)
+
+                    bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
+                    Array.Copy(bytes2, 0, bytes, &H1A, bytes2.Length)
+
+                    bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
+                    Array.Copy(bytes2, 0, bytes, &H1F, bytes2.Length)
+
+                    WriteProcessMemory(_targetProcessHandle, attemptIdPtr, bytes, bytes.Length, 0)
 
 
-                'Set up data packet
-                bytes = {&H1}
-                WriteProcessMemory(_targetProcessHandle, DataPacket1, bytes, bytes.Length, 0)
+                    'Set up data packet
+                    bytes = {&H1}
+                    WriteProcessMemory(_targetProcessHandle, DataPacket1, bytes, bytes.Length, 0)
 
-                Dim selfSteamName As String
-                selfSteamName = ReadUnicodeStr(ReadInt32(dsBase + &HF62DD4) + &H30)
+                    Dim selfSteamName As String
+                    selfSteamName = ReadUnicodeStr(ReadInt32(dsBase + &HF62DD4) + &H30)
 
-                bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
-                WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
+                    bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
+                    WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
 
-                CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
+                    CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
+                End If
             End If
         Catch ex As Exception
             MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " &
