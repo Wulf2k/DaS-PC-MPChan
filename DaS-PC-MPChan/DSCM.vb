@@ -425,7 +425,7 @@ Public Class DSCM
                 str = str & selfName & "," & selfSteamID & "," & selfSL & "," & selfPhantomType & "," & selfMPZone & "," & selfWorld
 
                 ircOutWrite(str)
-                ircDebugWrite("Reporting status to DSCMNet - " & str)
+                ircDebugWrite("Reporting status to DSCMNet.")
             End If
         Catch ex As Exception
             ircDebugWrite("Error reporting status - " & ex.Message)
