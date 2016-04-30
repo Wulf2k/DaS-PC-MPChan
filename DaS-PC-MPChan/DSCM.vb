@@ -46,6 +46,7 @@ Public Class DSCM
     Dim trdLock As New Object
     Private Shared ircInQueue As New List(Of String)
     Private Shared ircOutQueue As New List(Of String)
+    Private Shared ircDbgQueue As New List(Of String)
     Private _tcpclientConnection As TcpClient = Nothing
     Private _networkStream As NetworkStream = Nothing
     Private _streamWriter As StreamWriter = Nothing
@@ -90,6 +91,11 @@ Public Class DSCM
     Dim steamApiBase As Integer = 0
 
     Dim steamApiDllModule As ProcessModule
+
+    'String lookups
+    Dim hshtPhantomType As New Hashtable()
+    Dim hshtWorld As New Hashtable()
+
 
     'New version of DSCM available?
     Dim newstablever As Boolean = False
@@ -147,6 +153,11 @@ Public Class DSCM
 
                     End Select
                 Next
+
+                'Disable FPS Disconnection
+                If ReadUInt8(dsBase + &H978425) = &HE8& Then
+                    WriteBytes(dsBase + &H978425, {&H90, &H90, &H90, &H90, &H90})
+                End If
             End If
         Else
             MessageBox.Show("Already attached! (Please Detach first?)")
@@ -269,15 +280,44 @@ Public Class DSCM
         dgvDSCMNet.Font = New Font("Consolas", 10)
 
 
+        'Init String lookups
+
+        hshtPhantomType.Add("-1", "Loading")
+        hshtPhantomType.Add("0", "Human")
+        hshtPhantomType.Add("1", "Co-op")
+        hshtPhantomType.Add("2", "Invader")
+        hshtPhantomType.Add("8", "Hollow")
+
+        hshtWorld.Add("-1--1", "None")
+        hshtWorld.Add("10-0", "Depths")
+        hshtWorld.Add("10-1", "Undead Burg/Parish")
+        hshtWorld.Add("10-2", "Firelink Shrine")
+        hshtWorld.Add("11-0", "Painted World")
+        hshtWorld.Add("12-0", "Darkroot Garden")
+        hshtWorld.Add("12-1", "Oolacile")
+        hshtWorld.Add("13-0", "Catacombs")
+        hshtWorld.Add("13-1", "Tomb of the Giants")
+        hshtWorld.Add("13-2", "Ash Lake")
+        hshtWorld.Add("14-0", "Blighttown")
+        hshtWorld.Add("14-1", "Demon Ruins")
+        hshtWorld.Add("15-0", "Sen's Fortress")
+        hshtWorld.Add("15-1", "Anor Londo")
+        hshtWorld.Add("16-0", "New Londo Ruins")
+        hshtWorld.Add("17-0", "Duke's Archives / Caves")
+        hshtWorld.Add("18-0", "Kiln")
+        hshtWorld.Add("18-1", "Undead Asylum")
+
         'Check version number in new thread, so main thread isn't delayed.
         'Compares value on server to date in label on main form
         updTrd = New Thread(AddressOf updatecheck)
         updTrd.IsBackground = True
-        updTrd.Start()
+                updTrd.Start()
 
         'Create regkeys if they don't exist
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
-        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
+                My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
+
+
 
         'Load favorite node list from registry
         loadFavoriteNodes()
@@ -378,26 +418,38 @@ Public Class DSCM
     End Sub
     Private Sub ircTimer_Tick() Handles ircTimer.Tick
         'Report your status
-        If Not selfName = "" Then
-            Dim str As String = "REPORT|"
+        Try
+            If Not selfName = "" Then
+                Dim str As String = "PRIVMSG #DSCM-Main REPORT|"
 
-            str = str & selfSteamID & "," & selfSL & "," & selfPhantomType & "," & selfMPZone & "," & selfWorld
-            SyncLock trdLock
-                ircOutQueue.Add(str)
-            End SyncLock
-        End If
+                str = str & selfName & "," & selfSteamID & "," & selfSL & "," & selfPhantomType & "," & selfMPZone & "," & selfWorld
+
+                ircOutWrite(str)
+                ircDebugWrite("Reporting status to DSCMNet - " & str)
+            End If
+        Catch ex As Exception
+            ircDebugWrite("Error reporting status - " & ex.Message)
+        End Try
+
 
         'Prune outdated entries
-        Dim tmpNow As Integer
-        Dim tmpThen As Integer
-        tmpNow = Now.Minute
-        For i = 0 To dgvDSCMNet.ColumnCount - 1
-            tmpThen = dgvDSCMNet.Rows(i).Cells(6).Value
-            If tmpThen > tmpNow Then tmpThen -= 60
-            If (tmpNow - tmpThen) > 5 Then
-                dgvDSCMNet.Rows.Remove(dgvDSCMNet.Rows(i))
+        Try
+            Dim tmpNow As Integer
+            Dim tmpThen As Integer
+            tmpNow = Now.Minute
+            If dgvDSCMNet.Rows.Count > 0 Then
+                For i = 0 To dgvDSCMNet.RowCount - 1
+                    tmpThen = dgvDSCMNet.Rows(i).Cells(6).Value
+                    If tmpThen > tmpNow Then tmpThen -= 60
+                    If (tmpNow - tmpThen) > 5 Then
+                        dgvDSCMNet.Rows.Remove(dgvDSCMNet.Rows(i))
+                    End If
+                Next
             End If
-        Next
+        Catch ex As Exception
+            ircDebugWrite("Error removing old entries - " & ex.Message)
+        End Try
+
     End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
@@ -446,12 +498,87 @@ Public Class DSCM
         End If
 
         'IRC related
-        SyncLock trdLock
-            If ircInQueue.Count > 0 Then
-                Console.Write(ircInQueue(0) & Environment.NewLine)
-                ircInQueue.Remove(ircInQueue(0))
+        Dim ircIn As String
+        ircIn = ircinRead()
+        If Not ircIn Is Nothing Then
+            If ircIn.Contains("REPORT|") Then
+                Try
+                    Dim tmpName As String
+                    Dim tmpSteamID As String
+                    Dim tmpSL As Integer
+                    Dim tmpPhantom As String
+                    Dim tmpMPZone As Integer
+                    Dim tmpWorld As String
+                    Dim tmpUpdMinute As Integer
+
+                    Dim tmpFields()
+
+                    Dim tmpReport As String
+                    tmpReport = ircIn.Split("|")(1)
+
+                    tmpFields = tmpReport.Split(",")
+
+                    tmpName = tmpFields(0)
+                    tmpSteamID = tmpFields(1)
+                    tmpSL = tmpFields(2)
+                    tmpPhantom = tmpFields(3)
+                    tmpMPZone = tmpFields(4)
+                    tmpWorld = tmpFields(5)
+                    tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
+
+
+                    'Autoconnect to any nodes when Currnodes are under 4
+                    If Val(txtCurrNodes.Text) < 4 Then
+                        attemptConnSteamID(tmpSteamID)
+
+                        'Autoconnect to appropriate nodes when currNodes are 5 or more less than max
+                    ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > 4) Then
+                        If tmpWorld = selfWorld Then
+                            If Math.Abs(tmpSL - selfSL) < 11 Then
+                                attemptConnSteamID(tmpSteamID)
+                                ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
+                            End If
+                        End If
+                    End If
+
+
+            Try
+                tmpPhantom = hshtPhantomType(tmpPhantom)
+            Catch ex As Exception
+                Console.WriteLine("Phantom type lookup failed on " & tmpPhantom)
+            End Try
+            Try
+                tmpWorld = hshtWorld(tmpWorld)
+            Catch ex As Exception
+                Console.WriteLine("World name lookup failed on " & tmpWorld)
+            End Try
+
+            Dim newID As Boolean = True
+            For i = 0 To dgvDSCMNet.Rows.Count - 1
+                If dgvDSCMNet.Rows(i).Cells(1).Value = tmpSteamID Then
+                    newID = False
+                    dgvDSCMNet.Rows(i).Cells(0).Value = tmpName
+                    dgvDSCMNet.Rows(i).Cells(2).Value = tmpSL
+                    dgvDSCMNet.Rows(i).Cells(3).Value = tmpPhantom
+                    dgvDSCMNet.Rows(i).Cells(4).Value = tmpMPZone
+                    dgvDSCMNet.Rows(i).Cells(5).Value = tmpWorld
+                    dgvDSCMNet.Rows(i).Cells(6).Value = tmpUpdMinute
+                End If
+            Next
+            If newID And Not tmpSteamID = selfSteamID Then dgvDSCMNet.Rows.Add(tmpName, tmpSteamID, tmpSL, tmpPhantom, tmpMPZone, tmpWorld, tmpUpdMinute)
+                Catch ex As Exception
+                ircDebugWrite("Error processing player report - " & ex.Message)
+            End Try
             End If
-        End SyncLock
+
+            Console.WriteLine(ircIn)
+        End If
+
+            Dim ircDebug As String
+            ircDebug = ircDebugRead()
+            If Not ircDebug Is Nothing Then
+                txtIRCDebug.Text = ircDebug
+            End If
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
@@ -481,7 +608,9 @@ Public Class DSCM
         dgvMPNodes.Width = Me.Width - 50
         dgvMPNodes.Height = Me.Height - 225
         dgvDSCMNet.Width = Me.Width - 50
-        dgvDSCMNet.Height = Me.Height - 225
+        dgvDSCMNet.Height = Me.Height - 250
+        txtIRCDebug.Location = New Point(6, dgvDSCMNet.Location.Y + dgvDSCMNet.Height + 5)
+        txtIRCDebug.Width = dgvDSCMNet.Width
 
         dgvFavoriteNodes.Height = Me.Height - 225
         dgvRecentNodes.Height = Me.Height - 225
@@ -514,7 +643,7 @@ Public Class DSCM
         chkDSCMNet.Checked = False
 
         If watchdog Then
-            WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
+            'WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
         End If
 
         watchdog = False
@@ -644,6 +773,9 @@ Public Class DSCM
                 dgvMPNodes.Rows(i).Cells(3).Value = selfPhantomType
                 dgvMPNodes.Rows(i).Cells(4).Value = selfMPZone
                 dgvMPNodes.Rows(i).Cells(5).Value = selfWorld
+
+                selfName = selfName.Replace(",", "")
+                selfName = selfName.Replace("|", "")
             End If
         Next
 
@@ -679,64 +811,24 @@ Public Class DSCM
 
         For i = 0 To dgvMPNodes.Rows.Count - 1
             tmpid = dgvMPNodes.Rows(i).Cells(3).Value
-            Select Case tmpid
-                Case "0"
-                    tmpid = "Human"
-                Case "1"
-                    tmpid = "Co-op"
-                Case "2"
-                    tmpid = "Invader"
-                Case "8"
-                    tmpid = "Hollow"
-            End Select
+
+            Try
+                tmpid = hshtPhantomType(tmpid)
+            Catch ex As Exception
+                Console.WriteLine("Phantom type lookup failed on " & tmpid)
+            End Try
             dgvMPNodes.Rows(i).Cells(3).Value = tmpid
 
             'Note to self, should probably convert this to a pretty form of lookup some day.
             tmpid = dgvMPNodes.Rows(i).Cells(5).Value
-            Select Case tmpid
-                Case "-1--1"
-                    tmpid = "None"
-                Case "10-0"
-                    tmpid = "Depths"
-                Case "10-1"
-                    tmpid = "Undead Burg/Parish"
-                Case "10-2"
-                    tmpid = "Firelink Shrine"
-                Case "11-0"
-                    tmpid = "Painted World"
-                Case "12-0"
-                    tmpid = "Darkroot Garden"
-                Case "12-1"
-                    tmpid = "Oolacile"
-                Case "13-0"
-                    tmpid = "Catacombs"
-                Case "13-1"
-                    tmpid = "Tomb of the Giants"
-                Case "13-2"
-                    tmpid = "Ash Lake"
-                Case "14-0"
-                    tmpid = "Blighttown"
-                Case "14-1"
-                    tmpid = "Demon Ruins"
-                Case "15-0"
-                    tmpid = "Sen's Fortress"
-                Case "15-1"
-                    tmpid = "Anor Londo"
-                Case "16-0"
-                    tmpid = "New Londo Ruins"
-                Case "17-0"
-                    tmpid = "Duke's Archives / Caves"
-                Case "18-0"
-                    tmpid = "Kiln"
-                Case "18-1"
-                    tmpid = "Undead Asylum"
-            End Select
+
+            Try
+                tmpid = hshtWorld(tmpid)
+            Catch ex As Exception
+                Console.WriteLine("World name lookup failed on " & tmpid)
+            End Try
             dgvMPNodes.Rows(i).Cells(5).Value = tmpid
         Next
-
-        'Ugly way to convert self values to strings after above
-        selfPhantomType = dgvMPNodes.Rows(selfRow).Cells("phantomtype").Value
-        selfWorld = dgvMPNodes.Rows(selfRow).Cells("world").Value
 
 
         'Delete old nodes.
@@ -1104,23 +1196,74 @@ Public Class DSCM
         End Select
     End Sub
 
+    Private Shared Sub ircDebugWrite(ByRef str As String)
+        SyncLock DSCM.trdLock
+            ircDbgQueue.Add(TimeOfDay & ": " & str)
+        End SyncLock
+    End Sub
+    Private Shared Function ircDebugRead()
+        Dim str As String
+        SyncLock DSCM.trdLock
+            If ircDbgQueue.Count > 0 Then
+                str = ircDbgQueue.Item(0)
+                ircDbgQueue.Remove(str)
+            Else
+                str = Nothing
+            End If
+        End SyncLock
+        Return str
+    End Function
+    Private Shared Sub ircOutWrite(ByRef str As String)
+        SyncLock DSCM.trdLock
+            ircOutQueue.Add(str)
+        End SyncLock
+    End Sub
+    Private Shared Function ircOutRead()
+        Dim str As String
+        SyncLock DSCM.trdLock
+            If ircOutQueue.Count > 0 Then
+                str = ircOutQueue.Item(0)
+                ircOutQueue.Remove(str)
+            Else
+                str = Nothing
+            End If
+        End SyncLock
+        Return str
+    End Function
+    Private Shared Sub ircInWrite(ByRef str As String)
+        SyncLock DSCM.trdLock
+            ircInQueue.Add(str)
+        End SyncLock
+    End Sub
+    Private Shared Function ircinRead()
+        Dim str As String
+        SyncLock DSCM.trdLock
+            If ircInQueue.Count > 0 Then
+                str = ircInQueue.Item(0)
+                ircInQueue.Remove(str)
+            Else
+                str = Nothing
+            End If
+        End SyncLock
+        Return str
+    End Function
+
+
     Private Sub chkDSCMNet_CheckedChanged(sender As Object, e As EventArgs) Handles chkDSCMNet.CheckedChanged
         If chkDSCMNet.Checked Then
+            ircDebugWrite("Spawning new thread.")
             ircTrd = New Thread(AddressOf ircMain)
             ircTrd.IsBackground = True
             ircTrd.Start()
-
 
             ircTimer = New System.Windows.Forms.Timer
             ircTimer.Interval = 60 * 1000
             ircTimer.Enabled = True
             ircTimer.Start()
-
-
         Else
-            SyncLock trdLock
-                ircOutQueue.Add("QUIT")
-            End SyncLock
+            ircDebugWrite("Attempting to quit.")
+            ircOutWrite("QUIT")
+            ircTimer.Stop()
         End If
 
     End Sub
@@ -1130,138 +1273,100 @@ Public Class DSCM
         Dim buf As String, nick As String, owner As String, server As String, chan As String
         Dim sock As New System.Net.Sockets.TcpClient()
 
-        While selfName = ""
+        Try
+            ircDebugWrite("Waiting for local player info")
+            While selfName = ""
 
-        End While
+            End While
 
-        nick = "DSCM-" & selfSteamID
-        owner = "DSCMbot"
-        server = "dscm.wulf2k.ca"
-        port = 8123
-        chan = "#DSCM-Main"
-
-        'Connect to irc server and get input and output text streams from TcpClient.
-        sock.Connect(server, port)
-        If Not sock.Connected Then
-            Console.WriteLine("Failed to connect!")
-            Return
-        End If
-        input = New System.IO.StreamReader(sock.GetStream())
-        output = New System.IO.StreamWriter(sock.GetStream())
-
-        'USER and NICK login commands 
-        output.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf & "NICK " & nick & vbCr & vbLf)
-        output.Flush()
-
-        output.Write("MODE " & nick & " +B" & vbCr & vbLf)
-        output.Flush()
-
-        ircOnline = False
-
-        'Join channel on start
-        While Not ircOnline
-            buf = input.ReadLine()
-            If Not buf Is Nothing Then
-                'Console.WriteLine(buf)
-                SyncLock trdLock
-                    ircInQueue.Add(buf)
-                End SyncLock
-
-                If buf.StartsWith("PING ") Then
-                    output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
-                    output.Flush()
-                End If
+            nick = "DSCM-" & selfSteamID
+            owner = "DSCMbot"
+            server = "dscm.wulf2k.ca"
+            port = 8123
+            chan = "#DSCM-Main"
 
 
-                If buf.Contains(":MOTD") Then
-                    output.write("JOIN " & chan & vbCr & vbLf)
-                    output.flush()
-                    ircOnline = True
-                End If
+            ircDebugWrite("Initiating connection")
+            'Connect to irc server and get input and output text streams from TcpClient.
+            sock.Connect(server, port)
+            If Not sock.Connected Then
+                ircDebugWrite("Failed to connect.")
+                Console.WriteLine("Failed to connect!")
+                Return
             End If
-        End While
+            input = New System.IO.StreamReader(sock.GetStream())
+            output = New System.IO.StreamWriter(sock.GetStream())
+
+            'USER and NICK login commands 
+            output.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf & "NICK " & nick & vbCr & vbLf)
+            output.Flush()
+
+            output.Write("MODE " & nick & " +B" & vbCr & vbLf)
+            output.Flush()
+
+            ircOnline = False
+
+            'Join channel on start
+            While Not ircOnline
+                buf = input.ReadLine()
+                If Not buf Is Nothing Then
+                    ircInWrite(buf)
+
+                    If buf.StartsWith("PING ") Then
+                        output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+                        output.Flush()
+                    End If
 
 
-        'Process each line received from irc server
-        While ircOnline
-            buf = input.ReadLine()
-            'Display received irc message
+                    If buf.Contains(":MOTD") Then
+                        output.write("JOIN " & chan & vbCr & vbLf)
+                        output.flush()
+                        ircOnline = True
+                    End If
+                End If
+            End While
 
-            If Not buf Is Nothing Then
-                'Console.WriteLine(buf)
-                SyncLock trdLock
-                    ircInQueue.Add(buf)
-                End SyncLock
+            ircDebugWrite("Connected.")
+            'Process each line received from irc server
+            While ircOnline
+                'Will actually stop here until it receives input from server.
+                'Queued outbound commands will not process until this receives input.
+                buf = input.ReadLine()
 
-                'Send pong reply to any ping messages
-                If buf.StartsWith("PING ") Then
-                    output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
-                    output.Flush()
+                If Not buf Is Nothing Then
+                    ircInWrite(buf)
+
+                    'Send pong reply to any ping messages
+                    If buf.StartsWith("PING ") Then
+                        output.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+                        output.Flush()
+                    End If
+
+                    'Parse report commands
+                    If buf.Contains("REPORT|") Then
+                        'Report passed to main form.
+                    End If
                 End If
 
-                'Parse report commands
-                If buf.Contains("REPORT|") Then
-                    Dim tmpName As String
-                    Dim tmpSteamID As String
-                    Dim tmpSL As Integer
-                    Dim tmpPhantom As String
-                    Dim tmpMPZone As Integer
-                    Dim tmpWorld As String
-                    Dim tmpUpdMinute As Integer
+                'Parse commands from main form
 
-                    Dim tmpFields()
-
-                    Dim tmpReport As String
-                    tmpReport = buf.Split("|")(1)
-
-                    tmpFields = tmpReport.Split(",")
-
-                    tmpName = tmpFields(0)
-                    tmpSteamID = tmpFields(1)
-                    tmpSL = tmpFields(2)
-                    tmpPhantom = tmpFields(3)
-                    tmpMPZone = tmpFields(4)
-                    tmpWorld = tmpFields(5)
-                    tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
-
-
-                    SyncLock trdLock
-                        Dim newID As Boolean = True
-                        For i = 0 To dgvDSCMNet.Rows.Count - 1
-                            If dgvDSCMNet.Rows(i).Cells(1).Value = tmpSteamID Then
-                                newID = False
-                                dgvDSCMNet.Rows(i).Cells(0).Value = tmpName
-                                dgvDSCMNet.Rows(i).Cells(2).Value = tmpSL
-                                dgvDSCMNet.Rows(i).Cells(3).Value = tmpPhantom
-                                dgvDSCMNet.Rows(i).Cells(4).Value = tmpMPZone
-                                dgvDSCMNet.Rows(i).Cells(5).Value = tmpWorld
-                                dgvDSCMNet.Rows(i).Cells(6).Value = tmpUpdMinute
-                            End If
-                        Next
-                        If newID Then dgvDSCMNet.Rows.Add(tmpName, tmpSteamID, tmpSL, tmpPhantom, tmpMPZone, tmpWorld, tmpUpdMinute)
-                    End SyncLock
-
-                End If
-            End If
-
-            'Parse commands from main form
-            SyncLock trdLock
-                If ircOutQueue.Count > 0 Then
-                    Dim cmd = ircOutQueue.Item(0)
-
+                Dim cmd = ircOutRead()
+                If Not cmd Is Nothing Then
                     If cmd = "QUIT" Then
-                        ircOnline = False
+                        ircDebugWrite("Quit attempt processed.")
                         output.Write("QUIT" & vbCr & vbLf)
                         output.Flush()
 
-                        dgvDSCMNet.Rows.Clear()
+                        ircOnline = False
                     Else
                         output.write(cmd & vbCr & vbLf)
+                        output.flush()
                     End If
-                    ircOutQueue.Remove(cmd)
                 End If
-            End SyncLock
-
-        End While
+            End While
+            ircDebugWrite("Disconnected.")
+        Catch ex As Exception
+            ircDebugWrite("Unknown error in DSCMNet - " & ex.Message)
+        End Try
     End Sub
 End Class
