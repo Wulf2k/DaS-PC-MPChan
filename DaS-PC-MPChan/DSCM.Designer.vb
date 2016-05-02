@@ -188,6 +188,7 @@ Partial Class DSCM
         Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.nmbMaxNodes.Location = New System.Drawing.Point(737, 3)
         Me.nmbMaxNodes.Maximum = New Decimal(New Integer() {32, 0, 0, 0})
+        Me.nmbMaxNodes.Minimum = New Decimal(New Integer() {10, 0, 0, 0})
         Me.nmbMaxNodes.Name = "nmbMaxNodes"
         Me.nmbMaxNodes.Size = New System.Drawing.Size(40, 22)
         Me.nmbMaxNodes.TabIndex = 57

@@ -9,6 +9,7 @@ Public Class DSCM
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
     Private WithEvents ircTimer As New System.Windows.Forms.Timer()
+    Private WithEvents attemptConnTimer As New System.Windows.Forms.Timer()
     Private WithEvents onlineTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
@@ -47,6 +48,7 @@ Public Class DSCM
     Private Shared ircInQueue As New List(Of String)
     Private Shared ircOutQueue As New List(Of String)
     Private Shared ircDbgQueue As New List(Of String)
+    Private Shared attemptConnQueue As New List(Of String)
     Private _tcpclientConnection As TcpClient = Nothing
     Private _networkStream As NetworkStream = Nothing
     Private _streamWriter As StreamWriter = Nothing
@@ -327,6 +329,10 @@ Public Class DSCM
         onlineTimer.Enabled = True
         onlineTimer.Interval = 10 * 60 * 1000
         onlineTimer.Start()
+
+        attemptConnTimer.Enabled = True
+        attemptConnTimer.Interval = 1000
+        attemptConnTimer.Start()
     End Sub
     Private Sub loadFavoriteNodes()
         Dim key As Microsoft.Win32.RegistryKey
@@ -451,6 +457,12 @@ Public Class DSCM
         End Try
 
     End Sub
+    Private Sub AttemptConnTimer_Tick() Handles attemptConnTimer.Tick
+        If attemptConnQueue.Count > 0 Then
+            attemptConnSteamID(attemptConnQueue.Item(0))
+            attemptConnQueue.Remove(attemptConnQueue.Item(0))
+        End If
+    End Sub
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
         Dim tmpptr As Integer = 0
@@ -527,28 +539,19 @@ Public Class DSCM
                     tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
 
                     'Calculations for the IRC node-connect feature.
-                    Dim CurrNodesThreshold As Integer = 4
-                    Dim ReservedSteamNodesThreshold As Integer = 4 'N + 1 nodes reserved for Steam matchmaking
-                    'Hydra-chan: The calc below should be correct according to observed behaviour @ https://mpql.net/tools/dark-souls/ using key SL values of 48, 49, 50, 51, and 498, 499, 500, 501
-                    'Well, check the spreadsheet and the tool site. Not verified in-game. Hopefully "It Works (tm)"
-                    Dim SLDifference As Integer = Math.Abs(tmpSL - selfSL)
-                    Dim SLDifferenceRangeMin As Integer = Math.Ceiling(SLDifference)
-                    Dim SLDifferenceRangeMax As Integer = Math.Floor(SLDifference)
+                    Dim LowerNodesThreshold As Integer = 4
+                    Dim ReservedSteamNodeCount As Integer = 4 'N + 1 nodes reserved for Steam matchmaking
 
-                    If tmpSteamID.Length = 16 Then
-                        'Hydra-chan: Check node maximum first (previously did not account for max)
-                        If Val(txtCurrNodes.Text) < nmbMaxNodes.Value Then
-                            'Autoconnect to any nodes when Currnodes are under CurrNodesThreshold
-                            If Val(txtCurrNodes.Text) < CurrNodesThreshold Then
-                                attemptConnSteamID(tmpSteamID)
-
-                                'Autoconnect to appropriate nodes when currNodes are SLDiffThreshold or more less than max
-                                'I.e. Available space for new nodes (that is, unused node slots that are permitted wrt the node maximum) > CurrNodesThreshold
-                            ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > ReservedSteamNodesThreshold) Then
+                    If (tmpSteamID.Length = 16) Then
+                        If (Val(txtCurrNodes.Text) < nmbMaxNodes.Value) And Not (tmpWorld = "-1--1") And (attemptConnQueue.Count + Val(txtCurrNodes.Text) < 4) Then
+                            'Autoconnect to any nodes not idling at the menu when Currnodes are under LowerNodesThreshold
+                            If Val(txtCurrNodes.Text) < LowerNodesThreshold Then
+                                attemptConnQueue.Add(tmpSteamID)
+                            ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > ReservedSteamNodeCount) Then
                                 If tmpWorld = selfWorld Then
-                                    If SLDifferenceRangeMin >= SLDifference And SLDifference <= SLDifferenceRangeMax Then
-                                        attemptConnSteamID(tmpSteamID)
-                                        ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
+                                    If Math.Abs(tmpSL - selfSL) < 11 + selfSL * 0.1 Then
+                                        attemptConnQueue.Add(tmpSteamID)
+                                        ircDebugWrite("Attemping connection To " & tmpName & ", SL " & tmpSL & " In " & tmpWorld)
                                     End If
                                 End If
                             End If
@@ -557,12 +560,12 @@ Public Class DSCM
                         Try
                             tmpPhantom = hshtPhantomType(tmpPhantom)
                         Catch ex As Exception
-                            Console.WriteLine("Phantom type lookup failed on " & tmpPhantom)
+                            Console.WriteLine("Phantom type lookup failed On " & tmpPhantom)
                         End Try
                         Try
                             tmpWorld = hshtWorld(tmpWorld)
                         Catch ex As Exception
-                            Console.WriteLine("World name lookup failed on " & tmpWorld)
+                            Console.WriteLine("World name lookup failed On " & tmpWorld)
                         End Try
 
                         Dim newID As Boolean = True
@@ -719,7 +722,7 @@ Public Class DSCM
                 Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                 WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
             Else
-                MsgBox("Code insertion appears to have failed.  Try again.")
+                MsgBox("Code insertion appears To have failed.  Try again.")
                 namedNodePtr = 0
                 chkDebugDrawing.Checked = False
             End If
@@ -787,7 +790,7 @@ Public Class DSCM
                 dgvMPNodes.Rows(i).Cells(4).Value = selfMPZone
                 dgvMPNodes.Rows(i).Cells(5).Value = selfWorld
 
-                selfName = selfName.Replace(",", "")
+                selfName = selfName.Replace(", ", "")
                 selfName = selfName.Replace("|", "")
             End If
         Next
@@ -980,7 +983,7 @@ Public Class DSCM
             txtTargetSteamID.Text = txtTargetSteamID.Text.Replace(" ", "")
             'Regex code contributed by Chronial
             'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
-            Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
+            Dim r As Regex = New Regex("https?:  //steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
             Dim m As Match = r.Match(txtTargetSteamID.Text)
             If m.Success Then
                 steamIdInt = m.Groups.Item(1).Value
@@ -1007,12 +1010,19 @@ Public Class DSCM
 
                 'Extremely weak check to be sure we're at the right spot
                 If Not ReadUInt8(steamApiNetworking) = &HA1& Then
-                    MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
-                           Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
+                    'MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
+                    'Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
+
+                    'Fail Silently rather than spam messages
+                    Return
+
                 End If
 
                 If steamApiBase = 0 Then
-                    MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
+                    'MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
+
+                    'Fail Silently rather than spam messages
+                    Return
                 Else
                     Dim DataPacket1 As Integer
 
@@ -1062,8 +1072,11 @@ Public Class DSCM
                 End If
             End If
         Catch ex As Exception
-            MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " &
-                   Environment.NewLine & Environment.NewLine & ex.Message)
+
+            'Fail Silently rather than spam messages
+
+            'MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " &
+            'Environment.NewLine & Environment.NewLine & ex.Message)
         End Try
     End Sub
     Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
@@ -1251,7 +1264,7 @@ Public Class DSCM
             ircInQueue.Add(str)
         End SyncLock
     End Sub
-    Private Shared Function ircinRead()
+    Private Shared Function ircInRead()
         Dim str As String
         SyncLock DSCM.trdLock
             If ircInQueue.Count > 0 Then
