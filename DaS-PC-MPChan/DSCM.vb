@@ -297,7 +297,7 @@ Public Class DSCM
         hshtWorld.Add("12-1", "Oolacile")
         hshtWorld.Add("13-0", "Catacombs")
         hshtWorld.Add("13-1", "Tomb of the Giants")
-        hshtWorld.Add("13-2", "Ash Lake")
+        hshtWorld.Add("13-2", "Great Hollow / Ash Lake")
         hshtWorld.Add("14-0", "Blighttown")
         hshtWorld.Add("14-1", "Demon Ruins")
         hshtWorld.Add("15-0", "Sen's Fortress")
