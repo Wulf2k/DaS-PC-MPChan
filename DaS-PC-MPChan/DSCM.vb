@@ -526,23 +526,33 @@ Public Class DSCM
                     tmpWorld = tmpFields(5)
                     tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
 
+                    'Calculations for the IRC node-connect feature.
+                    Dim CurrNodesThreshold As Integer = 4
+                    Dim ReservedSteamNodesThreshold As Integer = 4 'N + 1 nodes reserved for Steam matchmaking
+                    'Hydra-chan: The calc below should be correct according to observed behaviour @ https://mpql.net/tools/dark-souls/ using key SL values of 48, 49, 50, 51, and 498, 499, 500, 501
+                    'Well, check the spreadsheet and the tool site. Not verified in-game. Hopefully "It Works (tm)"
+                    Dim SLDifference As Integer = Math.Abs(tmpSL - selfSL)
+                    Dim SLDifferenceRangeMin As Integer = Math.Ceiling(SLDifference)
+                    Dim SLDifferenceRangeMax As Integer = Math.Floor(SLDifference)
+
                     If tmpSteamID.Length = 16 Then
+                        'Hydra-chan: Check node maximum first (previously did not account for max)
+                        If Val(txtCurrNodes.Text) < nmbMaxNodes.Value Then
+                            'Autoconnect to any nodes when Currnodes are under CurrNodesThreshold
+                            If Val(txtCurrNodes.Text) < CurrNodesThreshold Then
+                                attemptConnSteamID(tmpSteamID)
 
-
-                        'Autoconnect to any nodes when Currnodes are under 4
-                        If Val(txtCurrNodes.Text) < 4 Then
-                            attemptConnSteamID(tmpSteamID)
-
-                            'Autoconnect to appropriate nodes when currNodes are 5 or more less than max
-                        ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > 4) Then
-                            If tmpWorld = selfWorld Then
-                                If Math.Abs(tmpSL - selfSL) < 11 Then
-                                    attemptConnSteamID(tmpSteamID)
-                                    ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
+                                'Autoconnect to appropriate nodes when currNodes are SLDiffThreshold or more less than max
+                                'I.e. Available space for new nodes (that is, unused node slots that are permitted wrt the node maximum) > CurrNodesThreshold
+                            ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > ReservedSteamNodesThreshold) Then
+                                If tmpWorld = selfWorld Then
+                                    If SLDifferenceRangeMin >= SLDifference And SLDifference <= SLDifferenceRangeMax Then
+                                        attemptConnSteamID(tmpSteamID)
+                                        ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
+                                    End If
                                 End If
                             End If
                         End If
-
 
                         Try
                             tmpPhantom = hshtPhantomType(tmpPhantom)
