@@ -47,6 +47,7 @@ Public Class DSCM
     Private Shared ircInQueue As New List(Of String)
     Private Shared ircOutQueue As New List(Of String)
     Private Shared ircDbgQueue As New List(Of String)
+    Private ircLastConnect As DateTime
     Private _tcpclientConnection As TcpClient = Nothing
     Private _networkStream As NetworkStream = Nothing
     Private _streamWriter As StreamWriter = Nothing
@@ -527,17 +528,24 @@ Public Class DSCM
                     tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
 
                     If tmpSteamID.Length = 16 Then
-
+                        Dim secondsPassed As Integer
+                        If IsNothing(ircLastConnect)
+                            secondsPassed = 10000
+                        Else
+                            secondsPassed = (DateTime.UtcNow - ircLastConnect).TotalSeconds
+                        End If
 
                         'Autoconnect to any nodes when Currnodes are under 4
-                        If Val(txtCurrNodes.Text) < 4 Then
+                        If secondsPassed >= 60 And Val(txtCurrNodes.Text) < 4 Then
                             attemptConnSteamID(tmpSteamID)
+                            ircLastConnect = DateTime.UtcNow
 
-                            'Autoconnect to appropriate nodes when currNodes are 5 or more less than max
-                        ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > 4) Then
+                        'Autoconnect to appropriate nodes when currNodes are 5 or more less than max
+                        ElseIf secondsPassed >= 10 And (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > 4) Then
                             If tmpWorld = selfWorld Then
-                                If Math.Abs(tmpSL - selfSL) < 11 Then
+                                If Math.Abs(tmpSL - selfSL) < 11 + selfSL * 0.1 Then
                                     attemptConnSteamID(tmpSteamID)
+                                    ircLastConnect = DateTime.UtcNow
                                     ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
                                 End If
                             End If
