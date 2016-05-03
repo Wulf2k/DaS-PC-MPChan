@@ -651,7 +651,9 @@ Public Class DSCM
             txtIRCDebug.Text = ircDebug
         End If
 
-        If chkDSCMNet.Checked Then tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
+        If chkDSCMNet.Checked and Not tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")" Then
+            tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
+        End If
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
