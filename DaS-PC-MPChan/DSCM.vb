@@ -537,7 +537,7 @@ Public Class DSCM
                     tmpMPZone = tmpFields(4)
                     tmpWorld = tmpFields(5)
                     tmpUpdMinute = TimeOfDay.TimeOfDay.Minutes
-
+                    
                     'Calculations for the IRC node-connect feature.
                     Dim LowerNodesThreshold As Integer = 4
                     Dim ReservedSteamNodeCount As Integer = 4 'N + 1 nodes reserved for Steam matchmaking
@@ -590,11 +590,13 @@ Public Class DSCM
             Console.WriteLine(ircIn)
         End If
 
-            Dim ircDebug As String
-            ircDebug = ircDebugRead()
-            If Not ircDebug Is Nothing Then
-                txtIRCDebug.Text = ircDebug
-            End If
+        Dim ircDebug As String
+        ircDebug = ircDebugRead()
+        If Not ircDebug Is Nothing Then
+            txtIRCDebug.Text = ircDebug
+        End If
+
+        If chkDSCMNet.Checked Then tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
