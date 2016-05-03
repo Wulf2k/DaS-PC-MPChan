@@ -551,7 +551,7 @@ Public Class DSCM
                                 If tmpWorld = selfWorld Then
                                     If Math.Abs(tmpSL - selfSL) < 11 + selfSL * 0.1 Then
                                         attemptConnQueue.Add(tmpSteamID)
-                                        ircDebugWrite("Attemping connection To " & tmpName & ", SL " & tmpSL & " In " & tmpWorld)
+                                        ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
                                     End If
                                 End If
                             End If
@@ -560,12 +560,12 @@ Public Class DSCM
                         Try
                             tmpPhantom = hshtPhantomType(tmpPhantom)
                         Catch ex As Exception
-                            Console.WriteLine("Phantom type lookup failed On " & tmpPhantom)
+                            Console.WriteLine("Phantom type lookup failed on " & tmpPhantom)
                         End Try
                         Try
                             tmpWorld = hshtWorld(tmpWorld)
                         Catch ex As Exception
-                            Console.WriteLine("World name lookup failed On " & tmpWorld)
+                            Console.WriteLine("World name lookup failed on " & tmpWorld)
                         End Try
 
                         Dim newID As Boolean = True
@@ -722,7 +722,7 @@ Public Class DSCM
                 Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                 WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
             Else
-                MsgBox("Code insertion appears To have failed.  Try again.")
+                MsgBox("Code insertion appears to have failed.  Try again.")
                 namedNodePtr = 0
                 chkDebugDrawing.Checked = False
             End If
@@ -790,7 +790,7 @@ Public Class DSCM
                 dgvMPNodes.Rows(i).Cells(4).Value = selfMPZone
                 dgvMPNodes.Rows(i).Cells(5).Value = selfWorld
 
-                selfName = selfName.Replace(", ", "")
+                selfName = selfName.Replace(",", "")
                 selfName = selfName.Replace("|", "")
             End If
         Next
@@ -983,7 +983,7 @@ Public Class DSCM
             txtTargetSteamID.Text = txtTargetSteamID.Text.Replace(" ", "")
             'Regex code contributed by Chronial
             'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
-            Dim r As Regex = New Regex("https?:  //steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
+            Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
             Dim m As Match = r.Match(txtTargetSteamID.Text)
             If m.Success Then
                 steamIdInt = m.Groups.Item(1).Value
@@ -1276,7 +1276,6 @@ Public Class DSCM
         End SyncLock
         Return str
     End Function
-
 
     Private Sub chkDSCMNet_CheckedChanged(sender As Object, e As EventArgs) Handles chkDSCMNet.CheckedChanged
         If chkDSCMNet.Checked Then
