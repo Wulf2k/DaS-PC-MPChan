@@ -8,7 +8,8 @@ Public Class DSCM
     'Timers
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
-    Private WithEvents ircTimer As New System.Windows.Forms.Timer()
+    Private WithEvents ircTimer As New System.Windows.Forms.Timer()  'Report personal info to IRC
+    Private WithEvents ircTimer2 As New System.Windows.Forms.Timer()  'Report secondary node info to IRC
     Private WithEvents attemptConnTimer As New System.Windows.Forms.Timer()
     Private WithEvents onlineTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
@@ -97,6 +98,9 @@ Public Class DSCM
     'String lookups
     Dim hshtPhantomType As New Hashtable()
     Dim hshtWorld As New Hashtable()
+
+    Dim hshtPhantomTypeReverse As New Hashtable()
+    Dim hshtWorldReverse As New Hashtable()
 
 
     'New version of DSCM available?
@@ -290,6 +294,8 @@ Public Class DSCM
         hshtPhantomType.Add("2", "Invader")
         hshtPhantomType.Add("8", "Hollow")
 
+
+
         hshtWorld.Add("-1--1", "None")
         hshtWorld.Add("10-0", "Depths")
         hshtWorld.Add("10-1", "Undead Burg/Parish")
@@ -308,6 +314,15 @@ Public Class DSCM
         hshtWorld.Add("17-0", "Duke's Archives / Caves")
         hshtWorld.Add("18-0", "Kiln")
         hshtWorld.Add("18-1", "Undead Asylum")
+
+        'Set up Reverse Lookups
+        For each phantomType In hshtPhantomType.keys
+            hshtPhantomTypeReverse.add(hshtPhantomType(phantomType),phantomType)
+        Next
+
+        For each world In hshtWorld.Keys
+            hshtWorldReverse.Add(hshtWorld(world),world)
+        Next
 
         'Check version number in new thread, so main thread isn't delayed.
         'Compares value on server to date in label on main form
@@ -437,7 +452,6 @@ Public Class DSCM
             ircDebugWrite("Error reporting status - " & ex.Message)
         End Try
 
-
         'Prune outdated entries
         Try
             Dim tmpNow As Integer
@@ -457,6 +471,47 @@ Public Class DSCM
         End Try
 
     End Sub
+    Private sub irctimer2_Tick() Handles irctimer2.Tick
+         'Report your active node status
+        Try
+            If Not (selfName = "" Or selfSteamID = "") Then
+                Console.WriteLine("Beginning secondary report")
+                For i = 0 To dgvMPNodes.Rows.Count - 1
+                    Dim str As String = "PRIVMSG #DSCM-Main REPORT|"
+                    Dim tmpName = dgvMPNodes.Rows(i).Cells(0).FormattedValue
+                    Dim tmpSteamID = dgvMPNodes.Rows(i).Cells(1).FormattedValue
+                    Dim tmpSL = dgvMPNodes.Rows(i).Cells(2).FormattedValue
+                    Dim tmpPhantom = dgvMPNodes.Rows(i).Cells(3).FormattedValue
+                    Dim tmpMPZone = dgvMPNodes.Rows(i).Cells(4).FormattedValue
+                    Dim tmpWorld = dgvMPNodes.Rows(i).Cells(5).FormattedValue
+
+
+                    'Check if node is already reported in the last 3 minutes
+                    Dim reported As Boolean = False
+                    For j = 0 To dgvDSCMNet.Rows.Count - 1
+                        Dim tmpUpdMinute = dgvDSCMNet.Rows(i).Cells(6).FormattedValue
+                        Dim tmpNow = Now.Minute
+                        If tmpUpdMinute > tmpNow Then tmpUpdMinute -=60 
+                        If (dgvDSCMNet.Rows(j).Cells(1).FormattedValue = tmpsteamid) And (tmpNow - tmpUpdMinute < 4) Then
+                            reported = true
+                        End If
+                    Next
+
+                    if Not reported then
+                        tmpPhantom = hshtPhantomTypeReverse(tmpPhantom)
+                        tmpWorld = hshtWorldReverse(tmpWorld)
+
+                        str = str & tmpName & "," & tmpSteamID & "," & tmpSL & "," & tmpPhantom & "," & tmpMPZone & "," & tmpWorld
+                        ircOutWrite(str)
+                    End If
+                Next
+
+            End If
+        Catch ex As Exception
+            Console.WriteLine("Error reporting secondary status - " & ex.Message)
+            ircDebugWrite("Error reporting secondary status - " & ex.Message)
+        End Try
+    End sub
     Private Sub AttemptConnTimer_Tick() Handles attemptConnTimer.Tick
         If attemptConnQueue.Count > 0 Then
             attemptConnSteamID(attemptConnQueue.Item(0))
@@ -587,7 +642,7 @@ Public Class DSCM
                 End Try
             End If
 
-            Console.WriteLine(ircIn)
+            'Console.WriteLine(ircIn)
         End If
 
         Dim ircDebug As String
@@ -1290,10 +1345,17 @@ Public Class DSCM
             ircTimer.Interval = 60 * 1000
             ircTimer.Enabled = True
             ircTimer.Start()
+
+            ircTimer2 = New System.Windows.Forms.Timer
+            ircTimer2.Interval = 2 * 60 * 1000
+            ircTimer2.Enabled = True
+            ircTimer2.Start()
         Else
             ircDebugWrite("Attempting to quit.")
             ircOutWrite("QUIT")
             ircTimer.Stop()
+            ircTimer2.Stop
+
         End If
 
     End Sub
