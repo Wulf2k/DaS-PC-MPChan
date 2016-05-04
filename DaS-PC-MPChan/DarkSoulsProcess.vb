@@ -1,5 +1,9 @@
-﻿Public Class DSProcessNotFound
-   Inherits System.ApplicationException
+﻿Public Class DSProcessAttachException
+    Inherits System.ApplicationException
+
+    Sub New(message As String)
+        MyBase.New(message)
+    End Sub
 End Class
 
 Public Class DarkSoulsProcess
@@ -54,15 +58,15 @@ Public Class DarkSoulsProcess
     Protected disposed As Boolean = False
 
     Sub New()
-        If Not TryAttachToProcess("darksouls")
-            Throw New DSProcessNotFound
-        End If
+        attachToProcess()
         Dim beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
         If beta Then
-            DetachFromProcess()
-            MsgBox("Beta version detected.  Disconnecting from process.")
-            Throw New DSProcessNotFound
+            detachFromProcess()
+            Throw New DSProcessAttachException("Dark Souls beta is not supported")
         End If
+        'TODO (chronial): Is this safe here, or should we wait a second because Dark Souls might be booting up?
+        findDllAddresses()
+        disableLowFPSDisonnect()
         SetupNodeDumpHook()
     End Sub
 
@@ -73,7 +77,7 @@ Public Class DarkSoulsProcess
             End If
 
             TearDownNodeDumpHook()
-            DetachFromProcess()
+            detachFromProcess()
             disposed = True
         End If
     End Sub
@@ -82,72 +86,63 @@ Public Class DarkSoulsProcess
         Dispose()
     End Sub
 
-    Private Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
+    Private Sub attachToProcess()
+        Dim windowCaption As String = "darksouls"
         Dim _allProcesses() As Process = Process.GetProcesses
         For Each pp As Process In _allProcesses
-            If pp.ProcessName.ToLower.Equals(windowCaption.ToLower) Then
-                Return TryAttachToProcess(pp)
+            If pp.ProcessName.ToLower.Equals(windowCaption.ToLower) AndAlso Not pp.HasExited Then
+                attachToProcess(pp)
+                Return
             End If
         Next
-        MessageBox.Show("Unable to find process '" & windowCaption & "'." & vbCrLf & " Is it running?")
-        Return False
-    End Function
+        Throw New DSProcessAttachException("Dark Souls not running")
+    End Sub
 
-    Private Function TryAttachToProcess(ByVal proc As Process) As Boolean
+    Private Sub attachToProcess(ByVal proc As Process)
         If _targetProcessHandle = IntPtr.Zero Then 'not already attached
             _targetProcess = proc
             _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
             If _targetProcessHandle = 0 Then
-                TryAttachToProcess = False
-                steamApiBase = 0
-                MessageBox.Show("OpenProcess() FAIL! Are you Administrator??")
-            Else
-                TryAttachToProcess = True
-
-                'Map various base addresses
-                For Each dll In _targetProcess.Modules
-
-                    Select Case dll.modulename.tolower
-
-                        Case "darksouls.exe"
-                            'Note to self, extra variables due to issues with conversion.  Fix "some day".
-                            dsBasePtr = dll.BaseAddress
-                            dsBase = dsBasePtr
-
-                        Case "d3d9.dll"
-                            If watchdog = False Then
-                                dsPWPtr = dll.baseaddress
-                                dsPWBase = dsPWPtr
-
-                                If ReadUInt8(dsPWBase + &H6E41) = &HE8& Then
-                                    watchdog = True
-                                    'this is ineffective at disabling PVP Watchdog's node write
-                                    'WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
-                                End If
-                            End If
-
-
-                        'Find steam_api.dll for ability to directly add SteamIDs as nodes
-                        Case "steam_api.dll"
-                            steamApiBasePtr = dll.baseaddress
-                            steamApiBase = steamApiBasePtr
-                            steamApiDllModule = dll
-
-                    End Select
-                Next
-
-                'Disable FPS Disconnection
-                If ReadUInt8(dsBase + &H978425) = &HE8& Then
-                    WriteBytes(dsBase + &H978425, {&H90, &H90, &H90, &H90, &H90})
-                End If
+                Throw New DSProcessAttachException("OpenProcess() failed. Check Permissions")
             End If
         Else
             MessageBox.Show("Already attached! (Please Detach first?)")
-            TryAttachToProcess = False
         End If
-    End Function
+    End Sub
+    Private Sub findDllAddresses()
+        For Each dll In _targetProcess.Modules
+            Select Case dll.modulename.tolower
+                Case "darksouls.exe"
+                    'Note to self, extra variables due to issues with conversion.  Fix "some day".
+                    dsBasePtr = dll.BaseAddress
+                    dsBase = dsBasePtr
 
-    Private Sub DetachFromProcess()
+                Case "d3d9.dll"
+                    If watchdog = False Then
+                        dsPWPtr = dll.baseaddress
+                        dsPWBase = dsPWPtr
+
+                        If ReadUInt8(dsPWBase + &H6E41) = &HE8& Then
+                            watchdog = True
+                            'this is ineffective at disabling PVP Watchdog's node write
+                            'WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
+                        End If
+                    End If
+
+                Case "steam_api.dll" 'Find steam_api.dll for ability to directly add SteamIDs as nodes
+                    steamApiBasePtr = dll.baseaddress
+                    steamApiBase = steamApiBasePtr
+                    steamApiDllModule = dll
+
+            End Select
+        Next
+    End Sub
+    Private Sub disableLowFPSDisonnect()
+        If ReadUInt8(dsBase + &H978425) = &HE8& Then
+            WriteBytes(dsBase + &H978425, {&H90, &H90, &H90, &H90, &H90})
+        End If
+    End Sub
+    Private Sub detachFromProcess()
         If Not (_targetProcessHandle = IntPtr.Zero) Then
             _targetProcess = Nothing
             Try
@@ -157,7 +152,11 @@ Public Class DarkSoulsProcess
             End Try
         End If
     End Sub
-
+    Public ReadOnly Property IsAttached As Boolean
+        Get
+            Return Not _targetProcess.HasExited
+        End Get
+    End Property
     Public Property DrawNodes As Boolean
         Get
             Return (ReadBytes(dsBase + &HBA256C, 1)(0) = 1)
