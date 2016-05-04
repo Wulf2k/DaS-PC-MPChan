@@ -62,7 +62,8 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>DSCM_Logo.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -161,9 +162,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ASM-NodeDump.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="DSCM_Logo.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
