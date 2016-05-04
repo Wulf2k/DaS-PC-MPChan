@@ -604,8 +604,7 @@ Public Class DSCM
         nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
 
         For Each node As DSNode In nodes.Values
-            Dim row As DataGridViewRow
-            Dim notexist As Boolean = True
+            Dim row As DataGridViewRow = Nothing
             For j = 0 To dgvMPNodes.Rows.Count - 1
                 If dgvMPNodes.Rows(j).Cells("steamId").Value = node.SteamId Then
                     row = dgvMPNodes.Rows(j)
