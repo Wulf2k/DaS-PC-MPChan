@@ -392,11 +392,9 @@ Public Class DSCM
     End Sub
 
     Private Sub refMpData_Tick() Handles refMpData.Tick
-        If IsNothing(dsProcess)
-            Exit Sub
-        End If
-        refMpData.Interval = 10000
+        If IsNothing(dsProcess) Then Return
         dsProcess.UpdateNodes()
+        If dsProcess.SelfNode.SteamId Is Nothing Then Return
         Dim nodes As New Dictionary(Of String, DSNode)(dsProcess.ConnectedNodes)
         nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
         If _ircClient IsNot Nothing
