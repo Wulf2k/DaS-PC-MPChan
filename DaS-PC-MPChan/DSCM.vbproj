@@ -89,6 +89,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DarkSoulsProcess.vb" />
     <Compile Include="DSCM.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -96,9 +97,7 @@
       <DependentUpon>DSCM.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MemRW.vb">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="DSNode.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
