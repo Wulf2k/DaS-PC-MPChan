@@ -17,29 +17,6 @@ Public Class DSCM
     'For hotkey support
     Public Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Integer) As Short
 
-    'Process/Memory Manipulation
-    Private Declare Function OpenProcess Lib "kernel32.dll" (ByVal dwDesiredAcess As UInt32, ByVal bInheritHandle As Boolean, ByVal dwProcessId As Int32) As IntPtr
-    Private Declare Function ReadProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesRead As Integer) As Boolean
-    Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByVal lpNumberOfBytesWritten As Integer) As Boolean
-    Private Declare Function CloseHandle Lib "kernel32.dll" (ByVal hObject As IntPtr) As Boolean
-    Private Declare Function VirtualAllocEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal dwSize As IntPtr, ByVal flAllocationType As Integer, ByVal flProtect As Integer) As IntPtr
-    Private Declare Function VirtualProtectEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal lpSize As IntPtr, ByVal dwNewProtect As UInt32, ByRef dwOldProtect As UInt32) As Boolean
-    Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As Integer, ByVal lpThreadAttributes As Integer, ByVal dwStackSize As Integer, ByVal lpStartAddress As Integer, ByVal lpParameter As Integer, ByVal dwCreationFlags As Integer, ByRef lpThreadId As Integer) As Integer
-
-    Public Const PROCESS_VM_READ = &H10
-    Public Const TH32CS_SNAPPROCESS = &H2
-    Public Const MEM_COMMIT = 4096
-    Public Const PAGE_READWRITE = 4
-    Public Const PAGE_EXECUTE_READWRITE = &H40
-    Public Const PROCESS_CREATE_THREAD = &H2
-    Public Const PROCESS_VM_OPERATION = &H8
-    Public Const PROCESS_VM_WRITE = &H20
-    Public Const PROCESS_ALL_ACCESS = &H1F0FFF
-
-    Private _oldPageProtection As Integer = 0
-    Private _targetProcess As Process = Nothing
-    Private _targetProcessHandle As IntPtr = IntPtr.Zero
-
     'Thread to check for updates
     Private updTrd As Thread
     Private ircTrd As Thread
@@ -55,13 +32,6 @@ Public Class DSCM
     Private _streamWriter As StreamWriter = Nothing
     Private _streamReader As StreamReader = Nothing
 
-    Private Shared selfName As String = ""
-    Private Shared selfSteamID As String
-    Private Shared selfSL As Integer
-    Private Shared selfPhantomType As String
-    Private Shared selfMPZone As Integer
-    Private Shared selfWorld As String
-
     Private Shared ircOnline As Boolean = False
     Private Shared input
     Private Shared output
@@ -71,29 +41,6 @@ Public Class DSCM
     Dim oneHeld As Boolean
     Dim twoheld As Boolean
 
-    'Check for Dark Souls beta EXE, fail if true
-    Dim beta As Boolean
-
-    'Check for PVP Watchdog
-    Dim watchdog As Boolean
-
-    'Addresses of the various inserted functions
-    Dim namedNodePtr As Integer = 0
-    Dim nodeDumpPtr As Integer = 0
-    Dim forceIdPtr As Integer = 0
-    Dim attemptIdPtr As Integer = 0
-
-    Dim dsPWPtr As IntPtr
-    Dim dsPWBase As Integer
-
-    Dim dsBasePtr As IntPtr
-    Dim dsBase As Integer
-
-    'For locating the Steam matchmaking functions
-    Dim steamApiBasePtr As IntPtr
-    Dim steamApiBase As Integer = 0
-
-    Dim steamApiDllModule As ProcessModule
 
     'String lookups
     Dim hshtPhantomType As New Hashtable()
@@ -107,86 +54,12 @@ Public Class DSCM
     Dim newstablever As Boolean = False
     Dim newtestver As Boolean = False
 
-    Public Function TryAttachToProcess(ByVal windowCaption As String) As Boolean
-        Dim _allProcesses() As Process = Process.GetProcesses
-        For Each pp As Process In _allProcesses
-            If pp.ProcessName.ToLower.Equals(windowCaption.ToLower) Then
-                Return TryAttachToProcess(pp)
-            End If
-        Next
-        MessageBox.Show("Unable to find process '" & windowCaption & "'." & vbCrLf & " Is it running?")
-        Return False
-    End Function
-    Public Function TryAttachToProcess(ByVal proc As Process) As Boolean
-        If _targetProcessHandle = IntPtr.Zero Then 'not already attached
-            _targetProcess = proc
-            _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
-            If _targetProcessHandle = 0 Then
-                TryAttachToProcess = False
-                steamApiBase = 0
-                MessageBox.Show("OpenProcess() FAIL! Are you Administrator??")
-            Else
-                TryAttachToProcess = True
+    Dim dsProcess As DarkSoulsProcess
 
-                'Map various base addresses
-                For Each dll In _targetProcess.Modules
-
-                    Select Case dll.modulename.tolower
-
-                        Case "darksouls.exe"
-                            'Note to self, extra variables due to issues with conversion.  Fix "some day".
-                            dsBasePtr = dll.BaseAddress
-                            dsBase = dsBasePtr
-
-                        Case "d3d9.dll"
-                            If watchdog = False Then
-                                dsPWPtr = dll.baseaddress
-                                dsPWBase = dsPWPtr
-
-                                If ReadUInt8(dsPWBase + &H6E41) = &HE8& Then
-                                    watchdog = True
-                                    'this is ineffective at disabling PVP Watchdog's node write
-                                    'WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
-                                End If
-                            End If
-
-
-                        'Find steam_api.dll for ability to directly add SteamIDs as nodes
-                        Case "steam_api.dll"
-                            steamApiBasePtr = dll.baseaddress
-                            steamApiBase = steamApiBasePtr
-                            steamApiDllModule = dll
-
-                    End Select
-                Next
-
-                'Disable FPS Disconnection
-                If ReadUInt8(dsBase + &H978425) = &HE8& Then
-                    WriteBytes(dsBase + &H978425, {&H90, &H90, &H90, &H90, &H90})
-                End If
-            End If
-        Else
-            MessageBox.Show("Already attached! (Please Detach first?)")
-            TryAttachToProcess = False
-        End If
-    End Function
-    Public Sub DetachFromProcess()
-        If Not (_targetProcessHandle = IntPtr.Zero) Then
-            _targetProcess = Nothing
-            Try
-                CloseHandle(_targetProcessHandle)
-                _targetProcessHandle = IntPtr.Zero
-            Catch ex As Exception
-            End Try
-        End If
-    End Sub
 
     Private Sub DSCM_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
         chkDebugDrawing.Checked = False
         chkExpand.Checked = False
-        If watchdog Then
-            'WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
-        End If
     End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         'Start Refresh timer
@@ -201,14 +74,13 @@ Public Class DSCM
 
         refMpData = New System.Windows.Forms.Timer
         refMpData.Interval = 10000
+        refMpData.Start()
         refTimer.Enabled = True
 
-        TryAttachToProcess("darksouls")
-        beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
-        If beta Then
-            MsgBox("Beta version detected.  Disconnecting from process.")
-            DetachFromProcess()
-        End If
+        Try
+            dsProcess = New DarkSoulsProcess()
+        Catch ex As DSProcessNotFound
+        End Try
 
         'Set initial form size to non-expanded
         Me.Width = 450
@@ -316,12 +188,12 @@ Public Class DSCM
         hshtWorld.Add("18-1", "Undead Asylum")
 
         'Set up Reverse Lookups
-        For each phantomType In hshtPhantomType.keys
-            hshtPhantomTypeReverse.add(hshtPhantomType(phantomType),phantomType)
+        For each k In hshtPhantomType.keys
+            hshtPhantomTypeReverse.add(hshtPhantomType(k),k)
         Next
 
-        For each world In hshtWorld.Keys
-            hshtWorldReverse.Add(hshtWorld(world),world)
+        For each k In hshtWorld.Keys
+            hshtWorldReverse.Add(hshtWorld(k),k)
         Next
 
         'Check version number in new thread, so main thread isn't delayed.
@@ -348,6 +220,8 @@ Public Class DSCM
         attemptConnTimer.Enabled = True
         attemptConnTimer.Interval = 1000
         attemptConnTimer.Start()
+
+        chkExpand.Checked = True
     End Sub
     Private Sub loadFavoriteNodes()
         Dim key As Microsoft.Win32.RegistryKey
@@ -440,10 +314,13 @@ Public Class DSCM
     Private Sub ircTimer_Tick() Handles ircTimer.Tick
         'Report your status
         Try
-            If Not (selfName = "" Or selfSteamID = "") Then
+            If Not IsNothing(dsProcess) AndAlso dsProcess.SelfNode.SteamId AndAlso dsProcess.SelfNode.CharacterName Then
                 Dim str As String = "PRIVMSG #DSCM-Main REPORT|"
-
-                str = str & selfName & "," & selfSteamID & "," & selfSL & "," & selfPhantomType & "," & selfMPZone & "," & selfWorld
+                Dim self As DSNode = dsProcess.SelfNode
+                Dim ircName As String = self.CharacterName
+                ircName = ircName.Replace(",", "")
+                ircName = ircName.Replace("|", "")
+                str = str & ircName & "," & self.SteamId & "," & self.SoulLevel & "," & self.PhantomType & "," & self.MPZone & "," & self.World
 
                 ircOutWrite(str)
                 ircDebugWrite("Reporting status to DSCMNet.")
@@ -474,7 +351,7 @@ Public Class DSCM
     Private sub irctimer2_Tick() Handles irctimer2.Tick
          'Report your active node status
         Try
-            If Not (selfName = "" Or selfSteamID = "") Then
+            If Not IsNothing(dsProcess) Then
                 Console.WriteLine("Beginning secondary report")
                 For i = 0 To dgvMPNodes.Rows.Count - 1
                     Dim str As String = "PRIVMSG #DSCM-Main REPORT|"
@@ -514,7 +391,7 @@ Public Class DSCM
     End sub
     Private Sub AttemptConnTimer_Tick() Handles attemptConnTimer.Tick
         If attemptConnQueue.Count > 0 Then
-            attemptConnSteamID(attemptConnQueue.Item(0))
+            dsProcess.ConnectToSteamId(attemptConnQueue.Item(0))
             attemptConnQueue.Remove(attemptConnQueue.Item(0))
         End If
     End Sub
@@ -531,38 +408,28 @@ Public Class DSCM
         End If
 
 
+        If dsProcess IsNot Nothing
+            'Node display
+            'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
+            chkDebugDrawing.Checked = dsProcess.DrawNodes
 
-        'Node display
-        'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
-        chkDebugDrawing.Checked = (ReadBytes(dsBase + &HBA256C, 1)(0) = 1)
-
-        tmpptr = ReadInt32(dsBase + &HF7F834)
-        tmpptr = ReadInt32(tmpptr + &H38)
-        If Not tmpptr = 0 And Not beta Then
-            Dim maxnodes = ReadInt32(tmpptr + &H70)
-            If maxnodes >= nmbMaxNodes.Minimum And maxnodes <= nmbMaxNodes.Maximum Then
-                nmbMaxNodes.Value = maxnodes
-            End If
-        End If
-
-        'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.
-        'Probably don't need to update this more than once anyway, but why not?
-        If Not txtSelfSteamID.Focused Then
-            txtSelfSteamID.Text = ReadAsciiStr(ReadInt32(dsBase + &HF7E204) + &HA00)
-            selfSteamID = txtSelfSteamID.Text
-        End If
-
-        tmpptr = ReadInt32(dsBase + &HF7E204)
-        If Not tmpptr = 0 And Not beta Then
-            txtCurrNodes.Text = ReadInt32(tmpptr + &HAE0)
-
-            'Find self in DGV by SteamID, then update MP Zone.
-            For i = 0 To dgvMPNodes.Rows.Count - 1
-                If dgvMPNodes.Rows(i).Cells(1).Value = txtSelfSteamID.Text Then
-                    dgvMPNodes.Rows(i).Cells(4).Value = ReadInt32(tmpptr + &HA14)
+            Dim maxNodes = dsProcess.MaxNodes
+            If maxNodes <> 0
+                If maxnodes >= nmbMaxNodes.Minimum And maxnodes <= nmbMaxNodes.Maximum Then
+                    nmbMaxNodes.Value = maxnodes
                 End If
-            Next
+            End If
+            
+            'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.
+            'Probably don't need to update this more than once anyway, but why not?
+            If Not txtSelfSteamID.Focused Then
+                txtSelfSteamID.Text = dsProcess.SelfSteamId
+            End If
+
+            txtCurrNodes.Text = dsProcess.NodeCount
         End If
+
+
 
         'IRC related
         Dim ircIn As String
@@ -597,14 +464,14 @@ Public Class DSCM
                     Dim LowerNodesThreshold As Integer = 4
                     Dim ReservedSteamNodeCount As Integer = 4 'N + 1 nodes reserved for Steam matchmaking
 
-                    If (tmpSteamID.Length = 16) Then
+                    If Not IsNothing(dsProcess) And (tmpSteamID.Length = 16) Then
                         If (Val(txtCurrNodes.Text) < nmbMaxNodes.Value) And Not (tmpWorld = "-1--1") And (attemptConnQueue.Count + Val(txtCurrNodes.Text) < 4) Then
                             'Autoconnect to any nodes not idling at the menu when Currnodes are under LowerNodesThreshold
                             If Val(txtCurrNodes.Text) < LowerNodesThreshold Then
                                 attemptConnQueue.Add(tmpSteamID)
                             ElseIf (nmbMaxNodes.Value - Val(txtCurrNodes.Text) > ReservedSteamNodeCount) Then
-                                If tmpWorld = selfWorld Then
-                                    If Math.Abs(tmpSL - selfSL) < 11 + selfSL * 0.1 Then
+                                If tmpWorld = dsProcess.SelfNode.World Then
+                                    If Math.Abs(tmpSL - dsProcess.SelfNode.SoulLevel) < 11 + dsProcess.SelfNode.SoulLevel * 0.1 Then
                                         attemptConnQueue.Add(tmpSteamID)
                                         ircDebugWrite("Attemping connection to " & tmpName & ", SL " & tmpSL & " in " & tmpWorld)
                                     End If
@@ -635,7 +502,7 @@ Public Class DSCM
                                 dgvDSCMNet.Rows(i).Cells(6).Value = tmpUpdMinute
                             End If
                         Next
-                        If newID And Not tmpSteamID = selfSteamID Then dgvDSCMNet.Rows.Add(tmpName, tmpSteamID, tmpSL, tmpPhantom, tmpMPZone, tmpWorld, tmpUpdMinute)
+                        If newID And Not tmpSteamID = dsProcess.SelfSteamId Then dgvDSCMNet.Rows.Add(tmpName, tmpSteamID, tmpSL, tmpPhantom, tmpMPZone, tmpWorld, tmpUpdMinute)
                     End If
                 Catch ex As Exception
                     ircDebugWrite("Error processing player report - " & ex.Message)
@@ -708,209 +575,60 @@ Public Class DSCM
     End Sub
 
     Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
-        'Forget about all previously allocated memory for functions on reconnect, allocate fresh if called again.
-        'Yeah, it's a memory leak, so don't do this hundreds of thousands of times.
-        namedNodePtr = 0
-        forceIdPtr = 0
-        nodeDumpPtr = 0
-        attemptIdPtr = 0
-
         chkDSCMNet.Checked = False
-
-        If watchdog Then
-            'WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
+        If Not IsNothing(dsProcess) Then
+            dsProcess.Dispose()
+            dsProcess = Nothing
         End If
-
-        watchdog = False
-        beta = False
-
-        DetachFromProcess()
-        TryAttachToProcess("darksouls")
-
-        'Note to self, push beta & debug check out to its own sub.
-        beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
-        If beta Then
-            MsgBox("Beta version detected.  Disconnecting from process.")
-            DetachFromProcess()
-        End If
-        chkExpand.Checked = False
+        
+        Try
+            dsProcess = New DarkSoulsProcess()
+        Catch ex As DSProcessNotFound
+        End Try
     End Sub
 
     Private Sub chkDebugDrawing_CheckedChanged(sender As Object, e As EventArgs) Handles chkDebugDrawing.CheckedChanged
-        Dim cmpLoc As Integer = dsBase + &HBA256C
-        Dim TargetBufferSize = 1024
-
-        Dim bytes() As Byte
-        Dim bytes2() As Byte
-
-        'Location in bytearray to insert jump location
-        Dim bytjmp As Integer = &H6B
-        Dim hookLoc As Integer = dsBase + &H15A550
-
-
-        If chkDebugDrawing.Checked Then
-            'Changes instruction doing the compare rather than changing the value it compares against
-            WriteBytes(cmpLoc, {&H1})
-
-
-            'If memory has not previously been allocated then allocate, otherwise use previous allocation
-            'Memory leaks still exists if somebody were to repeatedly reattach to the process, so...  don't do that.
-            If namedNodePtr = 0 Then
-                namedNodePtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                VirtualProtectEx(_targetProcessHandle, namedNodePtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
-            End If
-
-            'ASM in Resources\ASM-NamedNodes.txt
-            bytes = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H0, &HFB, &H0, &H0, &H81,
-                        &HFB, &H0, &HFB, &H0, &H0, &H8B, &HD8, &HF, &H84, &H5, &H0, &H0, &H0, &HE9, &H46, &H0,
-                        &H0, &H0, &H8B, &H5B, &HD0, &H83, &HFB, &H0, &HF, &H84, &H14, &H0, &H0, &H0, &H8B, &H5B,
-                        &H14, &H83, &HFB, &H0, &HF, &H84, &H8, &H0, &H0, &H0, &H83, &HC3, &H30, &HE9, &H7, &H0,
-                        &H0, &H0, &H8B, &HD8, &HE9, &H1F, &H0, &H0, &H0, &H50, &HB8, &H0, &H0, &H0, &H0, &H83,
-                        &HF8, &H20, &HF, &H84, &H9, &H0, &H0, &H0, &H8A, &H13, &H88, &H17, &H40, &H43, &H47, &HEB,
-                        &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
-
-            'Modify final JMP above to return to instruction after original hook
-            bytes2 = BitConverter.GetBytes((hookLoc - &H6A) - namedNodePtr)
-            Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
-            WriteProcessMemory(_targetProcessHandle, namedNodePtr, bytes, TargetBufferSize, 0)
-
-            If ReadUInt8(namedNodePtr) = &H8B& Then
-                'Insert hook to jump to allocated memory above
-                bytes = {&HE9, 0, 0, 0, 0}
-                bytes2 = BitConverter.GetBytes((namedNodePtr - hookLoc - 5))
-                Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-                WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-            Else
-                MsgBox("Code insertion appears to have failed.  Try again.")
-                namedNodePtr = 0
-                chkDebugDrawing.Checked = False
-            End If
-        Else
-            'Remove Named Node hook, restore original instruction
-            bytes = {&H8B, &H44, &H24, &H10, &H56}
-            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-
-            'Disable Node Drawing
-            WriteBytes(cmpLoc, {&H0})
+        If IsNothing(dsProcess) Then
+            chkDebugDrawing.Checked = False
+            Exit Sub
         End If
+        dsProcess.DrawNodes = chkDebugDrawing.Checked
     End Sub
 
     Private Sub refMpData_Tick() Handles refMpData.Tick
-        Dim nodeCount As Integer
+        If IsNothing(dsProcess)
+            Exit Sub
+        End If
+        dsProcess.UpdateNodes()
+        Dim nodes As New Dictionary(Of String, DSNode)(dsProcess.ConnectedNodes)
+        nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
 
-        Dim rowName As String = ""
-        Dim rowSteamID As String = ""
-        Dim rowSL As Integer = 0
-        Dim rowPhantomType As String = ""
-        Dim rowMPArea As Integer = 0
-        Dim rowWorld As String = ""
-
-        Dim SteamNodesPtr As Integer
-        Dim SteamNodeList As Integer
-        Dim SteamData1 As Integer
-        Dim SteamData2 As Integer
-
-        nodeCount = ReadInt32(dsBase + &HF62DD0)
-        SteamNodeList = ReadInt32(dsBase + &HF62DCC)
-        SteamNodesPtr = ReadInt32(SteamNodeList)
-
-        'Erase world value for all entries, if world value not updated later entry will be deleted.
-        For i = 0 To dgvMPNodes.Rows.Count - 1
-            dgvMPNodes.Rows(i).Cells(5).Value = ""
-        Next
-
-        For i = 0 To nodeCount - 1
-            SteamData1 = ReadInt32(SteamNodesPtr + &HC)
-            SteamData2 = ReadInt32(SteamData1 + &HC)
-            rowName = ReadUnicodeStr(SteamData1 + &H30)
-            rowSteamID = ReadUnicodeStr(SteamData2 + &H30)
-
-            SteamNodesPtr = ReadInt32(SteamNodesPtr)
-
+        For Each node As DSNode In nodes.Values
+            Dim row As DataGridViewRow
             Dim notexist As Boolean = True
             For j = 0 To dgvMPNodes.Rows.Count - 1
-                If rowSteamID = dgvMPNodes.Rows(j).Cells(1).Value Then notexist = False
-            Next
-            If notexist Then dgvMPNodes.Rows.Add({rowName, rowSteamID, rowSL, rowPhantomType, rowMPArea, rowWorld})
-        Next
-
-        Dim selfRow As Integer = 0
-        Dim tmpptr As Integer = ReadInt32(dsBase + &HF7E204)
-        For i = 0 To dgvMPNodes.Rows.Count - 1
-            If dgvMPNodes.Rows(i).Cells(1).Value = txtSelfSteamID.Text Then
-                selfName = dgvMPNodes.Rows(i).Cells("name").Value
-                selfSL = ReadInt32(tmpptr + &HA30)
-                selfPhantomType = ReadInt32(tmpptr + &HA28).ToString
-                selfMPZone = ReadInt32(tmpptr + &HA14)
-                selfWorld = (ReadInt8(tmpptr + &HA13) & "-" & ReadInt8(tmpptr + &HA12)).ToString
-                selfRow = i
-                dgvMPNodes.Rows(i).Cells(2).Value = selfSL
-                dgvMPNodes.Rows(i).Cells(3).Value = selfPhantomType
-                dgvMPNodes.Rows(i).Cells(4).Value = selfMPZone
-                dgvMPNodes.Rows(i).Cells(5).Value = selfWorld
-
-                selfName = selfName.Replace(",", "")
-                selfName = selfName.Replace("|", "")
-            End If
-        Next
-
-        Dim cont = True
-        Dim tmpid As String
-
-        tmpptr = nodeDumpPtr + &H200
-
-        While cont
-            tmpid = ReadAsciiStr(tmpptr)
-            cont = Not (tmpid = Nothing)
-
-            For i = 0 To dgvMPNodes.Rows.Count - 1
-                If (dgvMPNodes.Rows(i).Cells(1).Value = tmpid) And cont Then
-
-                    'SL
-                    dgvMPNodes.Rows(i).Cells(2).Value = Convert.ToInt32(ReadInt16(tmpptr + &H26))
-
-                    'Phantom
-                    dgvMPNodes.Rows(i).Cells(3).Value = ReadInt8(tmpptr + &H24).ToString
-
-                    'Mp Area ID
-                    dgvMPNodes.Rows(i).Cells(4).Value = ReadInt32(tmpptr + &H28)
-
-                    'World
-                    tmpid = ReadInt8(tmpptr + &H13) & "-" & ReadInt8(tmpptr + &H12)
-                    dgvMPNodes.Rows(i).Cells(5).Value = tmpid
+                If dgvMPNodes.Rows(j).Cells("steamId").Value = node.SteamId Then
+                    row = dgvMPNodes.Rows(j)
                 End If
-                WriteInt32(tmpptr, 0)
             Next
-            tmpptr += &H30
-        End While
-
-        For i = 0 To dgvMPNodes.Rows.Count - 1
-            tmpid = dgvMPNodes.Rows(i).Cells(3).Value
-
-            Try
-                tmpid = hshtPhantomType(tmpid)
-            Catch ex As Exception
-                Console.WriteLine("Phantom type lookup failed on " & tmpid)
-            End Try
-            dgvMPNodes.Rows(i).Cells(3).Value = tmpid
-
-            'Note to self, should probably convert this to a pretty form of lookup some day.
-            tmpid = dgvMPNodes.Rows(i).Cells(5).Value
-
-            Try
-                tmpid = hshtWorld(tmpid)
-            Catch ex As Exception
-                Console.WriteLine("World name lookup failed on " & tmpid)
-            End Try
-            dgvMPNodes.Rows(i).Cells(5).Value = tmpid
+            If row Is Nothing Then
+                Dim rowIndex = dgvMPNodes.Rows.Add()
+                row = dgvMPNodes.Rows(rowIndex)
+            End If
+            row.Cells("name").Value = node.CharacterName
+            row.Cells("steamId").Value = node.SteamId
+            row.Cells("soulLevel").Value = node.SoulLevel
+            row.Cells("phantomType").Value = node.PhantomTypeText
+            row.Cells("mpArea").Value = node.MPZone
+            row.Cells("world").Value = node.WorldText
         Next
-
-
+       
         'Delete old nodes.
         For i = dgvMPNodes.Rows.Count - 1 To 0 Step -1
-            If dgvMPNodes.Rows(i).Cells(5).Value = "" Then dgvMPNodes.Rows.Remove(dgvMPNodes.Rows(i))
+            If Not nodes.ContainsKey(dgvMPNodes.Rows(i).Cells("steamId").Value) Then
+                dgvMPNodes.Rows.Remove(dgvMPNodes.Rows(i))
+            End If
         Next
-
         updateRecentNodes()
     End Sub
     Private Sub updateRecentNodes()
@@ -959,67 +677,14 @@ Public Class DSCM
         End If
     End Sub
     Private Sub chkExpand_CheckedChanged(sender As Object, e As EventArgs) Handles chkExpand.CheckedChanged
-
-        'Note to self, buffer is overly large.  Trim down some day.
-        Dim TargetBufferSize = 4096
-
-        Dim bytes() As Byte
-        Dim bytes2() As Byte
-
-        Dim bytjmp As Integer = &H78
-        Dim hookLoc As Integer = dsBase + &H7E637E
-
         If chkExpand.Checked Then
-
-            If nodeDumpPtr = 0 Then
-                nodeDumpPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                VirtualProtectEx(_targetProcessHandle, nodeDumpPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
-            End If
-
-            'ASM in Resources\ASM-NodeDump.txt
-            bytes = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H0, &H0, &H0, &H0, &HB8, &H0, &H0, &H0, &H0,
-                        &HBB, &H0, &H0, &H0, &H0, &HB9, &H0, &H0, &H0, &H0, &HBA, &H0, &H0, &H0, &H0, &H8A,
-                        &H1F, &H80, &HFB, &H0, &HF, &H84, &H30, &H0, &H0, &H0, &H8A, &H6, &H8A, &H1F, &H46, &H47,
-                        &H41, &H38, &HD8, &HF, &H85, &H13, &H0, &H0, &H0, &H83, &HF9, &H11, &H75, &HEC, &H29, &HCE,
-                        &H29, &HCF, &HB9, &H0, &H0, &H0, &H0, &HE9, &HE, &H0, &H0, &H0, &H29, &HCE, &H29, &HCF,
-                        &HB9, &H0, &H0, &H0, &H0, &H83, &HC7, &H30, &HEB, &HC5, &H8A, &H1E, &H88, &H1F, &H46, &H47,
-                        &H41, &H83, &HF9, &H30, &HF, &H84, &H2, &H0, &H0, &H0, &HEB, &HEE, &H5F, &H5E, &H5A, &H59,
-                        &H5B, &H58, &H66, &HF, &HD6, &H46, &H14, &HE9, &H0, &H0, &H0, &H0}
-
-            'Adjust EDI
-            bytes2 = BitConverter.GetBytes(nodeDumpPtr + &H200)
-            Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
-
-            'Adjust the jump home
-            bytes2 = BitConverter.GetBytes((hookLoc - &H77) - nodeDumpPtr)
-            Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
-            WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
-
-            If ReadUInt8(nodeDumpPtr) = &H50& Then
-                'Insert the hook
-                bytes = {&HE9, 0, 0, 0, 0}
-                bytes2 = BitConverter.GetBytes((nodeDumpPtr - hookLoc - 5))
-                Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-                WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-                refMpData.Start()
-
-                Me.Width = 800
-                Me.Height = 680
-                tabs.Visible = True
-                lblNewVersion.Visible = False
-                btnAddFavorite.Visible = True
-                btnRemFavorite.Visible = True
-            Else
-                MsgBox("Code insertion appears to have failed.  Try again.")
-                nodeDumpPtr = 0
-                chkExpand.Checked = False
-            End If
+            Me.Width = 800
+            Me.Height = 680
+            tabs.Visible = True
+            lblNewVersion.Visible = False
+            btnAddFavorite.Visible = True
+            btnRemFavorite.Visible = True
         Else
-            'Restore original instruction
-            bytes = {&H66, &HF, &HD6, &H46, &H14}
-            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-            refMpData.Stop()
-
             Me.Width = 450
             Me.Height = 190
             tabs.Visible = False
@@ -1028,11 +693,9 @@ Public Class DSCM
         End If
     End Sub
     Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
-        Dim tmpptr As Integer
-
-        tmpptr = ReadInt32(dsBase + &HF7F834)
-        tmpptr = ReadInt32(tmpptr + &H38)
-        WriteInt32(tmpptr + &H70, nmbMaxNodes.Value)
+        If Not IsNothing(dsProcess) Then
+            dsProcess.MaxNodes = nmbMaxNodes.Value
+        End If
     End Sub
     Private Sub txtTargetSteamID_LostFocus(sender As Object, e As EventArgs) Handles txtTargetSteamID.LostFocus
         'Auto-convert Steam ID after clicking out of the textbox
@@ -1057,86 +720,7 @@ Public Class DSCM
     End Sub
     Private Sub btnAttemptId_MouseClick(sender As Object, e As EventArgs) Handles btnAttemptId.Click
         'Added to make future automated connection attempts simpler
-        attemptConnSteamID(txtTargetSteamID.Text)
-    End Sub
-    Private Sub attemptConnSteamID(ByVal steamID As String)
-        Try
-            If steamID.Length = 16 Then
-
-                'Note to self, find a better way of confirming that this is the correct address for this function.
-                'If nothing else, just compare the bytes at the address.
-                Dim steamApiNetworking As Integer = steamApiBase + &H2F70
-
-                'Extremely weak check to be sure we're at the right spot
-                If Not ReadUInt8(steamApiNetworking) = &HA1& Then
-                    'MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
-                    'Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
-
-                    'Fail Silently rather than spam messages
-                    Return
-
-                End If
-
-                If steamApiBase = 0 Then
-                    'MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
-
-                    'Fail Silently rather than spam messages
-                    Return
-                Else
-                    Dim DataPacket1 As Integer
-
-                    Dim TargetBufferSize = 1024
-                    Dim bytes() As Byte
-                    Dim bytes2() As Byte
-
-                    'If 0 then allocate memory, otherwise use previously allocated memory.
-                    If attemptIdPtr = 0 Then
-                        attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                        VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
-                    End If
-                    DataPacket1 = attemptIdPtr + &H100
-
-                    'Note to self, as usual, comment in the actual ASM before it gets lost.
-                    bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0,
-                             &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
-                             &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
-
-                    'Set steam_api.SteamNetworking call
-                    bytes2 = BitConverter.GetBytes(steamApiNetworking - attemptIdPtr - 5)
-                    Array.Copy(bytes2, 0, bytes, &H1, bytes2.Length)
-
-                    bytes2 = BitConverter.GetBytes(attemptIdPtr + &H100)
-                    Array.Copy(bytes2, 0, bytes, &H14, bytes2.Length)
-
-                    bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
-                    Array.Copy(bytes2, 0, bytes, &H1A, bytes2.Length)
-
-                    bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
-                    Array.Copy(bytes2, 0, bytes, &H1F, bytes2.Length)
-
-                    WriteProcessMemory(_targetProcessHandle, attemptIdPtr, bytes, bytes.Length, 0)
-
-
-                    'Set up data packet
-                    bytes = {&H1}
-                    WriteProcessMemory(_targetProcessHandle, DataPacket1, bytes, bytes.Length, 0)
-
-                    Dim selfSteamName As String
-                    selfSteamName = ReadUnicodeStr(ReadInt32(dsBase + &HF62DD4) + &H30)
-
-                    bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
-                    WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
-
-                    CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
-                End If
-            End If
-        Catch ex As Exception
-
-            'Fail Silently rather than spam messages
-
-            'MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " &
-            'Environment.NewLine & Environment.NewLine & ex.Message)
-        End Try
+        dsProcess.connectToSteamId(txtTargetSteamID.Text)
     End Sub
     Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
         dgvRecentNodes.CellEnter, dgvDSCMNet.CellEnter
@@ -1369,11 +953,11 @@ Public Class DSCM
 
         Try
             ircDebugWrite("Waiting for local player info")
-            While selfName = ""
+            While IsNothing(dsProcess) OrElse dsProcess.SelfNode.CharacterName = ""
 
             End While
 
-            nick = "DSCM-" & selfSteamID
+            nick = "DSCM-" & dsProcess.SelfSteamId
             owner = "DSCMbot"
             server = "dscm.wulf2k.ca"
             port = 8123
