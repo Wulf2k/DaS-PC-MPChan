@@ -160,6 +160,7 @@ Partial Class DSCM
         '
         Me.txtCurrNodes.Location = New System.Drawing.Point(688, 5)
         Me.txtCurrNodes.Name = "txtCurrNodes"
+        Me.txtCurrNodes.ReadOnly = true
         Me.txtCurrNodes.Size = New System.Drawing.Size(38, 20)
         Me.txtCurrNodes.TabIndex = 54
         '
@@ -217,6 +218,7 @@ Partial Class DSCM
         Me.txtSelfSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtSelfSteamID.Location = New System.Drawing.Point(645, 32)
         Me.txtSelfSteamID.Name = "txtSelfSteamID"
+        Me.txtSelfSteamID.ReadOnly = true
         Me.txtSelfSteamID.Size = New System.Drawing.Size(132, 23)
         Me.txtSelfSteamID.TabIndex = 62
         '
