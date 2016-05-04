@@ -38,6 +38,38 @@ Public Class DSNode
     Public PhantomType As Integer
     Public MPZone As Integer
     Public World As String
+
+    Public Function MemberwiseEquals(other As DSNode) As Boolean
+        If Object.ReferenceEquals(Me, other) Then Return True
+        Return (
+            SteamId = other.SteamId AndAlso
+            CharacterName = other.CharacterName AndAlso
+            SoulLevel = other.SoulLevel AndAlso
+            PhantomType = other.PhantomType AndAlso
+            MPZone = other.MPZone AndAlso
+            World = other.World)
+    End Function
+
+    Public ReadOnly Property SteamIdColumn As String
+        Get
+            Return SteamId
+        End Get
+    End Property
+        Public ReadOnly Property CharacterNameColumn As String
+        Get
+            Return CharacterName
+        End Get
+    End Property
+        Public ReadOnly Property SoulLevelColumn As String
+        Get
+            Return SoulLevel
+        End Get
+    End Property
+        Public ReadOnly Property MPZoneColumn As String
+        Get
+            Return MPZone
+        End Get
+    End Property
     Public ReadOnly Property PhantomTypeText As String
         Get
             Try
@@ -56,4 +88,7 @@ Public Class DSNode
             End Try
         End Get
     End Property
+    Public Function canCoop(other As DSNode) As Boolean
+        Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)
+    End Function
 End Class
