@@ -165,11 +165,16 @@ Public Class IRCClient
             SyncLock localNodesLock
                 For Each node In localNodes
                     'Check if node was already reported in the last 3 minutes
-                    'TODO: always report our own node
                     Dim networkKnowsNode = (
                         ircNodes.ContainsKey(node.SteamId) AndAlso
                         (DateTime.UtcNow - ircNodes(node.SteamId).Item2).TotalMinutes <= 3)
-                    If networkKnowsNode Then Continue For
+                    If networkKnowsNode Then
+                        'Publish anyways if the information in the network is incorrect
+                        Dim networkInfoIsStale = (
+                            Not ircNodes(node.SteamId).Item1.MemberwiseEquals(node) AndAlso
+                            (DateTime.UtcNow - ircNodes(node.SteamId).Item2).TotalSeconds >= 20)
+                        If Not networkInfoIsStale Then Continue For
+                    End If
 
                     Dim ircName As String = node.CharacterName
                     ircName = ircName.Replace(",", "")
