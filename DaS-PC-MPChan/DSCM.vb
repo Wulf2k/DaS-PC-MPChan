@@ -241,7 +241,13 @@ Public Class DSCM
         End Try
     End Sub
     Private Sub connectToIRCNode() Handles ircConnectTimer.Tick
-        If _ircClient Is Nothing OrElse dsProcess Is Nothing OrElse dsProcess.SelfSteamId = "" OrElse dsProcess.SelfNode.CharacterName = "" Then
+        If (_ircClient Is Nothing OrElse
+                dsProcess Is Nothing OrElse
+                dsProcess.SelfSteamId = "" OrElse
+                dsProcess.SelfNode.CharacterName = "" OrElse
+                dsProcess.SelfNode.PhantomType = -1) Then
+            'We either can't connect to other players yet or are lacking the
+            'neccessary information to make a good choice (our character is not loaded)
             Return
         End If
         Dim ReservedSteamNodeCount As Integer = 4
