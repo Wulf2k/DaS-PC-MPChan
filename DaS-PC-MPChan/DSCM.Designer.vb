@@ -37,7 +37,6 @@ Partial Class DSCM
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(DSCM))
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
-        Me.btnReconnect = New System.Windows.Forms.Button()
         Me.chkExpand = New System.Windows.Forms.CheckBox()
         Me.dgvMPNodes = New System.Windows.Forms.DataGridView()
         Me.txtCurrNodes = New System.Windows.Forms.TextBox()
@@ -63,6 +62,7 @@ Partial Class DSCM
         Me.lblNewVersion = New System.Windows.Forms.Label()
         Me.lblUrl = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
+        Me.dsProcessStatus = New System.Windows.Forms.TextBox()
         CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).BeginInit
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabs.SuspendLayout
@@ -97,15 +97,6 @@ Partial Class DSCM
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
         Me.lblVer.Text = "2016.05.02.23"
-        '
-        'btnReconnect
-        '
-        Me.btnReconnect.Location = New System.Drawing.Point(1, 615)
-        Me.btnReconnect.Name = "btnReconnect"
-        Me.btnReconnect.Size = New System.Drawing.Size(69, 23)
-        Me.btnReconnect.TabIndex = 50
-        Me.btnReconnect.Text = "Reattach"
-        Me.btnReconnect.UseVisualStyleBackColor = true
         '
         'chkExpand
         '
@@ -472,11 +463,20 @@ Partial Class DSCM
         Me.chkDSCMNet.Text = "Join DSCM-Net"
         Me.chkDSCMNet.UseVisualStyleBackColor = false
         '
+        'dsProcessStatus
+        '
+        Me.dsProcessStatus.Location = New System.Drawing.Point(10, 617)
+        Me.dsProcessStatus.Name = "dsProcessStatus"
+        Me.dsProcessStatus.ReadOnly = true
+        Me.dsProcessStatus.Size = New System.Drawing.Size(187, 20)
+        Me.dsProcessStatus.TabIndex = 74
+        '
         'DSCM
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(784, 642)
+        Me.Controls.Add(Me.dsProcessStatus)
         Me.Controls.Add(Me.chkDSCMNet)
         Me.Controls.Add(Me.lblUrl)
         Me.Controls.Add(Me.lblNewVersion)
@@ -493,7 +493,6 @@ Partial Class DSCM
         Me.Controls.Add(Me.lblNodes)
         Me.Controls.Add(Me.txtCurrNodes)
         Me.Controls.Add(Me.chkExpand)
-        Me.Controls.Add(Me.btnReconnect)
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
         Me.Icon = CType(resources.GetObject("$this.Icon"),System.Drawing.Icon)
@@ -516,7 +515,6 @@ Partial Class DSCM
 End Sub
     Friend WithEvents chkDebugDrawing As System.Windows.Forms.CheckBox
     Friend WithEvents lblVer As Label
-    Friend WithEvents btnReconnect As Button
     Friend WithEvents chkExpand As CheckBox
     Friend WithEvents dgvMPNodes As DataGridView
     Friend WithEvents txtCurrNodes As TextBox
@@ -542,4 +540,5 @@ End Sub
     Friend WithEvents dgvDSCMNet As DataGridView
     Friend WithEvents chkDSCMNet As CheckBox
     Friend WithEvents txtIRCDebug As System.Windows.Forms.TextBox
+    Friend WithEvents dsProcessStatus As System.Windows.Forms.TextBox
 End Class

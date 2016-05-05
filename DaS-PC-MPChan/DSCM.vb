@@ -10,6 +10,7 @@ Public Class DSCM
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
     Private WithEvents onlineTimer As New System.Windows.Forms.Timer()
     Private WithEvents ircConnectTimer As New System.Windows.Forms.Timer()
+    Private WithEvents dsProcessTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
     'For hotkey support
@@ -50,10 +51,10 @@ Public Class DSCM
 
         ircConnectTimer.Interval = 20000
 
-        Try
-            dsProcess = New DarkSoulsProcess()
-        Catch ex As DSProcessNotFound
-        End Try
+        dsProcessTimer.Interval = 1000
+        dsProcessTimer.Start()
+
+        attachDSProcess()
 
         'Set initial form size to non-expanded
         Me.Width = 450
@@ -354,7 +355,7 @@ Public Class DSCM
         dgvFavoriteNodes.Height = Me.Height - 225
         dgvRecentNodes.Height = Me.Height - 225
 
-        btnReconnect.Location = New Point(1, Me.Height - 65)
+        dsProcessStatus.Location = New Point(10, Me.Height - 63)
         lblVer.Location = New Point(Me.Width - 100, Me.Height - 55)
 
         lblNodes.Location = New Point(Me.Width - 167, 6)
@@ -371,16 +372,23 @@ Public Class DSCM
         btnRemFavorite.Location = New Point(400, Me.Height - 65)
     End Sub
 
-    Private Sub btnReconnect_Click(sender As Object, e As EventArgs) Handles btnReconnect.Click
-        If Not IsNothing(dsProcess) Then
-            dsProcess.Dispose()
-            dsProcess = Nothing
+    Private Sub attachDSProcess() Handles dsProcessTimer.Tick
+        If dsProcess isNot Nothing Then
+            If Not dsProcess.IsAttached
+                dsProcess.Dispose()
+                dsProcess = Nothing
+            End If
         End If
-        
-        Try
-            dsProcess = New DarkSoulsProcess()
-        Catch ex As DSProcessNotFound
-        End Try
+        If dsProcess is Nothing Then
+            Try
+                dsProcess = New DarkSoulsProcess()
+                dsProcessStatus.Text = " Attached to Dark Souls process"
+                dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(200, 255, 200)
+            Catch ex As DSProcessAttachException
+                dsProcessStatus.Text = " " & ex.Message
+                dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
+            End Try
+        End If
     End Sub
 
     Private Sub chkDebugDrawing_CheckedChanged(sender As Object, e As EventArgs) Handles chkDebugDrawing.CheckedChanged
@@ -392,11 +400,9 @@ Public Class DSCM
     End Sub
 
     Private Sub refMpData_Tick() Handles refMpData.Tick
-        If IsNothing(dsProcess)
-            Exit Sub
-        End If
-        refMpData.Interval = 10000
+        If IsNothing(dsProcess) Then Return
         dsProcess.UpdateNodes()
+        If dsProcess.SelfNode.SteamId Is Nothing Then Return
         Dim nodes As New Dictionary(Of String, DSNode)(dsProcess.ConnectedNodes)
         nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
         If _ircClient IsNot Nothing
