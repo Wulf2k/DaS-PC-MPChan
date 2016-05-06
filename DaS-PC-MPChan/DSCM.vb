@@ -415,19 +415,21 @@ Public Class DSCM
 
     Private Sub refMpData_Tick() Handles refMpData.Tick
         Dim nodes As Dictionary(Of String, DSNode)
+        Dim selfNode As DSNode = Nothing
         If dsProcess Is Nothing Then
             nodes = New Dictionary(Of String, DSNode)()
         Else
             dsProcess.UpdateNodes()
             If dsProcess.SelfNode.SteamId Is Nothing Then Return
             nodes = New Dictionary(Of String, DSNode)(dsProcess.ConnectedNodes)
-            nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
+            selfNode = dsProcess.SelfNode
         End If
 
         If _ircClient IsNot Nothing
-            _ircClient.setLocalNodes(nodes.Values)
+            _ircClient.setLocalNodes(selfNode, nodes.Values)
         End If
 
+        nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
         For Each node As DSNode In nodes.Values
             Dim row As DataGridViewRow = Nothing
             For j = 0 To dgvMPNodes.Rows.Count - 1

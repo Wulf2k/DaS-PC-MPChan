@@ -14,6 +14,7 @@ Public Class IRCClient
 
     Private localNodesLock As New Object()
     Private localNodes As New List(Of DSNode)
+    Private selfNode As DSNode
     Public ircNodes As New ConcurrentDictionary(Of String, Tuple(Of DSNode, Date))
 
     Public Sub New(mainWindow As DSCM)
@@ -23,9 +24,10 @@ Public Class IRCClient
         _thread.Start()
     End Sub
 
-    Public Sub setLocalNodes(nodes As IEnumerable(Of DSNode))
+    Public Sub setLocalNodes(self As DSNode, nodes As IEnumerable(Of DSNode))
         SyncLock localNodesLock
             localNodes = nodes.ToList()
+            selfNode = self
         End SyncLock
     End Sub
 
@@ -133,10 +135,16 @@ Public Class IRCClient
         End If
 
         'Parse report commands
-        If line.Contains("REPORT|") Then
+        If line.Contains("REPORT|") Or line.Contains("REPORTSELF|") Then
             Try
                 Dim inNode As DSNode
                 inNode = parseNodeReport(line.Split("|")(1))
+                If (ircNodes.ContainsKey(inNode.SteamId) AndAlso
+                        Not inNode.HasExtendedInfo AndAlso
+                        ircNodes(inNode.SteamId).Item1.HasExtendedInfo) Then
+                    inNode.Covenant = ircNodes(inNode.SteamId).Item1.Covenant
+                    inNode.Indictments = ircNodes(inNode.SteamId).Item1.Indictments
+                End If
                 ircNodes(inNode.SteamId) = Tuple.Create(inNode, DateTime.UtcNow)
             Catch ex As Exception
                 setStatus("Error processing player report - " & ex.Message)
@@ -176,7 +184,7 @@ Public Class IRCClient
                     If networkKnowsNode Then
                         'Publish anyways if the information in the network is incorrect
                         Dim networkInfoIsStale = (
-                            Not ircNodes(node.SteamId).Item1.MemberwiseEquals(node) AndAlso
+                            Not ircNodes(node.SteamId).Item1.BasicEquals(node) AndAlso
                             (DateTime.UtcNow - ircNodes(node.SteamId).Item2).TotalSeconds >= 20)
                         If Not networkInfoIsStale Then Continue For
                     End If
@@ -184,10 +192,21 @@ Public Class IRCClient
                     Dim ircName As String = node.CharacterName
                     ircName = ircName.Replace(",", "")
                     ircName = ircName.Replace("|", "")
-                    Dim reportData As String = ircName & "," & node.SteamId & "," & node.SoulLevel & "," & node.PhantomType & "," & node.MPZone & "," & node.World & "," & _
-                        node.Covenant & "," & node.Indictments 
+                    Dim reportData As String = (
+                        ircName & "," & node.SteamId & "," & node.SoulLevel & "," &
+                        node.PhantomType & "," & node.MPZone & "," & node.World)
                     _streamWriter.Write("PRIVMSG #DSCM-Main REPORT|" & reportData & vbCr & vbLf)
                 Next
+                If selfNode IsNot Nothing Then
+                    Dim ircName As String = selfNode.CharacterName
+                    ircName = ircName.Replace(",", "")
+                    ircName = ircName.Replace("|", "")
+                    Dim reportData As String = (
+                        ircName & "," & selfNode.SteamId & "," & selfNode.SoulLevel & "," &
+                        selfNode.PhantomType & "," & selfNode.MPZone & "," & selfNode.World & "," &
+                        selfNode.Covenant & "," & selfNode.Indictments)
+                    _streamWriter.Write("PRIVMSG #DSCM-Main REPORTSELF|" & reportData & vbCr & vbLf)
+                End If
             End SyncLock
         Catch ex As Exception
             setStatus("Error publishing local nodes: " & ex.Message)
