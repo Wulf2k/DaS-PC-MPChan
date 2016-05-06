@@ -406,11 +406,16 @@ Public Class DSCM
     End Sub
 
     Private Sub refMpData_Tick() Handles refMpData.Tick
-        If IsNothing(dsProcess) Then Return
-        dsProcess.UpdateNodes()
-        If dsProcess.SelfNode.SteamId Is Nothing Then Return
-        Dim nodes As New Dictionary(Of String, DSNode)(dsProcess.ConnectedNodes)
-        nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
+        Dim nodes As Dictionary(Of String, DSNode)
+        If dsProcess Is Nothing Then
+            nodes = New Dictionary(Of String, DSNode)()
+        Else
+            dsProcess.UpdateNodes()
+            If dsProcess.SelfNode.SteamId Is Nothing Then Return
+            nodes = New Dictionary(Of String, DSNode)(dsProcess.ConnectedNodes)
+            nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
+        End If
+
         If _ircClient IsNot Nothing
             _ircClient.setLocalNodes(nodes.Values)
         End If
