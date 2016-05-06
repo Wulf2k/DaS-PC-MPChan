@@ -60,81 +60,93 @@ Public Class DSCM
         Me.Width = 450
         Me.Height = 190
 
-        dgvMPNodes.Columns.Add("name", "Name")
-        dgvMPNodes.Columns(0).Width = 180
-        dgvMPNodes.Columns(0).ValueType = GetType(String)
-        dgvMPNodes.Columns.Add("steamId", "Steam ID")
-        dgvMPNodes.Columns(1).Width = 145
-        dgvMPNodes.Columns(1).ValueType = GetType(String)
-        dgvMPNodes.Columns.Add("soulLevel", "SL")
-        dgvMPNodes.Columns(2).Width = 60
-        dgvMPNodes.Columns(2).ValueType = GetType(Integer)
-        dgvMPNodes.Columns.Add("phantomType", "Phantom Type")
-        dgvMPNodes.Columns(3).Width = 80
-        dgvMPNodes.Columns(3).ValueType = GetType(String)
-        dgvMPNodes.Columns.Add("mpArea", "MP Area")
-        dgvMPNodes.Columns(4).Width = 80
-        dgvMPNodes.Columns(4).ValueType = GetType(Integer)
-        dgvMPNodes.Columns.Add("world", "World")
-        dgvMPNodes.Columns(5).Width = 200
-        dgvMPNodes.Columns(5).ValueType = GetType(String)
-        dgvMPNodes.Font = New Font("Consolas", 10)
+        Dim AlternateRowColor = Color.FromArgb(&HFFE3E3E3)
 
-        dgvFavoriteNodes.Columns.Add("name", "Name")
-        dgvFavoriteNodes.Columns(0).Width = 180
-        dgvFavoriteNodes.Columns(0).ValueType = GetType(String)
-        dgvFavoriteNodes.Columns.Add("steamId", "Steam ID")
-        dgvFavoriteNodes.Columns(1).Width = 145
-        dgvFavoriteNodes.Columns(1).ValueType = GetType(String)
-        dgvFavoriteNodes.Columns.Add("isOnline", "O")
-        dgvFavoriteNodes.Columns(2).Width = 20
-        dgvFavoriteNodes.Columns(2).ValueType = GetType(String)
-        dgvFavoriteNodes.Font = New Font("Consolas", 10)
+        With dgvMPNodes
+            .Columns.Add("name", "Name")
+            .Columns(0).Width = 180
+            .Columns(0).ValueType = GetType(String)
+            .Columns.Add("steamId", "Steam ID")
+            .Columns(1).Width = 145
+            .Columns(1).ValueType = GetType(String)
+            .Columns.Add("soulLevel", "SL")
+            .Columns(2).Width = 60
+            .Columns(2).ValueType = GetType(Integer)
+            .Columns.Add("phantomType", "Phantom Type")
+            .Columns(3).Width = 80
+            .Columns(3).ValueType = GetType(String)
+            .Columns.Add("mpArea", "MP Area")
+            .Columns(4).Width = 80
+            .Columns(4).ValueType = GetType(Integer)
+            .Columns.Add("world", "World")
+            .Columns(5).Width = 200
+            .Columns(5).ValueType = GetType(String)
+            .Font = New Font("Consolas", 10)
+            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+        End With
 
+        With dgvFavoriteNodes
+            .Columns.Add("name", "Name")
+            .Columns(0).Width = 180
+            .Columns(0).ValueType = GetType(String)
+            .Columns.Add("steamId", "Steam ID")
+            .Columns(1).Width = 145
+            .Columns(1).ValueType = GetType(String)
+            .Columns.Add("isOnline", "O")
+            .Columns(2).Width = 20
+            .Columns(2).ValueType = GetType(String)
+            .Font = New Font("Consolas", 10)
+            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+        End With
 
-        dgvRecentNodes.Columns.Add("name", "Name")
-        dgvRecentNodes.Columns(0).Width = 180
-        dgvRecentNodes.Columns(0).ValueType = GetType(String)
-        dgvRecentNodes.Columns.Add("steamId", "Steam ID")
-        dgvRecentNodes.Columns(1).Width = 145
-        dgvRecentNodes.Columns(1).ValueType = GetType(String)
-        dgvRecentNodes.Columns.Add("orderId", "Order ID")
-        dgvRecentNodes.Columns(2).Visible = False
-        dgvRecentNodes.Columns(2).ValueType = GetType(Long)
-        dgvRecentNodes.Columns.Add("isOnline", "O")
-        dgvRecentNodes.Columns(3).Width = 20
-        dgvRecentNodes.Columns(3).ValueType = GetType(String)
-        dgvRecentNodes.Font = New Font("Consolas", 10)
+        With dgvRecentNodes
+            .Columns.Add("name", "Name")
+            .Columns(0).Width = 180
+            .Columns(0).ValueType = GetType(String)
+            .Columns.Add("steamId", "Steam ID")
+            .Columns(1).Width = 145
+            .Columns(1).ValueType = GetType(String)
+            .Columns.Add("orderId", "Order ID")
+            .Columns(2).Visible = False
+            .Columns(2).ValueType = GetType(Long)
+            .Columns.Add("isOnline", "O")
+            .Columns(3).Width = 20
+            .Columns(3).ValueType = GetType(String)
+            .Font = New Font("Consolas", 10)
+            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+        End With
 
-        dgvDSCMNet.AutoGenerateColumns = False
-        dgvDSCMNet.DataSource = ircDisplayList
-        dgvDSCMNet.Columns.Add("name", "Name")
-        dgvDSCMNet.Columns("name").Width = 135
-        dgvDSCMNet.Columns("name").DataPropertyName = "CharacterNameColumn"
-        dgvDSCMNet.Columns.Add("steamId", "Steam ID")
-        dgvDSCMNet.Columns("steamId").Width = 145
-        dgvDSCMNet.Columns("steamId").DataPropertyName = "SteamIdColumn"
-        dgvDSCMNet.Columns("steamId").Visible = False 
-        dgvDSCMNet.Columns.Add("soulLevel", "SL")
-        dgvDSCMNet.Columns("soulLevel").Width = 40
-        dgvDSCMNet.Columns("soulLevel").DataPropertyName = "SoulLevelColumn"
-        dgvDSCMNet.Columns.Add("phantomType", "Phantom Type")
-        dgvDSCMNet.Columns("phantomType").Width = 70
-        dgvDSCMNet.Columns("phantomType").DataPropertyName = "PhantomTypeText"
-        dgvDSCMNet.Columns.Add("mpArea", "MP Area")
-        dgvDSCMNet.Columns("mpArea").Width = 60
-        dgvDSCMNet.Columns("mpArea").DataPropertyName = "MPZoneColumn"
-        dgvDSCMNet.Columns.Add("world", "World")
-        dgvDSCMNet.Columns("world").Width = 195
-        dgvDSCMNet.Columns("world").DataPropertyName = "WorldText"
-        dgvDSCMNet.Columns.Add("covenant", "Covenant")
-        dgvDSCMNet.Columns("covenant").Width = 165
-        dgvDSCMNet.Columns("covenant").DataPropertyName = "CovenantColumn"
-        dgvDSCMNet.Columns.Add("indictments","Sin")
-        dgvDSCMNet.Columns("indictments").Width = 60
-        dgvDSCMNet.Columns("indictments").DataPropertyName = "IndictmentsColumn"
-        
-        dgvDSCMNet.Font = New Font("Consolas", 10)
+        With dgvDSCMNet
+            .AutoGenerateColumns = False
+            .DataSource = ircDisplayList
+            .Columns.Add("name", "Name")
+            .Columns("name").Width = 135
+            .Columns("name").DataPropertyName = "CharacterNameColumn"
+            .Columns.Add("steamId", "Steam ID")
+            .Columns("steamId").Width = 145
+            .Columns("steamId").DataPropertyName = "SteamIdColumn"
+            .Columns("steamId").Visible = False
+            .Columns.Add("soulLevel", "SL")
+            .Columns("soulLevel").Width = 40
+            .Columns("soulLevel").DataPropertyName = "SoulLevelColumn"
+            .Columns.Add("phantomType", "Phantom Type")
+            .Columns("phantomType").Width = 70
+            .Columns("phantomType").DataPropertyName = "PhantomTypeText"
+            .Columns.Add("mpArea", "MP Area")
+            .Columns("mpArea").Width = 60
+            .Columns("mpArea").DataPropertyName = "MPZoneColumn"
+            .Columns.Add("world", "World")
+            .Columns("world").Width = 195
+            .Columns("world").DataPropertyName = "WorldText"
+            .Columns.Add("covenant", "Covenant")
+            .Columns("covenant").Width = 165
+            .Columns("covenant").DataPropertyName = "CovenantColumn"
+            .Columns.Add("indictments", "Sin")
+            .Columns("indictments").Width = 60
+            .Columns("indictments").DataPropertyName = "IndictmentsColumn"
+            .Font = New Font("Consolas", 10)
+            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+        End With
 
 
         'Check version number in new thread, so main thread isn't delayed.
@@ -145,7 +157,7 @@ Public Class DSCM
 
         'Create regkeys if they don't exist
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
-                My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
+        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
 
 
 
