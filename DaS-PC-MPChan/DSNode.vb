@@ -29,7 +29,7 @@
         World.Add("18-0", "Kiln")
         World.Add("18-1", "Undead Asylum")
 
-        Covenant.Add(-1,"Unknown")
+        Covenant.Add(-1," Unknown")
         Covenant.Add(0,"None")
         Covenant.Add(1,"Way of White")
         Covenant.Add(2,"Princess's Guard")

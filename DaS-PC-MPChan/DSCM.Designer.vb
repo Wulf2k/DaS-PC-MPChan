@@ -95,7 +95,7 @@ Partial Class DSCM
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.05.05.22"
+        Me.lblVer.Text = "2016.05.06.01"
         '
         'chkExpand
         '

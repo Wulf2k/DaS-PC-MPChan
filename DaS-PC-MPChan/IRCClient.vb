@@ -206,6 +206,7 @@ Public Class IRCClient
                         selfNode.PhantomType & "," & selfNode.MPZone & "," & selfNode.World & "," &
                         selfNode.Covenant & "," & selfNode.Indictments)
                     _streamWriter.Write("PRIVMSG #DSCM-Main REPORTSELF|" & reportData & vbCr & vbLf)
+                    Console.WriteLine(reportdata)
                 End If
             End SyncLock
         Catch ex As Exception
