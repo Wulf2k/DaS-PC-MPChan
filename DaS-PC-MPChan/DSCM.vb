@@ -429,7 +429,9 @@ Public Class DSCM
             _ircClient.setLocalNodes(selfNode, nodes.Values)
         End If
 
-        nodes.Add(dsProcess.SelfNode.SteamId, dsProcess.SelfNode)
+        If selfNode IsNot Nothing Then
+            nodes.Add(selfNode.SteamId, selfNode)
+        End If
         For Each node As DSNode In nodes.Values
             Dim row As DataGridViewRow = Nothing
             For j = 0 To dgvMPNodes.Rows.Count - 1
