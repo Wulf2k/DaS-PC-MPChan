@@ -184,7 +184,7 @@ Public Class IRCClient
                     Dim ircName As String = node.CharacterName
                     ircName = ircName.Replace(",", "")
                     ircName = ircName.Replace("|", "")
-                    Dim reportData As String = ircName & "," & node.SteamId & "," & node.SoulLevel & "," & node.PhantomType & "," & node.MPZone & "," & node.World & _
+                    Dim reportData As String = ircName & "," & node.SteamId & "," & node.SoulLevel & "," & node.PhantomType & "," & node.MPZone & "," & node.World & "," & _
                         node.Covenant & "," & node.Indictments 
                     _streamWriter.Write("PRIVMSG #DSCM-Main REPORT|" & reportData & vbCr & vbLf)
                 Next
