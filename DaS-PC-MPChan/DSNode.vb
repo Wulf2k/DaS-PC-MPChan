@@ -1,6 +1,8 @@
 ﻿Module DSDataMaps
     Public PhantomType As New Dictionary(Of Integer, String)
     Public World As New Dictionary(Of String, String)
+    Public Covenant As New Dictionary(Of Integer, String)
+
     Sub New()
         PhantomType.Add(-1, "Loading")
         PhantomType.Add(0, "Human")
@@ -26,6 +28,16 @@
         World.Add("17-0", "Duke's Archives / Caves")
         World.Add("18-0", "Kiln")
         World.Add("18-1", "Undead Asylum")
+
+        Covenant.Add(1,"Way of White")
+        Covenant.Add(2,"Princess's Guard")
+        Covenant.Add(3,"Warrior of Sunlight")
+        Covenant.Add(4,"Darkwraith")
+        Covenant.Add(5,"Path of the Dragon")
+        Covenant.Add(6,"Gravelord Servant")
+        Covenant.Add(7,"Forest Hunter")
+        Covenant.Add(8,"Darkmoon Blade")
+        Covenant.Add(9,"Chaos Servant")
     End Sub
 End Module
 
@@ -38,6 +50,9 @@ Public Class DSNode
     Public PhantomType As Integer
     Public MPZone As Integer
     Public World As String
+    Public Covenant As Integer
+    Public Indictments As Integer
+
 
     Public Function MemberwiseEquals(other As DSNode) As Boolean
         If Object.ReferenceEquals(Me, other) Then Return True
@@ -47,7 +62,9 @@ Public Class DSNode
             SoulLevel = other.SoulLevel AndAlso
             PhantomType = other.PhantomType AndAlso
             MPZone = other.MPZone AndAlso
-            World = other.World)
+            World = other.World AndAlso 
+            Covenant = other.Covenant AndAlso
+            Indictments = other.Indictments)
     End Function
 
     Public ReadOnly Property SteamIdColumn As String
@@ -55,17 +72,17 @@ Public Class DSNode
             Return SteamId
         End Get
     End Property
-        Public ReadOnly Property CharacterNameColumn As String
+    Public ReadOnly Property CharacterNameColumn As String
         Get
             Return CharacterName
         End Get
     End Property
-        Public ReadOnly Property SoulLevelColumn As String
+    Public ReadOnly Property SoulLevelColumn As String
         Get
             Return SoulLevel
         End Get
     End Property
-        Public ReadOnly Property MPZoneColumn As String
+    Public ReadOnly Property MPZoneColumn As String
         Get
             Return MPZone
         End Get
@@ -88,6 +105,23 @@ Public Class DSNode
             End Try
         End Get
     End Property
+    Public ReadOnly property CovenantColumn As Integer
+        Get
+            Try
+                return DSDataMaps.Covenant(Covenant)
+            Catch ex As Exception
+                Return Covenant
+            End Try
+            Return Covenant
+        End Get
+    End Property
+    Public ReadOnly Property IndictmentsColumn As Integer
+        Get
+            Return Indictments
+        End Get
+    End Property
+
+
     Public Function canCoop(other As DSNode) As Boolean
         Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)
     End Function

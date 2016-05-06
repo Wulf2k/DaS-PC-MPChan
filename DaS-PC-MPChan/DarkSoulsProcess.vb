@@ -431,6 +431,11 @@ Public Class DarkSoulsProcess
         SelfNode.World = ReadInt8(selfPtr + &HA13) & "-" & ReadInt8(selfPtr + &HA12)
         SelfNode.PhantomType = ReadInt32(selfPtr + &HA28)
 
+        Dim tmpCharPtr As Integer = ReadInt32(dsBase + &HF78700)
+        tmpCharPtr = ReadInt32(tmpCharPtr + &H8)
+        SelfNode.Indictments = ReadInt32(tmpCharPtr + &HEC)
+        selfNode.Covenant = ReadInt8(tmpCharPtr + &H10B)
+
         'Delete old nodes.
         For Each key As String In New List(Of String)(ConnectedNodes.Keys)
             If Not seenSteamIds.Contains(key)

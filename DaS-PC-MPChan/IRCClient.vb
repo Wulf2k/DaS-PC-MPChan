@@ -157,6 +157,11 @@ Public Class IRCClient
         node.MPZone = tmpFields(4)
         node.World = tmpFields(5)
 
+        If tmpFields.Count > 6 Then
+            node.Covenant = tmpFields(6)
+            node.Indictments = tmpFields(7)
+        End If
+        
         Return node
     End Function
     Private Sub publishLocalNodes()
@@ -179,7 +184,8 @@ Public Class IRCClient
                     Dim ircName As String = node.CharacterName
                     ircName = ircName.Replace(",", "")
                     ircName = ircName.Replace("|", "")
-                    Dim reportData As String = ircName & "," & node.SteamId & "," & node.SoulLevel & "," & node.PhantomType & "," & node.MPZone & "," & node.World
+                    Dim reportData As String = ircName & "," & node.SteamId & "," & node.SoulLevel & "," & node.PhantomType & "," & node.MPZone & "," & node.World & _
+                        node.Covenant & "," & node.Indictments 
                     _streamWriter.Write("PRIVMSG #DSCM-Main REPORT|" & reportData & vbCr & vbLf)
                 Next
             End SyncLock

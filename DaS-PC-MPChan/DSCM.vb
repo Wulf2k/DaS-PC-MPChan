@@ -109,23 +109,31 @@ Public Class DSCM
         dgvDSCMNet.AutoGenerateColumns = False
         dgvDSCMNet.DataSource = ircDisplayList
         dgvDSCMNet.Columns.Add("name", "Name")
-        dgvDSCMNet.Columns(0).Width = 180
-        dgvDSCMNet.Columns(0).DataPropertyName = "CharacterNameColumn"
+        dgvDSCMNet.Columns("name").Width = 170
+        dgvDSCMNet.Columns("name").DataPropertyName = "CharacterNameColumn"
         dgvDSCMNet.Columns.Add("steamId", "Steam ID")
-        dgvDSCMNet.Columns(1).Width = 145
-        dgvDSCMNet.Columns(1).DataPropertyName = "SteamIdColumn"
+        dgvDSCMNet.Columns("steamId").Width = 145
+        dgvDSCMNet.Columns("steamId").DataPropertyName = "SteamIdColumn"
+        dgvDSCMNet.Columns("steamId").Visible = False 
         dgvDSCMNet.Columns.Add("soulLevel", "SL")
-        dgvDSCMNet.Columns(2).Width = 60
-        dgvDSCMNet.Columns(2).DataPropertyName = "SoulLevelColumn"
+        dgvDSCMNet.Columns("soulLevel").Width = 40
+        dgvDSCMNet.Columns("soulLevel").DataPropertyName = "SoulLevelColumn"
         dgvDSCMNet.Columns.Add("phantomType", "Phantom Type")
-        dgvDSCMNet.Columns(3).Width = 80
-        dgvDSCMNet.Columns(3).DataPropertyName = "PhantomTypeText"
+        dgvDSCMNet.Columns("phantomType").Width = 70
+        dgvDSCMNet.Columns("phantomType").DataPropertyName = "PhantomTypeText"
         dgvDSCMNet.Columns.Add("mpArea", "MP Area")
-        dgvDSCMNet.Columns(4).Width = 80
-        dgvDSCMNet.Columns(4).DataPropertyName = "MPZoneColumn"
+        dgvDSCMNet.Columns("mpArea").Width = 70
+        dgvDSCMNet.Columns("mpArea").DataPropertyName = "MPZoneColumn"
         dgvDSCMNet.Columns.Add("world", "World")
-        dgvDSCMNet.Columns(5).Width = 200
-        dgvDSCMNet.Columns(5).DataPropertyName = "WorldText"
+        dgvDSCMNet.Columns("world").Width = 200
+        dgvDSCMNet.Columns("world").DataPropertyName = "WorldText"
+        dgvDSCMNet.Columns.Add("covenant", "Covenant")
+        dgvDSCMNet.Columns("covenant").Width = 100
+        dgvDSCMNet.Columns("covenant").DataPropertyName = "CovenantColumn"
+        dgvDSCMNet.Columns.Add("indictments","Sin")
+        dgvDSCMNet.Columns("indictments").Width = 60
+        dgvDSCMNet.Columns("indictments").DataPropertyName = "IndictmentsColumn"
+        
         dgvDSCMNet.Font = New Font("Consolas", 10)
 
 
