@@ -29,6 +29,7 @@
         World.Add("18-0", "Kiln")
         World.Add("18-1", "Undead Asylum")
 
+        Covenant.Add(0,"None/Unknown")
         Covenant.Add(1,"Way of White")
         Covenant.Add(2,"Princess's Guard")
         Covenant.Add(3,"Warrior of Sunlight")
@@ -105,7 +106,7 @@ Public Class DSNode
             End Try
         End Get
     End Property
-    Public ReadOnly property CovenantColumn As Integer
+    Public ReadOnly property CovenantColumn As String
         Get
             Try
                 return DSDataMaps.Covenant(Covenant)
