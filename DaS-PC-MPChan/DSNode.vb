@@ -29,7 +29,8 @@
         World.Add("18-0", "Kiln")
         World.Add("18-1", "Undead Asylum")
 
-        Covenant.Add(0,"None/Unknown")
+        Covenant.Add(-1,"Unknown")
+        Covenant.Add(0,"None")
         Covenant.Add(1,"Way of White")
         Covenant.Add(2,"Princess's Guard")
         Covenant.Add(3,"Warrior of Sunlight")
@@ -51,8 +52,8 @@ Public Class DSNode
     Public PhantomType As Integer
     Public MPZone As Integer
     Public World As String
-    Public Covenant As Integer
-    Public Indictments As Integer
+    Public Covenant As Integer = -1
+    Public Indictments As Integer = -1
 
 
     Public Function MemberwiseEquals(other As DSNode) As Boolean
