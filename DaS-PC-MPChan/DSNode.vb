@@ -109,10 +109,9 @@ Public Class DSNode
         Get
             Try
                 return DSDataMaps.Covenant(Covenant)
-            Catch ex As Exception
-                Return Covenant
+            Catch ex As KeyNotFoundException
+                Return Covenant.ToString()
             End Try
-            Return Covenant
         End Get
     End Property
     Public ReadOnly Property IndictmentsColumn As Integer
