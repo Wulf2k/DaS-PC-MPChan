@@ -272,7 +272,7 @@ Public Class DSCM
 
         'Text indicating new version is hidden if DSCM is expanded, only care if it's seen at the start anyway.
         If newtestver Or newstablever Then
-            lblNewVersion.Visible = Not chkExpand.Checked
+            lblNewVersion.Visible = true
             lblUrl.Visible = lblNewVersion.Visible
             If newtestver Then lblNewVersion.Text = "New testing version available"
             If newstablever Then lblNewVersion.Text = "New stable version available"
@@ -497,7 +497,6 @@ Public Class DSCM
             Me.Width = 800
             Me.Height = 680
             tabs.Visible = True
-            lblNewVersion.Visible = False
             btnAddFavorite.Visible = True
             btnRemFavorite.Visible = True
         Else

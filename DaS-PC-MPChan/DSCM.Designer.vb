@@ -96,14 +96,14 @@ Partial Class DSCM
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.05.02.23"
+        Me.lblVer.Text = "2015.05.05.21"
         '
         'chkExpand
         '
         Me.chkExpand.AutoSize = true
         Me.chkExpand.BackColor = System.Drawing.SystemColors.Control
         Me.chkExpand.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.chkExpand.Location = New System.Drawing.Point(12, 30)
+        Me.chkExpand.Location = New System.Drawing.Point(12, 27)
         Me.chkExpand.Name = "chkExpand"
         Me.chkExpand.Size = New System.Drawing.Size(115, 20)
         Me.chkExpand.TabIndex = 52
@@ -432,7 +432,7 @@ Partial Class DSCM
         Me.lblNewVersion.AutoSize = true
         Me.lblNewVersion.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.lblNewVersion.ForeColor = System.Drawing.Color.Red
-        Me.lblNewVersion.Location = New System.Drawing.Point(1, 83)
+        Me.lblNewVersion.Location = New System.Drawing.Point(9, 76)
         Me.lblNewVersion.Name = "lblNewVersion"
         Me.lblNewVersion.Size = New System.Drawing.Size(183, 16)
         Me.lblNewVersion.TabIndex = 71
@@ -444,7 +444,7 @@ Partial Class DSCM
         Me.lblUrl.AutoSize = true
         Me.lblUrl.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.lblUrl.ForeColor = System.Drawing.Color.Red
-        Me.lblUrl.Location = New System.Drawing.Point(1, 100)
+        Me.lblUrl.Location = New System.Drawing.Point(9, 93)
         Me.lblUrl.Name = "lblUrl"
         Me.lblUrl.Size = New System.Drawing.Size(94, 16)
         Me.lblUrl.TabIndex = 72
@@ -456,7 +456,7 @@ Partial Class DSCM
         Me.chkDSCMNet.AutoSize = true
         Me.chkDSCMNet.BackColor = System.Drawing.SystemColors.Control
         Me.chkDSCMNet.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.chkDSCMNet.Location = New System.Drawing.Point(12, 56)
+        Me.chkDSCMNet.Location = New System.Drawing.Point(12, 50)
         Me.chkDSCMNet.Name = "chkDSCMNet"
         Me.chkDSCMNet.Size = New System.Drawing.Size(119, 20)
         Me.chkDSCMNet.TabIndex = 73
@@ -495,7 +495,6 @@ Partial Class DSCM
         Me.Controls.Add(Me.chkExpand)
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
-        Me.Icon = CType(resources.GetObject("$this.Icon"),System.Drawing.Icon)
         Me.Name = "DSCM"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
         CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).EndInit
