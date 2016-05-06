@@ -387,6 +387,7 @@ Public Class DarkSoulsProcess
 
     Public Sub UpdateNodes()
         Dim nodeCount As Integer = ReadInt32(dsBase + &HF62DD0)
+        Dim basicNodeInfo As New Dictionary(Of String, String)
         Dim steamNodeList = ReadInt32(dsBase + &HF62DCC)
         Dim steamNodesPtr As Integer = ReadInt32(steamNodeList)
         For i = 0 To nodeCount - 1
@@ -395,16 +396,21 @@ Public Class DarkSoulsProcess
             Dim steamData2 As Integer = ReadInt32(steamData1 + &HC)
             node.SteamId = ReadUnicodeStr(steamData2 + &H30)
             node.CharacterName = ReadUnicodeStr(steamData1 + &H30)
+            basicNodeInfo(node.SteamId) = node.CharacterName
             If node.SteamId = SelfSteamId
                 SelfNode.SteamId = node.SteamId
                 SelfNode.CharacterName = node.CharacterName
-            ElseIf Not ConnectedNodes.ContainsKey(node.SteamId)
-                ConnectedNodes.Add(node.SteamId, node)
             End If
             steamNodesPtr = ReadInt32(steamNodesPtr)
         Next
 
-        Dim seenSteamIds As New HashSet(Of String)
+        'Delete old nodes.
+        For Each key As String In New List(Of String)(ConnectedNodes.Keys)
+            If Not basicNodeInfo.ContainsKey(key)
+                ConnectedNodes.Remove(key)
+            End If
+        Next
+
         Dim nodeSteamId As String
         Dim nodePtr As Integer
         nodePtr = nodeDumpPtr + &H200
@@ -414,9 +420,16 @@ Public Class DarkSoulsProcess
             If nodeSteamId = ""
                 Exit While
             End If
-            If ConnectedNodes.ContainsKey(nodeSteamId)
-                seenSteamIds.Add(nodeSteamId)
-                Dim node As DSNode = ConnectedNodes(nodeSteamId)
+            If basicNodeInfo.ContainsKey(nodeSteamId) Then
+                Dim node As DSNode
+                If ConnectedNodes.ContainsKey(nodeSteamId)
+                    node = ConnectedNodes(nodeSteamId)
+                Else
+                    node = New DSNode()
+                    node.SteamId = nodeSteamId
+                    node.CharacterName = basicNodeInfo(nodeSteamId)
+                    ConnectedNodes.Add(nodeSteamId, node)
+                End If
                 node.SoulLevel = Convert.ToInt32(ReadInt16(nodePtr + &H26))
                 node.PhantomType = Convert.ToInt32(ReadInt8(nodePtr + &H24))
                 node.MPZone = ReadInt32(nodePtr + &H28)
@@ -430,13 +443,6 @@ Public Class DarkSoulsProcess
         SelfNode.MPZone = ReadInt32(selfPtr + &HA14)
         SelfNode.World = ReadInt8(selfPtr + &HA13) & "-" & ReadInt8(selfPtr + &HA12)
         SelfNode.PhantomType = ReadInt32(selfPtr + &HA28)
-
-        'Delete old nodes.
-        For Each key As String In New List(Of String)(ConnectedNodes.Keys)
-            If Not seenSteamIds.Contains(key)
-                ConnectedNodes.Remove(key)
-            End If
-        Next
     End Sub
 
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
