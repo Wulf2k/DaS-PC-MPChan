@@ -109,7 +109,7 @@ Public Class DSCM
         dgvDSCMNet.AutoGenerateColumns = False
         dgvDSCMNet.DataSource = ircDisplayList
         dgvDSCMNet.Columns.Add("name", "Name")
-        dgvDSCMNet.Columns("name").Width = 150
+        dgvDSCMNet.Columns("name").Width = 140
         dgvDSCMNet.Columns("name").DataPropertyName = "CharacterNameColumn"
         dgvDSCMNet.Columns.Add("steamId", "Steam ID")
         dgvDSCMNet.Columns("steamId").Width = 145
@@ -122,13 +122,13 @@ Public Class DSCM
         dgvDSCMNet.Columns("phantomType").Width = 70
         dgvDSCMNet.Columns("phantomType").DataPropertyName = "PhantomTypeText"
         dgvDSCMNet.Columns.Add("mpArea", "MP Area")
-        dgvDSCMNet.Columns("mpArea").Width = 70
+        dgvDSCMNet.Columns("mpArea").Width = 60
         dgvDSCMNet.Columns("mpArea").DataPropertyName = "MPZoneColumn"
         dgvDSCMNet.Columns.Add("world", "World")
         dgvDSCMNet.Columns("world").Width = 200
         dgvDSCMNet.Columns("world").DataPropertyName = "WorldText"
         dgvDSCMNet.Columns.Add("covenant", "Covenant")
-        dgvDSCMNet.Columns("covenant").Width = 120
+        dgvDSCMNet.Columns("covenant").Width = 150
         dgvDSCMNet.Columns("covenant").DataPropertyName = "CovenantColumn"
         dgvDSCMNet.Columns.Add("indictments","Sin")
         dgvDSCMNet.Columns("indictments").Width = 60
