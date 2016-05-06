@@ -68,7 +68,21 @@ Public Class DSNode
             Covenant = other.Covenant AndAlso
             Indictments = other.Indictments)
     End Function
-
+    Public Function BasicEquals(other As DSNode) As Boolean
+        If Object.ReferenceEquals(Me, other) Then Return True
+        Return (
+            SteamId = other.SteamId AndAlso
+            CharacterName = other.CharacterName AndAlso
+            SoulLevel = other.SoulLevel AndAlso
+            PhantomType = other.PhantomType AndAlso
+            MPZone = other.MPZone AndAlso
+            World = other.World)
+    End Function
+    Public ReadOnly Property HasExtendedInfo As Boolean
+        Get
+            Return Covenant <> -1
+        End Get
+    End Property
     Public ReadOnly Property SteamIdColumn As String
         Get
             Return SteamId
