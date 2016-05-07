@@ -29,7 +29,7 @@
         World.Add("18-0", "Kiln")
         World.Add("18-1", "Undead Asylum")
 
-        Covenant.Add(-1," Unknown")
+        Covenant.Add(-1,"")
         Covenant.Add(0,"None")
         Covenant.Add(1,"Way of White")
         Covenant.Add(2,"Princess's Guard")
@@ -93,12 +93,12 @@ Public Class DSNode
             Return CharacterName
         End Get
     End Property
-    Public ReadOnly Property SoulLevelColumn As String
+    Public ReadOnly Property SoulLevelColumn As Integer
         Get
             Return SoulLevel
         End Get
     End Property
-    Public ReadOnly Property MPZoneColumn As String
+    Public ReadOnly Property MPZoneColumn As Integer
         Get
             Return MPZone
         End Get
@@ -130,9 +130,13 @@ Public Class DSNode
             End Try
         End Get
     End Property
-    Public ReadOnly Property IndictmentsColumn As Integer
+    Public ReadOnly Property IndictmentsColumn As String
         Get
-            Return Indictments
+            If Indictments = -1 Then
+                Return ""
+            Else
+                Return Indictments
+            End If
         End Get
     End Property
 
