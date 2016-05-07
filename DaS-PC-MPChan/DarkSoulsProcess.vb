@@ -261,7 +261,7 @@ Public Class DarkSoulsProcess
             WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
         Else
             nodeDumpPtr = 0
-            Throw New ApplicationException("NodeDump code injection appears to have failed.")
+            Throw New DSProcessAttachException("NodeDump code injection appears to have failed.")
         End If
     End Sub
     Private Sub TearDownNodeDumpHook()
