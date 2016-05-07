@@ -171,6 +171,7 @@ Public Class DSCM
         onlineTimer.Start()
 
         chkExpand.Checked = True
+        chkDSCMNet.Checked = True
     End Sub
     Private Sub loadFavoriteNodes()
         Dim key As Microsoft.Win32.RegistryKey
