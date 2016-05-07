@@ -34,6 +34,7 @@ Partial Class DSCM
         Dim DataGridViewCellStyle10 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle11 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle12 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(DSCM))
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
         Me.chkExpand = New System.Windows.Forms.CheckBox()
@@ -494,6 +495,7 @@ Partial Class DSCM
         Me.Controls.Add(Me.chkExpand)
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
+        Me.Icon = CType(resources.GetObject("$this.Icon"),System.Drawing.Icon)
         Me.Name = "DSCM"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
         CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).EndInit
