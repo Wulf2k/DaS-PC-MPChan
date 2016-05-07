@@ -1,3 +1,9 @@
+# NuGet packages
+/packages
+
+# Build copy of readme
+Readme--copy.md
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db

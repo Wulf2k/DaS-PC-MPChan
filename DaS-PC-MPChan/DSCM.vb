@@ -159,12 +159,12 @@ Public Class DSCM
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
 
-
-
         'Load favorite node list from registry
         loadFavoriteNodes()
         loadRecentNodes()
         updateOnlinestate()
+
+        loadReadme()
 
         onlineTimer.Enabled = True
         onlineTimer.Interval = 10 * 60 * 1000
@@ -172,6 +172,31 @@ Public Class DSCM
 
         chkExpand.Checked = True
         chkDSCMNet.Checked = True
+    End Sub
+    Private Sub loadReadme()
+        Dim html As XElement =
+            <html>
+                <head>
+                    <style>
+                        body {font-family: Calibri}
+                        ol, ul {margin-bottom: 1em}
+                        h1 {border-bottom: 1px solid black}
+                    </style>
+                </head>
+                <body>###</body>
+            </html>
+
+        Dim htmlString = html.ToString()
+        Dim body = CommonMark.CommonMarkConverter.Convert(My.Resources.Readme)
+        helpView.DocumentText = htmlString.Replace("###", body)
+        helpView.IsWebBrowserContextMenuEnabled = False
+        helpView.AllowWebBrowserDrop = False
+    End Sub
+    Private Sub helpView_Navigating(sender As System.Object, e As System.Windows.Forms.WebBrowserNavigatingEventArgs) Handles helpView.Navigating
+        If e.Url.ToString <> "about:blank" Then
+            e.Cancel = True 'Cancel the event to avoid default behavior
+            System.Diagnostics.Process.Start(e.Url.ToString()) 'Open the link in the default browser
+        End If
     End Sub
     Private Sub loadFavoriteNodes()
         Dim key As Microsoft.Win32.RegistryKey
