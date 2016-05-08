@@ -96,7 +96,7 @@ Public Class IRCClient
     End Sub
 
     Private Sub connectToServer()
-        Dim nick As String = "DSCM-" & Guid.NewGuid.ToString()
+        Dim nick As String = "DSCM[" & mainWindow.Version.Replace(".", "-") & "]" & Guid.NewGuid.ToString().Split("-")(0)
         Dim owner As String = "DSCMbot"
         Dim server As String = "dscm.wulf2k.ca"
         Dim port As Integer = 8123

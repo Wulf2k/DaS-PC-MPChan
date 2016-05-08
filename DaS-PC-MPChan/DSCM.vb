@@ -25,6 +25,7 @@ Public Class DSCM
     Dim oneHeld As Boolean
     Dim twoheld As Boolean
 
+    Public Version As String
     'New version of DSCM available?
     Dim newstablever As Boolean = False
     Dim newtestver As Boolean = False
@@ -39,6 +40,7 @@ Public Class DSCM
         chkDebugDrawing.Checked = False
     End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Version = lblVer.Text
         'Start Refresh timer
         refTimer.Interval = 200
         refTimer.Start()
@@ -255,8 +257,8 @@ Public Class DSCM
             Dim stablever = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(0)
             Dim testver = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(1)
 
-            newstablever = (stablever > lblVer.Text.Replace(".", ""))
-            newtestver = (testver > lblVer.Text.Replace(".", ""))
+            newstablever = (stablever > Version.Replace(".", ""))
+            newtestver = (testver > Version.Replace(".", ""))
         Catch ex As Exception
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
