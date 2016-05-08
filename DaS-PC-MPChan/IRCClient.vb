@@ -2,6 +2,7 @@
 Imports System.IO
 Imports System.Net.Sockets
 Imports System.Collections.Concurrent
+Imports System.Text.RegularExpressions
 
 Class IRCConnectionError
     Inherits System.ApplicationException
@@ -125,7 +126,7 @@ Public Class IRCClient
             If buf IsNot Nothing Then
                 If buf.StartsWith("PING ") Then
                     _streamWriter.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
-                Else If buf.Contains(":MOTD") Then
+                ElseIf buf.Contains(":MOTD") Then
                     _streamWriter.Write("JOIN " & chan & vbCr & vbLf)
                     Exit While
                 End If
@@ -157,7 +158,10 @@ Public Class IRCClient
     Private Sub handleIRCLine(line As String)
         If line.StartsWith("PING ") Then
             _streamWriter.Write(line.Replace("PING", "PONG") & vbCr & vbLf)
-        Else If line.Contains("REPORT|") Or line.Contains("REPORTSELF|") Then
+        ElseIf line.Contains("REPORT|") Or line.Contains("REPORTSELF|") Then
+            Dim senderNick As String = Nothing
+            Dim m As Match = Regex.Match(line, "^:([^!]+)!")
+            If m.Success Then senderNick = m.Groups.Item(1).Value
             Try
                 Dim inNode As DSNode
                 inNode = parseNodeReport(line.Split("|")(1))
@@ -169,7 +173,12 @@ Public Class IRCClient
                 End If
                 ircNodes(inNode.SteamId) = Tuple.Create(inNode, DateTime.UtcNow)
             Catch ex As Exception
-                setStatus("Error processing player report - " & ex.Message)
+                ' Silence errors from old version that is known to be buggy
+                ' first implementation of IRC
+                Dim firstVersion = Regex.IsMatch(senderNick, "^DSCM-[0-1a-f]{16}$")
+                If Not firstVersion Then
+                    setStatus("Error processing player report - " & ex.Message)
+                End If
             End Try
         End If
     End Sub
@@ -191,7 +200,7 @@ Public Class IRCClient
             node.Covenant = tmpFields(6)
             node.Indictments = tmpFields(7)
         End If
-        
+
         Return node
     End Function
     Private Sub publishLocalNodes()
@@ -228,7 +237,7 @@ Public Class IRCClient
                         selfNode.PhantomType & "," & selfNode.MPZone & "," & selfNode.World & "," &
                         selfNode.Covenant & "," & selfNode.Indictments)
                     _streamWriter.Write("PRIVMSG #DSCM-Main REPORTSELF|" & reportData & vbCr & vbLf)
-                    Console.WriteLine(reportdata)
+                    Console.WriteLine(reportData)
                 End If
             End SyncLock
         Catch ex As Exception
