@@ -162,24 +162,22 @@ Public Class IRCClient
             Dim senderNick As String = Nothing
             Dim m As Match = Regex.Match(line, "^:([^!]+)!")
             If m.Success Then senderNick = m.Groups.Item(1).Value
+            Dim inNode As DSNode
             Try
-                Dim inNode As DSNode
                 inNode = parseNodeReport(line.Split("|")(1))
-                If (ircNodes.ContainsKey(inNode.SteamId) AndAlso
-                        Not inNode.HasExtendedInfo AndAlso
-                        ircNodes(inNode.SteamId).Item1.HasExtendedInfo) Then
-                    inNode.Covenant = ircNodes(inNode.SteamId).Item1.Covenant
-                    inNode.Indictments = ircNodes(inNode.SteamId).Item1.Indictments
-                End If
-                ircNodes(inNode.SteamId) = Tuple.Create(inNode, DateTime.UtcNow)
             Catch ex As Exception
-                ' Silence errors from old version that is known to be buggy
-                ' first implementation of IRC
-                Dim firstVersion = Regex.IsMatch(senderNick, "^DSCM-[0-1a-f]{16}$")
-                If Not firstVersion Then
-                    setStatus("Error processing player report - " & ex.Message)
-                End If
+#If DEBUG Then
+                setStatus("Parsing: " & senderNick & " " & line.Split({" "c}, 4)(3).Substring(1))
+#End If
+                Return
             End Try
+            If (ircNodes.ContainsKey(inNode.SteamId) AndAlso
+                    Not inNode.HasExtendedInfo AndAlso
+                    ircNodes(inNode.SteamId).Item1.HasExtendedInfo) Then
+                inNode.Covenant = ircNodes(inNode.SteamId).Item1.Covenant
+                inNode.Indictments = ircNodes(inNode.SteamId).Item1.Indictments
+            End If
+            ircNodes(inNode.SteamId) = Tuple.Create(inNode, DateTime.UtcNow)
         End If
     End Sub
 
