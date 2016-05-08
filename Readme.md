@@ -12,7 +12,7 @@ Instructions
 Automatic node finding
 ----------------------
 While DSCM-Net is active, it will automatically connect to players in the same
-are and in coop level range. Just have it running and enjoy working Dark Souls
+area and in coop level range. Just have it running and enjoy working Dark Souls
 multiplayer.
 
 Manual Connecting
