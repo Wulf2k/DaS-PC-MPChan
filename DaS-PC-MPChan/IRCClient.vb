@@ -3,10 +3,20 @@ Imports System.IO
 Imports System.Net.Sockets
 Imports System.Collections.Concurrent
 
+Class IRCConnectionError
+    Inherits System.ApplicationException
+
+    Sub New(message As String)
+        MyBase.New(message)
+    End Sub
+End Class
+
 Public Class IRCClient
     Private mainWindow As DSCM
 
     Private _thread As Thread
+    Private tcpClient As System.Net.Sockets.TcpClient
+    Private stream As NetworkStream
     Private _streamWriter As StreamWriter = Nothing
     Private _streamReader As StreamReader = Nothing
 
@@ -61,65 +71,22 @@ Public Class IRCClient
     End Function
 
     Private Sub main(args As String())
-        Dim port As Integer
-        Dim buf As String, nick As String, owner As String, server As String, chan As String
-        Dim tcpClient As New System.Net.Sockets.TcpClient()
-        Dim stream As NetworkStream
-
-
         Try
-            nick = "DSCM-" & Guid.NewGuid.ToString()
-            owner = "DSCMbot"
-            server = "dscm.wulf2k.ca"
-            port = 8123
-            chan = "#DSCM-Main"
-
-            setStatus("Initiating connection")
-            'Connect to irc server and get input and output text streams from TcpClient.
-            tcpClient.Connect(server, port)
-            If Not tcpClient.Connected Then
-                setStatus("Failed to connect.")
-                Return
-            End If
-            stream = tcpClient.GetStream()
-            _streamReader = New StreamReader(stream)
-            _streamWriter = New StreamWriter(stream)
-            _streamWriter.AutoFlush = True
-
-            _streamWriter.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf)
-            _streamWriter.Write("NICK " & nick & vbCr & vbLf)
-            _streamWriter.Write("MODE " & nick & " +B" & vbCr & vbLf)
-
-            'Join channel on start
-            While True
-                buf = _streamReader.ReadLine()
-                If buf IsNot Nothing Then
-                    If buf.StartsWith("PING ") Then
-                        _streamWriter.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+            While Not shouldQuit
+                Try
+                    setStatus("Initiating connection ...")
+                    connectToServer()
+                    setStatus("Connected.")
+                    messageLoop()
+                Catch ex As IRCConnectionError
+                    If Not shouldQuit Then
+                        setStatus("Error: " & ex.Message & " – retrying in 10 seconds")
+                        Thread.Sleep(10000)
                     End If
-
-                    If buf.Contains(":MOTD") Then
-                        _streamWriter.Write("JOIN " & chan & vbCr & vbLf)
-                        Exit While
-                    End If
-                End If
-            End While
-
-            setStatus("Connected.")
-
-            Dim lastPublish As Date = DateTime.UtcNow
-            While True
-                If shouldQuit Then
-                    _streamWriter.Write("QUIT" & vbCr & vbLf)
-                    Exit While
-                ElseIf (DateTime.UtcNow - lastPublish).TotalSeconds >= 120 Then
-                    lastPublish = DateTime.UtcNow
-                    publishLocalNodes()
-                    expireIrcNodes()
-                ElseIf stream.DataAvailable Then
-                    handleIRCLine(_streamReader.ReadLine())
-                Else
-                    Thread.Sleep(50)
+                End Try
+                If tcpClient IsNot Nothing Then
+                    tcpClient.Close()
+                    tcpClient = Nothing
                 End If
             End While
             setStatus("Disconnected.")
@@ -128,14 +95,69 @@ Public Class IRCClient
         End Try
     End Sub
 
+    Private Sub connectToServer()
+        Dim nick As String = "DSCM-" & Guid.NewGuid.ToString()
+        Dim owner As String = "DSCMbot"
+        Dim server As String = "dscm.wulf2k.ca"
+        Dim port As Integer = 8123
+        Dim chan As String = "#DSCM-Main"
+
+        tcpClient = New System.Net.Sockets.TcpClient()
+        tcpClient.Connect(server, port)
+        If Not tcpClient.Connected Then
+            Throw New IRCConnectionError("Failed to connect")
+        End If
+        stream = tcpClient.GetStream()
+        _streamReader = New StreamReader(stream)
+        _streamWriter = New StreamWriter(stream)
+        _streamWriter.AutoFlush = True
+
+        _streamWriter.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf)
+        _streamWriter.Write("NICK " & nick & vbCr & vbLf)
+        _streamWriter.Write("MODE " & nick & " +B" & vbCr & vbLf)
+
+        'Join channel on start
+        While True
+            If isConnectionDropped() Then
+                Throw New IRCConnectionError("Connection was dropped during init")
+            End If
+            Dim buf As String = _streamReader.ReadLine()
+            If buf IsNot Nothing Then
+                If buf.StartsWith("PING ") Then
+                    _streamWriter.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
+                Else If buf.Contains(":MOTD") Then
+                    _streamWriter.Write("JOIN " & chan & vbCr & vbLf)
+                    Exit While
+                End If
+            End If
+        End While
+    End Sub
+    Private Sub messageLoop()
+        Dim lastPublish As Date = DateTime.UtcNow
+        While True
+            If shouldQuit Then
+                _streamWriter.Write("QUIT" & vbCr & vbLf)
+                Exit While
+            ElseIf isConnectionDropped() Then
+                Throw New IRCConnectionError("Connection was dropped")
+            ElseIf (DateTime.UtcNow - lastPublish).TotalSeconds >= 120 Then
+                lastPublish = DateTime.UtcNow
+                publishLocalNodes()
+                expireIrcNodes()
+            ElseIf stream.DataAvailable Then
+                handleIRCLine(_streamReader.ReadLine())
+            Else
+                Thread.Sleep(50)
+            End If
+        End While
+    End Sub
+    Private Function isConnectionDropped() As Boolean
+        Return tcpClient.Client.Poll(0, SelectMode.SelectRead) AndAlso tcpClient.Client.Available = 0
+    End Function
     Private Sub handleIRCLine(line As String)
-        'Send pong reply to any ping messages
         If line.StartsWith("PING ") Then
             _streamWriter.Write(line.Replace("PING", "PONG") & vbCr & vbLf)
-        End If
-
-        'Parse report commands
-        If line.Contains("REPORT|") Or line.Contains("REPORTSELF|") Then
+        Else If line.Contains("REPORT|") Or line.Contains("REPORTSELF|") Then
             Try
                 Dim inNode As DSNode
                 inNode = parseNodeReport(line.Split("|")(1))
