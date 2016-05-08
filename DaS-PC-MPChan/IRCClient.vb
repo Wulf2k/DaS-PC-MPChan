@@ -156,28 +156,38 @@ Public Class IRCClient
         Return tcpClient.Client.Poll(0, SelectMode.SelectRead) AndAlso tcpClient.Client.Available = 0
     End Function
     Private Sub handleIRCLine(line As String)
-        If line.StartsWith("PING ") Then
-            _streamWriter.Write(line.Replace("PING", "PONG") & vbCr & vbLf)
-        ElseIf line.Contains("REPORT|") Or line.Contains("REPORTSELF|") Then
-            Dim senderNick As String = Nothing
-            Dim m As Match = Regex.Match(line, "^:([^!]+)!")
-            If m.Success Then senderNick = m.Groups.Item(1).Value
-            Dim inNode As DSNode
-            Try
-                inNode = parseNodeReport(line.Split("|")(1))
-            Catch ex As Exception
+        Dim prefix As String = Nothing
+        If line.StartsWith(":") Then
+            prefix = line.Split({" "c}, 2)(0).Substring(1)
+            line = line.Split({" "c}, 2)(1)
+        End If
+        Dim parts = line.Split({" "c}, 2)
+        Dim command As String = parts(0)
+        Dim rest As String = parts.ElementAtOrDefault(1)
+
+        If command = "PING" Then
+            _streamWriter.Write("PONG " & rest & vbCr & vbLf)
+        ElseIf command = "PRIVMSG" Then
+            Dim msg As String = rest.Split({" "c}, 2)(1).Substring(1)
+            If msg.StartsWith("REPORT|") Or msg.StartsWith("REPORTSELF|") Then
+                Dim inNode As DSNode
+                Try
+                    inNode = parseNodeReport(msg.Split("|")(1))
+                Catch ex As Exception
 #If DEBUG Then
-                setStatus("Parsing: " & senderNick & " " & line.Split({" "c}, 4)(3).Substring(1))
+                    Dim senderNick As String = Regex.Match(prefix, "^([^!@]+)").Groups.Item(1).Value
+                    setStatus("Parsing: " & senderNick & " " & line.Split({" "c}, 4)(3).Substring(1))
 #End If
-                Return
-            End Try
-            If (ircNodes.ContainsKey(inNode.SteamId) AndAlso
-                    Not inNode.HasExtendedInfo AndAlso
-                    ircNodes(inNode.SteamId).Item1.HasExtendedInfo) Then
-                inNode.Covenant = ircNodes(inNode.SteamId).Item1.Covenant
-                inNode.Indictments = ircNodes(inNode.SteamId).Item1.Indictments
+                    Return
+                End Try
+                If (ircNodes.ContainsKey(inNode.SteamId) AndAlso
+                        Not inNode.HasExtendedInfo AndAlso
+                        ircNodes(inNode.SteamId).Item1.HasExtendedInfo) Then
+                    inNode.Covenant = ircNodes(inNode.SteamId).Item1.Covenant
+                    inNode.Indictments = ircNodes(inNode.SteamId).Item1.Indictments
+                End If
+                ircNodes(inNode.SteamId) = Tuple.Create(inNode, DateTime.UtcNow)
             End If
-            ircNodes(inNode.SteamId) = Tuple.Create(inNode, DateTime.UtcNow)
         End If
     End Sub
 
