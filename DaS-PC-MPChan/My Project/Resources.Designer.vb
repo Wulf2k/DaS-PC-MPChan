@@ -105,7 +105,10 @@ Namespace My.Resources
         '''sub edi, 20
         '''pop eax
         '''
-        '''cod [rest of string was truncated]&quot;;.
+        '''codeSkip:
+        '''pop eax
+        '''push esi
+        '''jmp darksouls.exe +  [rest of string was truncated]&quot;;.
         '''</summary>
         Friend ReadOnly Property ASM_NamedNodes() As String
             Get
@@ -160,11 +163,43 @@ Namespace My.Resources
         '''inc esi
         '''inc edi
         '''inc ecx
-        '''cmp e [rest of string was truncated]&quot;;.
+        '''cmp ecx,30
+        '''je ExitLoop
+        '''jmp CopyLoop
+        '''
+        '''ExitLoop:
+        '''pop  [rest of string was truncated]&quot;;.
         '''</summary>
         Friend ReadOnly Property ASM_NodeDump() As String
             Get
                 Return ResourceManager.GetString("ASM_NodeDump", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to **Disclaimer:** Use this software at your own risk. By using this software, you
+        '''agree that we are not liable for any possible issues your game or computer may
+        '''experience.
+        '''
+        '''Instructions
+        '''============
+        '''
+        '''1. Start DSCM
+        '''2. Start Dark Souls
+        '''3. Enjoy Dark Souls Multiplayer :)
+        '''
+        '''Automatic node finding
+        '''----------------------
+        '''While DSCM-Net is active, it will automatically connect to players in the same
+        '''are and in coop level range. Just have it running and enjoy working Dark Souls
+        '''multiplayer.
+        '''
+        '''Manual Connecting
+        '''------- [rest of string was truncated]&quot;;.
+        '''</summary>
+        Friend ReadOnly Property Readme() As String
+            Get
+                Return ResourceManager.GetString("Readme", resourceCulture)
             End Get
         End Property
     End Module

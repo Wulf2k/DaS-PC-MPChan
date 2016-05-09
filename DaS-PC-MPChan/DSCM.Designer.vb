@@ -57,6 +57,8 @@ Partial Class DSCM
         Me.tabDSCMNet = New System.Windows.Forms.TabPage()
         Me.txtIRCDebug = New System.Windows.Forms.TextBox()
         Me.dgvDSCMNet = New System.Windows.Forms.DataGridView()
+        Me.tabHelp = New System.Windows.Forms.TabPage()
+        Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
         Me.btnRemFavorite = New System.Windows.Forms.Button()
         Me.lblNewVersion = New System.Windows.Forms.Label()
@@ -73,6 +75,7 @@ Partial Class DSCM
         CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabDSCMNet.SuspendLayout
         CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).BeginInit
+        Me.tabHelp.SuspendLayout
         Me.SuspendLayout
         '
         'chkDebugDrawing
@@ -239,6 +242,7 @@ Partial Class DSCM
         Me.tabs.Controls.Add(Me.tabFavorites)
         Me.tabs.Controls.Add(Me.tabRecent)
         Me.tabs.Controls.Add(Me.tabDSCMNet)
+        Me.tabs.Controls.Add(Me.tabHelp)
         Me.tabs.Location = New System.Drawing.Point(10, 115)
         Me.tabs.Name = "tabs"
         Me.tabs.SelectedIndex = 0
@@ -407,6 +411,26 @@ Partial Class DSCM
         Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 425)
         Me.dgvDSCMNet.TabIndex = 54
         '
+        'tabHelp
+        '
+        Me.tabHelp.Controls.Add(Me.helpView)
+        Me.tabHelp.Location = New System.Drawing.Point(4, 22)
+        Me.tabHelp.Name = "tabHelp"
+        Me.tabHelp.Padding = New System.Windows.Forms.Padding(3)
+        Me.tabHelp.Size = New System.Drawing.Size(757, 464)
+        Me.tabHelp.TabIndex = 4
+        Me.tabHelp.Text = "Help"
+        Me.tabHelp.UseVisualStyleBackColor = true
+        '
+        'helpView
+        '
+        Me.helpView.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.helpView.Location = New System.Drawing.Point(3, 3)
+        Me.helpView.MinimumSize = New System.Drawing.Size(20, 20)
+        Me.helpView.Name = "helpView"
+        Me.helpView.Size = New System.Drawing.Size(751, 458)
+        Me.helpView.TabIndex = 0
+        '
         'btnAddFavorite
         '
         Me.btnAddFavorite.Location = New System.Drawing.Point(269, 615)
@@ -509,6 +533,7 @@ Partial Class DSCM
         Me.tabDSCMNet.ResumeLayout(false)
         Me.tabDSCMNet.PerformLayout
         CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).EndInit
+        Me.tabHelp.ResumeLayout(false)
         Me.ResumeLayout(false)
         Me.PerformLayout
 
@@ -541,4 +566,6 @@ End Sub
     Friend WithEvents chkDSCMNet As CheckBox
     Friend WithEvents txtIRCDebug As System.Windows.Forms.TextBox
     Friend WithEvents dsProcessStatus As System.Windows.Forms.TextBox
+    Friend WithEvents tabHelp As System.Windows.Forms.TabPage
+    Friend WithEvents helpView As System.Windows.Forms.WebBrowser
 End Class
