@@ -31,24 +31,19 @@ Public Class DarkSoulsProcess
     Private _targetProcess As Process = Nothing
     Private _targetProcessHandle As IntPtr = IntPtr.Zero
 
-    'Check for PVP Watchdog
-    Dim watchdog As Boolean
-
     'Addresses of the various inserted functions
     Dim namedNodePtr As Integer = 0
     Dim nodeDumpPtr As Integer = 0
     Dim forceIdPtr As Integer = 0
     Dim attemptIdPtr As Integer = 0
 
-    Dim dsPWPtr As IntPtr
-    Dim dsPWBase As Integer
+    'Dark Souls
+    Dim dsBase As UInt32 = 0
+    'Steam API
+    Dim steamApiBase As UInt32 = 0
+    'PVP Watchdog
+    Dim watchdogBase As UInt32 = 0
 
-    Dim dsBasePtr As IntPtr
-    Dim dsBase As Integer
-
-    'For locating the Steam matchmaking functions
-    Dim steamApiBasePtr As IntPtr
-    Dim steamApiBase As Integer = 0
 
     Dim steamApiDllModule As ProcessModule
 
@@ -72,8 +67,8 @@ Public Class DarkSoulsProcess
 
     Public Overloads Sub Dispose() Implements IDisposable.Dispose
         If Not Me.disposed Then
-            If watchdog Then
-                'WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
+            If watchdogBase Then
+                'WriteBytes(watchdogBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
             End If
 
             TearDownNodeDumpHook()
@@ -110,32 +105,26 @@ Public Class DarkSoulsProcess
         End If
     End Sub
     Private Sub findDllAddresses()
-        For Each dll In _targetProcess.Modules
+        For Each dll As ProcessModule In _targetProcess.Modules
             Select Case dll.modulename.tolower
                 Case "darksouls.exe"
-                    'Note to self, extra variables due to issues with conversion.  Fix "some day".
-                    dsBasePtr = dll.BaseAddress
-                    dsBase = dsBasePtr
+                    dsBase = dll.BaseAddress
 
                 Case "d3d9.dll"
-                    If watchdog = False Then
-                        dsPWPtr = dll.baseaddress
-                        dsPWBase = dsPWPtr
+                    watchdogBase = dll.BaseAddress
 
-                        If ReadUInt8(dsPWBase + &H6E41) = &HE8& Then
-                            watchdog = True
-                            'this is ineffective at disabling PVP Watchdog's node write
-                            'WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
-                        End If
+                    If ReadUInt8(watchdogBase + &H6E41) <> &HE8& Then
+                        watchdogBase = 0
+                        'this is ineffective at disabling PVP Watchdog's node write
+                        'WriteBytes(watchdogBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
                     End If
 
                 Case "steam_api.dll" 'Find steam_api.dll for ability to directly add SteamIDs as nodes
-                    steamApiBasePtr = dll.baseaddress
-                    steamApiBase = steamApiBasePtr
-                    steamApiDllModule = dll
-
+                    steamApiBase = dll.BaseAddress
             End Select
         Next
+        If Not dsBase Then Throw New DSProcessAttachException("Couldn't find Dark Souls base address")
+        If Not steamApiBase Then Throw New DSProcessAttachException("Couldn't find Steam API base address")
     End Sub
     Private Sub disableLowFPSDisonnect()
         If ReadUInt8(dsBase + &H978425) = &HE8& Then
