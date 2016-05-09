@@ -1,7 +1,3 @@
-**Disclaimer:** Use this software at your own risk. By using this software, you
-agree that we are not liable for any possible issues your game or computer may
-experience.
-
 Instructions
 ============
 
@@ -20,8 +16,8 @@ Manual Connecting
 You can also manually connect to a specific player like this:
 1. Make sure you are connected to less than 20 nodes. You might want to disable
    DCSM-Net, so you get less nodes.
-2. Obtain the other player's SteamID64 (it should start with 7). You can do this
-   by pasting the url of their profile into <https://steamid.io/>.
+2. Obtain the other player's SteamID64 (it should start with 7 or 0110). You can do 
+   this by pasting the url of their profile into <https://steamid.io/>.
 2. Copy the SteamID64 into the `Target Steam64 ID` field.
 3. Click `Attempt Connection`
 4. After a few seconds, they should appear in the `Active` tab.
