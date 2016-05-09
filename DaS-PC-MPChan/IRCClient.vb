@@ -176,7 +176,7 @@ Public Class IRCClient
                 Catch ex As Exception
 #If DEBUG Then
                     Dim senderNick As String = Regex.Match(prefix, "^([^!@]+)").Groups.Item(1).Value
-                    setStatus("Parsing: " & senderNick & " " & line.Split({" "c}, 4)(3).Substring(1))
+                    setStatus("Invalid: " & senderNick & "   " & msg)
 #End If
                     Return
                 End Try
