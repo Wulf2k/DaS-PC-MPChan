@@ -1,4 +1,14 @@
-﻿Public Class DSProcessAttachException
+﻿Imports System.Text
+
+Public Class DSProcessAttachException
+    Inherits System.ApplicationException
+
+    Sub New(message As String)
+        MyBase.New(message)
+    End Sub
+End Class
+
+Public Class DSConnectException
     Inherits System.ApplicationException
 
     Sub New(message As String)
@@ -27,28 +37,21 @@ Public Class DarkSoulsProcess
     Public Const PROCESS_VM_WRITE = &H20
     Public Const PROCESS_ALL_ACCESS = &H1F0FFF
 
-    Private _oldPageProtection As Integer = 0
     Private _targetProcess As Process = Nothing
     Private _targetProcessHandle As IntPtr = IntPtr.Zero
 
-    'Check for PVP Watchdog
-    Dim watchdog As Boolean
-
     'Addresses of the various inserted functions
-    Dim namedNodePtr As Integer = 0
-    Dim nodeDumpPtr As Integer = 0
-    Dim forceIdPtr As Integer = 0
-    Dim attemptIdPtr As Integer = 0
+    Dim namedNodePtr As IntPtr = 0
+    Dim nodeDumpPtr As IntPtr = 0
+    Dim attemptIdPtr As IntPtr = 0
 
-    Dim dsPWPtr As IntPtr
-    Dim dsPWBase As Integer
+    'Dark Souls
+    Dim dsBase As IntPtr = 0
+    'Steam API
+    Dim steamApiBase As IntPtr = 0
+    'PVP Watchdog
+    Dim watchdogBase As IntPtr = 0
 
-    Dim dsBasePtr As IntPtr
-    Dim dsBase As Integer
-
-    'For locating the Steam matchmaking functions
-    Dim steamApiBasePtr As IntPtr
-    Dim steamApiBase As Integer = 0
 
     Dim steamApiDllModule As ProcessModule
 
@@ -72,8 +75,8 @@ Public Class DarkSoulsProcess
 
     Public Overloads Sub Dispose() Implements IDisposable.Dispose
         If Not Me.disposed Then
-            If watchdog Then
-                'WriteBytes(dsPWBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
+            If watchdogBase Then
+                'WriteBytes(watchdogBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
             End If
 
             TearDownNodeDumpHook()
@@ -110,32 +113,26 @@ Public Class DarkSoulsProcess
         End If
     End Sub
     Private Sub findDllAddresses()
-        For Each dll In _targetProcess.Modules
-            Select Case dll.modulename.tolower
+        For Each dll As ProcessModule In _targetProcess.Modules
+            Select Case dll.ModuleName.ToLower
                 Case "darksouls.exe"
-                    'Note to self, extra variables due to issues with conversion.  Fix "some day".
-                    dsBasePtr = dll.BaseAddress
-                    dsBase = dsBasePtr
+                    dsBase = dll.BaseAddress
 
                 Case "d3d9.dll"
-                    If watchdog = False Then
-                        dsPWPtr = dll.baseaddress
-                        dsPWBase = dsPWPtr
+                    watchdogBase = dll.BaseAddress
 
-                        If ReadUInt8(dsPWBase + &H6E41) = &HE8& Then
-                            watchdog = True
-                            'this is ineffective at disabling PVP Watchdog's node write
-                            'WriteBytes(dsPWBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
-                        End If
+                    If ReadUInt8(watchdogBase + &H6E41) <> &HE8& Then
+                        watchdogBase = 0
+                        'this is ineffective at disabling PVP Watchdog's node write
+                        'WriteBytes(watchdogBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
                     End If
 
                 Case "steam_api.dll" 'Find steam_api.dll for ability to directly add SteamIDs as nodes
-                    steamApiBasePtr = dll.baseaddress
-                    steamApiBase = steamApiBasePtr
-                    steamApiDllModule = dll
-
+                    steamApiBase = dll.BaseAddress
             End Select
         Next
+        If dsBase = 0 Then Throw New DSProcessAttachException("Couldn't find Dark Souls base address")
+        If steamApiBase = 0 Then Throw New DSProcessAttachException("Couldn't find Steam API base address")
     End Sub
     Private Sub disableLowFPSDisonnect()
         If ReadUInt8(dsBase + &H978425) = &HE8& Then
@@ -170,7 +167,7 @@ Public Class DarkSoulsProcess
 
             'Location in bytearray to insert jump location
             Dim bytjmp As Integer = &H6B
-            Dim hookLoc As Integer = dsBase + &H15A550
+            Dim hookLoc As IntPtr = dsBase + &H15A550
 
 
             If value Then
@@ -181,7 +178,8 @@ Public Class DarkSoulsProcess
                 'Memory leaks still exists if somebody were to repeatedly reattach to the process, so...  don't do that.
                 If namedNodePtr = 0 Then
                     namedNodePtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                    VirtualProtectEx(_targetProcessHandle, namedNodePtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
+                    Dim oldProtectionOut As UInteger
+                    VirtualProtectEx(_targetProcessHandle, namedNodePtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
                 End If
 
                 'ASM in Resources\ASM-NamedNodes.txt
@@ -194,14 +192,14 @@ Public Class DarkSoulsProcess
                             &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
 
                 'Modify final JMP above to return to instruction after original hook
-                bytes2 = BitConverter.GetBytes((hookLoc - &H6A) - namedNodePtr)
+                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodePtr, UInt32))
                 Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
                 WriteProcessMemory(_targetProcessHandle, namedNodePtr, bytes, TargetBufferSize, 0)
 
                 If ReadUInt8(namedNodePtr) = &H8B& Then
                     'Insert hook to jump to allocated memory above
                     bytes = {&HE9, 0, 0, 0, 0}
-                    bytes2 = BitConverter.GetBytes((namedNodePtr - hookLoc - 5))
+                    bytes2 = BitConverter.GetBytes(CType(namedNodePtr - hookLoc - 5, UInt32))
                     Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                     WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
                 Else
@@ -227,11 +225,12 @@ Public Class DarkSoulsProcess
         Dim bytes2() As Byte
 
         Dim bytjmp As Integer = &H78
-        Dim hookLoc As Integer = dsBase + &H7E637E
+        Dim hookLoc As IntPtr = dsBase + &H7E637E
 
         If nodeDumpPtr = 0 Then
             nodeDumpPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-            VirtualProtectEx(_targetProcessHandle, nodeDumpPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
+            Dim oldProtectionOut As UInteger
+            VirtualProtectEx(_targetProcessHandle, nodeDumpPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
         End If
 
         'ASM in Resources\ASM-NodeDump.txt
@@ -245,18 +244,18 @@ Public Class DarkSoulsProcess
                     &H5B, &H58, &H66, &HF, &HD6, &H46, &H14, &HE9, &H0, &H0, &H0, &H0}
 
         'Adjust EDI
-        bytes2 = BitConverter.GetBytes(nodeDumpPtr + &H200)
+        bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr + &H200, UInt32))
         Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
 
         'Adjust the jump home
-        bytes2 = BitConverter.GetBytes((hookLoc - &H77) - nodeDumpPtr)
+        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpPtr, UInt32))
         Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
         WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
 
         If ReadUInt8(nodeDumpPtr) = &H50& Then
             'Insert the hook
             bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes((nodeDumpPtr - hookLoc - 5))
+            bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr - hookLoc - 5, UInt32))
             Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
         Else
@@ -302,87 +301,76 @@ Public Class DarkSoulsProcess
 
     Public ReadOnly Property SelfSteamId As String
         Get
-            Return ReadAsciiStr(ReadInt32(dsBase + &HF7E204) + &HA00)
+            Return ReadSteamIdAscii(ReadInt32(dsBase + &HF7E204) + &HA00)
         End Get
     End Property
 
     Public Sub ConnectToSteamId(ByVal steamId As String)
+        Dim data(70) As Byte
+        data(0) = &H1
+        Dim selfSteamName As String = ReadSteamName(ReadInt32(dsBase + &HF62DD4) + &H30)
+        Dim selfSteamNameBytes() As Byte = Encoding.Unicode.GetBytes(selfSteamName)
+        Array.Copy(selfSteamNameBytes, 0, data, 1, selfSteamNameBytes.Length)
+
         Try
-            If steamId.Length = 16 Then
-                'Note to self, find a better way of confirming that this is the correct address for this function.
-                'If nothing else, just compare the bytes at the address.
-                Dim steamApiNetworking As Integer = steamApiBase + &H2F70
-
-                'Extremely weak check to be sure we're at the right spot
-                If Not ReadUInt8(steamApiNetworking) = &HA1& Then
-                    'MsgBox("Unexpected byte at Steam_api.dll|Networking.  Game is likely to crash now." & Environment.NewLine &
-                    'Environment.NewLine & "Please report this error to wulfs.throwaway.address@gmail.com.")
-
-                    'Fail Silently rather than spam messages
-                    Return
-
-                End If
-
-                If steamApiBase = 0 Then
-                    'MsgBox("Unable to locate necessary function in memory.  Aborting connection attempt.")
-
-                    'Fail Silently rather than spam messages
-                    Return
-                Else
-                    Dim DataPacket1 As Integer
-
-                    Dim TargetBufferSize = 1024
-                    Dim bytes() As Byte
-                    Dim bytes2() As Byte
-
-                    'If 0 then allocate memory, otherwise use previously allocated memory.
-                    If attemptIdPtr = 0 Then
-                        attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                        VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, _oldPageProtection)
-                    End If
-                    DataPacket1 = attemptIdPtr + &H100
-
-                    'Note to self, as usual, comment in the actual ASM before it gets lost.
-                    bytes = {&HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0,
-                             &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
-                             &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
-
-                    'Set steam_api.SteamNetworking call
-                    bytes2 = BitConverter.GetBytes(steamApiNetworking - attemptIdPtr - 5)
-                    Array.Copy(bytes2, 0, bytes, &H1, bytes2.Length)
-
-                    bytes2 = BitConverter.GetBytes(attemptIdPtr + &H100)
-                    Array.Copy(bytes2, 0, bytes, &H14, bytes2.Length)
-
-                    bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
-                    Array.Copy(bytes2, 0, bytes, &H1A, bytes2.Length)
-
-                    bytes2 = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
-                    Array.Copy(bytes2, 0, bytes, &H1F, bytes2.Length)
-
-                    WriteProcessMemory(_targetProcessHandle, attemptIdPtr, bytes, bytes.Length, 0)
-
-
-                    'Set up data packet
-                    bytes = {&H1}
-                    WriteProcessMemory(_targetProcessHandle, DataPacket1, bytes, bytes.Length, 0)
-
-                    Dim selfSteamName As String
-                    selfSteamName = ReadUnicodeStr(ReadInt32(dsBase + &HF62DD4) + &H30)
-
-                    bytes = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
-                    WriteProcessMemory(_targetProcessHandle, DataPacket1 + 1, bytes, bytes.Length, 0)
-
-                    CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
-                End If
-            End If
+            sendP2PPacket(steamId, data)
         Catch ex As Exception
-
-            'Fail Silently rather than spam messages
-
-            'MsgBox("Well, that failed spectacularly.  Why?" & Environment.NewLine & "I dunno, I'm just an inanimate message box.  Ask a human about the following message: " &
-            'Environment.NewLine & Environment.NewLine & ex.Message)
+            Throw New DSConnectException(ex.Message)
         End Try
+    End Sub
+
+    Private Sub sendP2PPacket(targetSteamId As String, data As Byte())
+        If targetSteamId.Length <> 16 Then
+            Throw New ApplicationException("Invalid Steam ID: " & targetSteamId)
+        End If
+        'Note to self, find a better way of confirming that this is the correct address for this function.
+        'If nothing else, just compare the bytes at the address.
+        Dim steamApiNetworking As IntPtr = steamApiBase + &H2F70
+
+        'Extremely weak check to be sure we're at the right spot
+        If Not ReadUInt8(steamApiNetworking) = &HA1& Then
+            Throw New ApplicationException("Unexpected byte at steam_api.dll|Networking")
+        End If
+
+        'If 0 then allocate memory, otherwise use previously allocated memory.
+        If attemptIdPtr = 0 Then
+            Dim TargetBufferSize = 1024
+            attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+            Dim oldProtectionOut As UInteger
+            VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
+        End If
+
+        'Set up data packet
+        If data.Length > 512 Then Throw New ApplicationException("Data packet to big")
+        Dim dataPacketPtr As IntPtr = attemptIdPtr + &H100
+        WriteProcessMemory(_targetProcessHandle, dataPacketPtr, data, data.Length, 0)
+
+        'Set up code
+        'Note to self, as usual, comment in the actual ASM before it gets lost.
+        Dim code() As Byte = {
+            &HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H0, &H0,
+            &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
+            &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
+
+        'Set steam_api.SteamNetworking call
+        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, UInt32))
+        Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
+
+        Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
+        Array.Copy(dataPacketLen, 0, code, &HE, dataPacketLen.Length)
+
+        Dim dataPacketPtrBytes() As Byte = BitConverter.GetBytes(CType(dataPacketPtr, UInt32))
+        Array.Copy(dataPacketPtrBytes, 0, code, &H14, dataPacketPtrBytes.Length)
+
+        Dim steamIdLeft() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
+        Array.Copy(steamIdLeft, 0, code, &H1A, steamIdLeft.Length)
+
+        Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
+        Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
+
+        WriteProcessMemory(_targetProcessHandle, attemptIdPtr, code, code.Length, 0)
+
+        CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
     End Sub
 
     Public Sub UpdateNodes()
@@ -394,10 +382,10 @@ Public Class DarkSoulsProcess
             Dim node As New DSNode
             Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC)
             Dim steamData2 As Integer = ReadInt32(steamData1 + &HC)
-            node.SteamId = ReadUnicodeStr(steamData2 + &H30)
-            node.CharacterName = ReadUnicodeStr(steamData1 + &H30)
+            node.SteamId = ReadSteamIdUnicode(steamData2 + &H30)
+            node.CharacterName = ReadSteamName(steamData1 + &H30)
             basicNodeInfo(node.SteamId) = node.CharacterName
-            If node.SteamId = SelfSteamId
+            If node.SteamId = SelfSteamId Then
                 SelfNode.SteamId = node.SteamId
                 SelfNode.CharacterName = node.CharacterName
             End If
@@ -406,8 +394,8 @@ Public Class DarkSoulsProcess
 
 
         For Each key As String In New List(Of String)(ConnectedNodes.Keys)
-            If Not basicNodeInfo.ContainsKey(key)
-              ConnectedNodes.Remove(key)
+            If Not basicNodeInfo.ContainsKey(key) Then
+                ConnectedNodes.Remove(key)
             End If
         Next
 
@@ -415,14 +403,14 @@ Public Class DarkSoulsProcess
         Dim nodePtr As Integer
         nodePtr = nodeDumpPtr + &H200
         While True
-            nodeSteamId = ReadAsciiStr(nodePtr)
+            nodeSteamId = ReadSteamIdAscii(nodePtr)
             WriteInt32(nodePtr, 0)
-            If nodeSteamId = ""
+            If nodeSteamId Is Nothing Then
                 Exit While
             End If
-             If basicNodeInfo.ContainsKey(nodeSteamId) Then
+            If basicNodeInfo.ContainsKey(nodeSteamId) Then
                 Dim node As DSNode
-                If ConnectedNodes.ContainsKey(nodeSteamId)
+                If ConnectedNodes.ContainsKey(nodeSteamId) Then
                     node = ConnectedNodes(nodeSteamId)
                 Else
                     node = New DSNode()
@@ -448,7 +436,7 @@ Public Class DarkSoulsProcess
         Dim tmpCharPtr As Integer = ReadInt32(dsBase + &HF78700)
         tmpCharPtr = ReadInt32(tmpCharPtr + &H8)
         SelfNode.Indictments = ReadInt32(tmpCharPtr + &HEC)
-        selfNode.Covenant = ReadInt8(tmpCharPtr + &H10B)
+        SelfNode.Covenant = ReadInt8(tmpCharPtr + &H10B)
     End Sub
 
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
@@ -516,52 +504,28 @@ Public Class DarkSoulsProcess
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, size, vbNull)
         Return _rtnBytes
     End Function
-    Private Function ReadAsciiStr(ByVal addr As UInteger) As String
-        Dim Str As String = ""
-        Dim cont As Boolean = True
-        Dim loc As Integer = 0
-
-        Dim bytes(&H10) As Byte
-
-        ReadProcessMemory(_targetProcessHandle, addr, bytes, &H10, vbNull)
-
-        While (cont And loc < &H10)
-            If bytes(loc) > 0 Then
-
-                Str = Str + Convert.ToChar(bytes(loc))
-
-                loc += 1
-            Else
-                cont = False
-            End If
-        End While
-
-        Return Str
+    Private Function ReadSteamIdAscii(addr As IntPtr) As String
+        Dim bytes(15) As Byte
+        ReadProcessMemory(_targetProcessHandle, addr, bytes, 16, vbNull)
+        If bytes(0) = 0 Then Return Nothing
+        Return Encoding.ASCII.GetChars(bytes)
     End Function
-    Private Function ReadUnicodeStr(ByVal addr As UInteger) As String
+    Private Function ReadSteamIdUnicode(addr As IntPtr) As String
+        Dim bytes(31) As Byte
+        ReadProcessMemory(_targetProcessHandle, addr, bytes, 32, vbNull)
+        Return Encoding.Unicode.GetChars(bytes)
+    End Function
+    Private Function ReadSteamName(ByVal addr As UInteger) As String
+        Dim str As New StringBuilder()
+        Dim bytes(63) As Byte
+        ReadProcessMemory(_targetProcessHandle, addr, bytes, 64, vbNull)
 
-        'Doesn't understand Unicode, just treat it as an ASCII string with 0's between bytes
-
-        Dim Str As String = ""
-        Dim cont As Boolean = True
-        Dim loc As Integer = 0
-
-        Dim bytes(&H20) As Byte
-
-        ReadProcessMemory(_targetProcessHandle, addr, bytes, &H20, vbNull)
-
-        While (cont And loc < &H20)
-            If bytes(loc) > 0 Then
-
-                Str = Str + Convert.ToChar(bytes(loc))
-
-                loc += 2
-            Else
-                cont = False
-            End If
-        End While
-
-        Return Str
+        For i = 0 To 63 Step 2
+            Dim chr As UInt16 = bytes(i) + 256 * bytes(i + 1)
+            If chr = 0 Then Exit For
+            str.Append(Convert.ToChar(chr))
+        Next
+        Return str.ToString()
     End Function
 
     Public Sub WriteInt32(ByVal addr As IntPtr, val As Int32)

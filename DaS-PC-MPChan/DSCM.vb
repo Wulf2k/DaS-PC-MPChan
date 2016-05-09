@@ -560,7 +560,13 @@ Public Class DSCM
     End Sub
     Private Sub connectToSteamId(steamId As String)
         If dsProcess IsNot Nothing Then
-            dsProcess.connectToSteamId(steamId)
+            Try
+                dsProcess.ConnectToSteamId(steamId)
+            Catch ex As DSConnectException
+                dsProcessStatus.Text = " Connect failed: " & ex.Message
+                dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 153, 51)
+                Return
+            End Try
 
             Dim now As Date = DateTime.UtcNow
             recentConnections.Enqueue(Tuple.Create(now, steamId))
