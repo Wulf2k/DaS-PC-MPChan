@@ -304,62 +304,71 @@ Public Class DarkSoulsProcess
     End Property
 
     Public Sub ConnectToSteamId(ByVal steamId As String)
-        If steamId.Length <> 16 Then
-            Throw New DSConnectException("Invalid Steam ID: " & steamId)
-        End If
+        Dim data(70) As Byte
+        data(0) = &H1
+        Dim selfSteamName As String = ReadUnicodeStr(ReadInt32(dsBase + &HF62DD4) + &H30)
+        Dim selfSteamNameBytes() As Byte = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
+        Array.Copy(selfSteamNameBytes, 0, data, 1, selfSteamNameBytes.Length)
+
         Try
-            'Note to self, find a better way of confirming that this is the correct address for this function.
-            'If nothing else, just compare the bytes at the address.
-            Dim steamApiNetworking As IntPtr = steamApiBase + &H2F70
-
-            'Extremely weak check to be sure we're at the right spot
-            If Not ReadUInt8(steamApiNetworking) = &HA1& Then
-                Throw New DSConnectException("Unexpected byte at steam_api.dll|Networking")
-            End If
-
-            'If 0 then allocate memory, otherwise use previously allocated memory.
-            If attemptIdPtr = 0 Then
-                Dim TargetBufferSize = 1024
-                attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                Dim oldProtectionOut As UInteger
-                VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
-            End If
-
-            'Set up data packet
-            Dim dataPacketPtr As IntPtr = attemptIdPtr + &H100
-            Dim connectFlag As Byte() = {&H1}
-            WriteProcessMemory(_targetProcessHandle, dataPacketPtr, connectFlag, connectFlag.Length, 0)
-
-            Dim selfSteamName As String = ReadUnicodeStr(ReadInt32(dsBase + &HF62DD4) + &H30)
-            Dim selfSteamNameBytes() As Byte = System.Text.Encoding.Unicode.GetBytes(selfSteamName)
-            WriteProcessMemory(_targetProcessHandle, dataPacketPtr + 1, selfSteamNameBytes, selfSteamNameBytes.Length, 0)
-
-            'Set up code
-            'Note to self, as usual, comment in the actual ASM before it gets lost.
-            Dim code() As Byte = {
-                &HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H43, &H0,
-                &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
-                &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
-
-            'Set steam_api.SteamNetworking call
-            Dim jmpLoc() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, UInt32))
-            Array.Copy(jmpLoc, 0, code, &H1, jmpLoc.Length)
-
-            Dim dataPacketPtrBytes() As Byte = BitConverter.GetBytes(CType(dataPacketPtr, UInt32))
-            Array.Copy(dataPacketPtrBytes, 0, code, &H14, dataPacketPtrBytes.Length)
-
-            Dim steamIdLeft() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
-            Array.Copy(steamIdLeft, 0, code, &H1A, steamIdLeft.Length)
-
-            Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
-            Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
-
-            WriteProcessMemory(_targetProcessHandle, attemptIdPtr, code, code.Length, 0)
-
-            CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
+            sendP2PPacket(steamId, data)
         Catch ex As Exception
             Throw New DSConnectException(ex.Message)
         End Try
+    End Sub
+
+    Private Sub sendP2PPacket(targetSteamId As String, data As Byte())
+        If targetSteamId.Length <> 16 Then
+            Throw New ApplicationException("Invalid Steam ID: " & targetSteamId)
+        End If
+        'Note to self, find a better way of confirming that this is the correct address for this function.
+        'If nothing else, just compare the bytes at the address.
+        Dim steamApiNetworking As IntPtr = steamApiBase + &H2F70
+
+        'Extremely weak check to be sure we're at the right spot
+        If Not ReadUInt8(steamApiNetworking) = &HA1& Then
+            Throw New ApplicationException("Unexpected byte at steam_api.dll|Networking")
+        End If
+
+        'If 0 then allocate memory, otherwise use previously allocated memory.
+        If attemptIdPtr = 0 Then
+            Dim TargetBufferSize = 1024
+            attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
+            Dim oldProtectionOut As UInteger
+            VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
+        End If
+
+        'Set up data packet
+        If data.Length > 512 Then Throw New ApplicationException("Data packet to big")
+        Dim dataPacketPtr As IntPtr = attemptIdPtr + &H100
+        WriteProcessMemory(_targetProcessHandle, dataPacketPtr, data, data.Length, 0)
+
+        'Set up code
+        'Note to self, as usual, comment in the actual ASM before it gets lost.
+        Dim code() As Byte = {
+            &HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H0, &H0,
+            &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
+            &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
+
+        'Set steam_api.SteamNetworking call
+        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, UInt32))
+        Array.Copy(steamApiNetworkingRelative, 0, code, &H01, steamApiNetworkingRelative.Length)
+
+        Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
+        Array.Copy(dataPacketLen, 0, code, &H0E, dataPacketLen.Length)
+
+        Dim dataPacketPtrBytes() As Byte = BitConverter.GetBytes(CType(dataPacketPtr, UInt32))
+        Array.Copy(dataPacketPtrBytes, 0, code, &H14, dataPacketPtrBytes.Length)
+
+        Dim steamIdLeft() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
+        Array.Copy(steamIdLeft, 0, code, &H1A, steamIdLeft.Length)
+
+        Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
+        Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
+
+        WriteProcessMemory(_targetProcessHandle, attemptIdPtr, code, code.Length, 0)
+
+        CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
     End Sub
 
     Public Sub UpdateNodes()

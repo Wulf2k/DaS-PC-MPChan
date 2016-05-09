@@ -1,0 +1,14 @@
+﻿e8f1f1f1f1      call loc_f1f1f1f6
+8b10            mov edx,DWORD PTR [eax]	       
+8b12            mov edx,DWORD PTR [edx]	       
+6a01            push 0x1
+6a02            push 0x2
+bf43000000      mov edi,0x43
+57              push edi
+b9f2f2f2f2      mov ecx,0xf2f2f2f2	       
+51              push ecx
+68f3f3f3f3      push 0xf3f3f3f3
+68f4f4f4f4      push 0xf4f4f4f4
+8bc8            mov ecx,eax
+ffd2            call edx
+c3              ret
