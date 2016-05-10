@@ -91,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DarkSoulsProcess.vb" />
+    <Compile Include="DkmPref.vb" />
     <Compile Include="DSCM.vb">
       <SubType>Form</SubType>
     </Compile>

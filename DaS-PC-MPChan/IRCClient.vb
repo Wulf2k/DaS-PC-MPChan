@@ -53,8 +53,21 @@ Public Class IRCClient
         blackSet.Add(self.SteamId)
 
         Dim candidates As New List(Of DSNode)
+
+        Dim DkmSelectedPref As DkmPref = DSCM.DkmPrefBox.SelectedItem
+
         For Each t In ircNodes.Values
             Dim node As DSNode = t.Item1
+
+            'WIP: Darkmoon proprocessing for Blacklist
+            If DkmSelectedPref.Value <> 0 Then
+                If DSCM.DkmCheckBoxSinnersOnly.Checked Then
+                    If node.Indictments < 1 Then
+                        blackSet.Add(node.SteamId)
+                    End If
+                End If
+            End If
+
             If blackSet.Contains(node.SteamId) Then Continue For
             candidates.Add(node)
         Next
@@ -68,6 +81,7 @@ Public Class IRCClient
             .ThenByDescending(Function(n) (n.World <> "-1--1")) _
             .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
 
+        'Debug.Print(String.Concat("Dkm: ", sorted(0).CharacterName, ", SL ", sorted(0).SoulLevel, ", Sin ", sorted(0).Indictments))
         Return sorted(0)
     End Function
 
