@@ -422,10 +422,16 @@ Public Class DSCM
             End If
         End If
         If dsProcess is Nothing Then
+            nmbMaxNodes.Enabled = False
             Try
                 dsProcess = New DarkSoulsProcess()
                 dsProcessStatus.Text = " Attached to Dark Souls process"
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(200, 255, 200)
+
+                'PVP Watchdog overrides any node count changes we make
+                If Not dsProcess.HasWatchdog Then
+                    nmbMaxNodes.Enabled = True
+                End If
             Catch ex As DSProcessAttachException
                 dsProcessStatus.Text = " " & ex.Message
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)

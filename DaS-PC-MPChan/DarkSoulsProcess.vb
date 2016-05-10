@@ -41,19 +41,19 @@ Public Class DarkSoulsProcess
     Private _targetProcessHandle As IntPtr = IntPtr.Zero
 
     'Addresses of the various inserted functions
-    Dim namedNodePtr As IntPtr = 0
-    Dim nodeDumpPtr As IntPtr = 0
-    Dim attemptIdPtr As IntPtr = 0
+    Private namedNodePtr As IntPtr = 0
+    Private nodeDumpPtr As IntPtr = 0
+    Private attemptIdPtr As IntPtr = 0
 
     'Dark Souls
-    Dim dsBase As IntPtr = 0
+    Private dsBase As IntPtr = 0
     'Steam API
-    Dim steamApiBase As IntPtr = 0
+    Private steamApiBase As IntPtr = 0
     'PVP Watchdog
-    Dim watchdogBase As IntPtr = 0
+    Private watchdogBase As IntPtr = 0
 
 
-    Dim steamApiDllModule As ProcessModule
+    Private steamApiDllModule As ProcessModule
 
     Public ConnectedNodes As New Dictionary(Of String, DSNode)()
     Public SelfNode As New DSNode()
@@ -119,12 +119,8 @@ Public Class DarkSoulsProcess
                     dsBase = dll.BaseAddress
 
                 Case "d3d9.dll"
-                    watchdogBase = dll.BaseAddress
-
-                    If ReadUInt8(watchdogBase + &H6E41) <> &HE8& Then
-                        watchdogBase = 0
-                        'this is ineffective at disabling PVP Watchdog's node write
-                        'WriteBytes(watchdogBase + &H6E41, {&H90, &H90, &H90, &H90, &H90})
+                    If dll.FileVersionInfo.ProductName.Contains("Watchdog") Then
+                        watchdogBase = dll.BaseAddress
                     End If
 
                 Case "steam_api.dll" 'Find steam_api.dll for ability to directly add SteamIDs as nodes
@@ -152,6 +148,11 @@ Public Class DarkSoulsProcess
     Public ReadOnly Property IsAttached As Boolean
         Get
             Return Not _targetProcess.HasExited
+        End Get
+    End Property
+    Public ReadOnly Property HasWatchdog As Boolean
+        Get
+            Return watchdogBase <> 0
         End Get
     End Property
     Public Property DrawNodes As Boolean
