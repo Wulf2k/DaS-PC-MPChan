@@ -186,8 +186,8 @@ Public Class DSCM
         With tabDarkmoon
             Dim dkmPreferencesList As New ArrayList()
             With dkmPreferencesList
-                .Add(New DkmPref("Disabled", 0, "Searching that prefers nodes of sinners is disabled. Default."))
-                .Add(New DkmPref("Indiscriminate", -1, "Justice indiscriminate. Sinners are selected from DSCM-Net without any particular sorting."))
+                .Add(New DkmPref("Disabled", 0, "Searching that prefers nodes of sinners is disabled."))
+                .Add(New DkmPref("Indiscriminate", -1, "Justice indiscriminate. Sinners are selected from DSCM-Net without any additional sorting beyond the normal."))
                 '.Add(New DkmPref("Random", 1, "Retribution strikes at random, striking fear into all. Sinners are explicitly selected at random from DSCM-Net."))
                 '.Add(New DkmPref("Weak Sinners", -2, "The power of the Blades of the Darkmoon is overpowering. Sinners are selected from DSCM-Net starting with the ones with the lowest permissible Soul Level."))
                 '.Add(New DkmPref("Strong Sinners", 2, "The Blades of the Darkmoon pursue the most dangerous sinners. Sinners are selected from DSCM-Net starting with the ones with the highest permissible Soul Level."))
@@ -200,7 +200,7 @@ Public Class DSCM
                 .ValueMember = "Value"
                 .AutoCompleteMode = AutoCompleteMode.Suggest
                 .DropDownStyle = ComboBoxStyle.DropDownList
-                .SelectedIndex = 0
+                .SelectedIndex = 1
             End With
             With DkmPrefHelpTextBox
                 Dim Pref As DkmPref = DkmPrefBox.SelectedItem

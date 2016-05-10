@@ -74,14 +74,27 @@ Public Class IRCClient
 
         If candidates.Count = 0 Then Return Nothing
 
-        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
+        Dim sorted As IOrderedEnumerable(Of DSNode)
+
+        If DkmSelectedPref.Value = 0 Then
+            'Standard sorting
+            sorted = candidates _
             .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.World <> "-1--1")) _
             .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
+        Else
+            'Darkmoon sorting, using canInvadeGuilty()
+            sorted = candidates _
+            .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canInvadeGuilty(n)) _
+            .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canInvadeGuilty(n)) _
+            .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canInvadeGuilty(n)) _
+            .ThenByDescending(Function(n) (n.World <> "-1--1")) _
+            .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
+        End If
 
-        'Debug.Print(String.Concat("Dkm: ", sorted(0).CharacterName, ", SL ", sorted(0).SoulLevel, ", Sin ", sorted(0).Indictments))
+        Debug.Print(String.Concat("Dkm: ", sorted(0).CharacterName, ", SL ", sorted(0).SoulLevel, ", Sin ", sorted(0).Indictments))
         Return sorted(0)
     End Function
 
@@ -111,7 +124,7 @@ Public Class IRCClient
     End Sub
 
     Private Sub connectToServer()
-        Dim nick As String = "DSCM[" & mainWindow.Version.Replace(".", "-") & "]" & Guid.NewGuid.ToString().Split("-")(0)
+        Dim nick As String = "DSCM-Dkm[" & mainWindow.Version.Replace(".", "-") & "]" & Guid.NewGuid.ToString().Split("-")(0)
         Dim owner As String = "DSCMbot"
         Dim server As String = "dscm.wulf2k.ca"
         Dim port As Integer = 8123
