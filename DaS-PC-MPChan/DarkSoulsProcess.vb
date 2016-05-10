@@ -384,10 +384,11 @@ Public Class DarkSoulsProcess
             Dim steamData2 As Integer = ReadInt32(steamData1 + &HC)
             node.SteamId = ReadSteamIdUnicode(steamData2 + &H30)
             node.CharacterName = ReadSteamName(steamData1 + &H30)
-            basicNodeInfo(node.SteamId) = node.CharacterName
             If node.SteamId = SelfSteamId Then
                 SelfNode.SteamId = node.SteamId
                 SelfNode.CharacterName = node.CharacterName
+            Else
+                basicNodeInfo(node.SteamId) = node.CharacterName
             End If
             steamNodesPtr = ReadInt32(steamNodesPtr)
         Next
