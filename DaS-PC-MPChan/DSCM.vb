@@ -176,10 +176,25 @@ Public Class DSCM
         chkDSCMNet.Checked = True
     End Sub
     Private Sub loadReadme()
-        Dim body = My.Resources.Readme
-        txtHelpView.Text = body
+        Dim html As XElement =
+            <html>
+                <head>
+                    <style>
+                        body {font-family: Calibri}
+                        ol, ul {margin-bottom: 1em}
+                        h1 {border-bottom: 1px solid black}
+                    </style>
+                </head>
+                <body>###</body>
+            </html>
+
+        Dim htmlString = html.ToString()
+        Dim body = CommonMark.CommonMarkConverter.Convert(My.Resources.Readme)
+        helpView.DocumentText = htmlString.Replace("###", body)
+        helpView.IsWebBrowserContextMenuEnabled = False
+        helpView.AllowWebBrowserDrop = False
     End Sub
-    Private Sub helpView_Navigating(sender As System.Object, e As System.Windows.Forms.WebBrowserNavigatingEventArgs)
+    Private Sub helpView_Navigating(sender As System.Object, e As System.Windows.Forms.WebBrowserNavigatingEventArgs) Handles helpView.Navigating
         If e.Url.ToString <> "about:blank" Then
             e.Cancel = True 'Cancel the event to avoid default behavior
             System.Diagnostics.Process.Start(e.Url.ToString()) 'Open the link in the default browser
@@ -390,9 +405,6 @@ Public Class DSCM
         dgvDSCMNet.Height = Me.Height - 250
         txtIRCDebug.Location = New Point(6, dgvDSCMNet.Location.Y + dgvDSCMNet.Height + 5)
         txtIRCDebug.Width = dgvDSCMNet.Width
-
-        txtHelpView.Width = dgvMPNodes.Width
-        txtHelpView.Height = dgvMPNodes.Height
 
         dgvFavoriteNodes.Height = Me.Height - 225
         dgvRecentNodes.Height = Me.Height - 225
