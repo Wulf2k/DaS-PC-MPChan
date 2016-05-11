@@ -93,14 +93,24 @@ Public Class DSNode
             Return CharacterName
         End Get
     End Property
-    Public ReadOnly Property SoulLevelColumn As Integer
+    Public ReadOnly Property SoulLevelColumn As String
+        Get
+            Return If(SoulLevel >= 0, SoulLevel, "")
+        End Get
+    End Property
+    Public ReadOnly Property SoulLevelColumnSort As Integer
         Get
             Return SoulLevel
         End Get
     End Property
-    Public ReadOnly Property MPZoneColumn As Integer
+    Public ReadOnly Property MPZoneColumn As String
         Get
-            Return MPZone
+            Return If(MPZone <= 0, "", MPZone)
+        End Get
+    End Property
+    Public ReadOnly Property MPZoneColumnSort As Integer
+        Get
+            Return If(MPZone <= 0, 0, MPZone)
         End Get
     End Property
     Public ReadOnly Property PhantomTypeText As String
@@ -139,7 +149,11 @@ Public Class DSNode
             End If
         End Get
     End Property
-
+    Public ReadOnly Property IndictmentsColumnSort As Integer
+        Get
+            Return Indictments
+        End Get
+    End Property
 
     Public Function canCoop(other As DSNode) As Boolean
         Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)

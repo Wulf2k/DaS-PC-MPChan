@@ -2,6 +2,7 @@
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Net.Sockets
+Imports System.ComponentModel
 
 
 Public Class DSCM
@@ -32,8 +33,8 @@ Public Class DSCM
 
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _ircClient As IRCClient = Nothing
-    Private ircDisplayList As New SortableBindingList(Of DSNode)(New List(Of DSNode))
-    
+    Private ircDisplayList As New SortableBindingList(Of DSNode)()
+
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
     Private Sub DSCM_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
@@ -85,6 +86,7 @@ Public Class DSCM
             .Columns(5).ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+            .SelectionMode = DataGridViewSelectionMode.FullRowSelect
         End With
 
         With dgvFavoriteNodes
@@ -99,6 +101,7 @@ Public Class DSCM
             .Columns(2).ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+            .SelectionMode = DataGridViewSelectionMode.FullRowSelect
         End With
 
         With dgvRecentNodes
@@ -116,6 +119,7 @@ Public Class DSCM
             .Columns(3).ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+            .SelectionMode = DataGridViewSelectionMode.FullRowSelect
         End With
 
         With dgvDSCMNet
@@ -131,6 +135,7 @@ Public Class DSCM
             .Columns.Add("soulLevel", "SL")
             .Columns("soulLevel").Width = 40
             .Columns("soulLevel").DataPropertyName = "SoulLevelColumn"
+            .Columns("soulLevel").DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Columns.Add("phantomType", "Phantom Type")
             .Columns("phantomType").Width = 70
             .Columns("phantomType").DataPropertyName = "PhantomTypeText"
@@ -146,8 +151,11 @@ Public Class DSCM
             .Columns.Add("indictments", "Sin")
             .Columns("indictments").Width = 60
             .Columns("indictments").DataPropertyName = "IndictmentsColumn"
+            .Columns("indictments").DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Font = New Font("Consolas", 10)
-            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+            .SelectionMode = DataGridViewSelectionMode.FullRowSelect
+            .Sort(.Columns("steamId"), ListSortDirection.Ascending)
+            .Sort(.Columns("soulLevel"), ListSortDirection.Descending)
         End With
 
 
@@ -348,33 +356,43 @@ Public Class DSCM
             txtCurrNodes.Text = dsProcess.NodeCount
         End If
 
-        ' Sync IRC Nodes from client to display list
+        updateIrcInfo()
+    End Sub
+    Private Sub updateIrcInfo()
         If _ircClient IsNot Nothing Then
+            Dim firstDisplayRow = dgvDSCMNet.FirstDisplayedScrollingRowIndex
             Dim seenNodes As New HashSet(Of String)
             For i = ircDisplayList.Count - 1 To 0 Step -1
                 Dim node As DSNode = ircDisplayList(i)
                 If Not _ircClient.ircNodes.ContainsKey(node.SteamId) Then
                     ircDisplayList.RemoveAt(i)
+                    If i < firstDisplayRow Then firstDisplayRow -= 1
                 Else
                     seenNodes.Add(node.SteamId)
                     Dim ircNode As DSNode = _ircClient.ircNodes(node.SteamId).Item1
                     If Not node.MemberwiseEquals(ircNode) Then
-                        ircDisplayList(i) = ircNode
+                        ircDisplayList.ReplaceSorted(i, ircNode)
                     End If
                 End If
             Next
             For Each t In _ircClient.ircNodes.Values
                 If Not seenNodes.Contains(t.Item1.SteamId) Then
-                    ircDisplayList.Add(t.Item1)
+                    Dim index = ircDisplayList.InsertSorted(t.Item1)
+                    If index < firstDisplayRow Then firstDisplayRow += 1
                 End If
             Next
+            If firstDisplayRow >= 0 And firstDisplayRow < ircDisplayList.Count Then
+                dgvDSCMNet.FirstDisplayedScrollingRowIndex = firstDisplayRow
+            Else
+                Dim x =  6
+            End If
         End If
 
-        If chkDSCMNet.Checked and Not tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")" Then
+        If Not tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")" Then
             tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
         End If
     End Sub
-    Private Shared Sub hotkeyTimer_Tick() Handles hotkeytimer.Tick
+    Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
         Dim ctrlkey As Boolean
         Dim oneKey As Boolean 'Toggle Node Display
         Dim twoKey As Boolean 'Previously toggled NamedNodes, now a free hotkey.
