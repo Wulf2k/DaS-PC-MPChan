@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!--                                                                                   -->
+    <!-- ILMerge project-specific settings. Almost never need to be set explicitly.       -->
+    <!-- for details, see http://research.microsoft.com/en-us/people/mbarnett/ilmerge.aspx -->
+    <!--                                                                                   -->
+    <!-- *** set this file to Type=None, CopyToOutput=Never ***                            -->
+
+    <!-- Extra ILMerge library paths (semicolon-separated). Dont put your package dependencies here, they will be added automagically -->
+    <ILMergeLibraryPath></ILMergeLibraryPath>
+
+    <!-- The solution NuGet package directory if not standard 'SOLUTION\packages' -->
+    <ILMergePackagesPath></ILMergePackagesPath>
+
+    <!-- The merge order file name if differs from standard 'ILMergeOrder.txt' -->
+    <ILMergeOrderFile></ILMergeOrderFile>
+
+    <!-- The strong key file name if not specified in the project -->
+    <ILMergeKeyFile></ILMergeKeyFile>
+
+    <!-- The assembly version if differs for the version of the main assembly -->
+    <ILMergeAssemblyVersion></ILMergeAssemblyVersion>
+  </PropertyGroup>
+</Project>

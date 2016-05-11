@@ -248,14 +248,14 @@ Public Class DarkSoulsProcess
         Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
 
         'Adjust the jump home
-        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpPtr, UInt32))
+        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpPtr, Int32))
         Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
         WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
 
         If ReadUInt8(nodeDumpPtr) = &H50& Then
             'Insert the hook
             bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr - hookLoc - 5, UInt32))
+            bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr - hookLoc - 5, Int32))
             Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
         Else
@@ -353,7 +353,7 @@ Public Class DarkSoulsProcess
             &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
         'Set steam_api.SteamNetworking call
-        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, UInt32))
+        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, Int32))
         Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
 
         Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
@@ -443,7 +443,8 @@ Public Class DarkSoulsProcess
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
         Dim _rtnBytes(0) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 1, vbNull)
-        Return _rtnBytes(0)
+        If _rtnBytes(0) < 128 Then Return _rtnBytes(0)
+        Return _rtnBytes(0) - 256
     End Function
     Public Function ReadInt16(ByVal addr As IntPtr) As Int16
         Dim _rtnBytes(1) As Byte
