@@ -12,6 +12,7 @@ Public Class DSCM
     Private WithEvents ircConnectTimer As New System.Windows.Forms.Timer()
     Private WithEvents dsProcessTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
+    Private WithEvents favoritesConnectTimer As New System.Windows.Forms.Timer()
 
     'For hotkey support
     Public Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Integer) As Short
@@ -55,6 +56,9 @@ Public Class DSCM
 
         dsProcessTimer.Interval = 1000
         dsProcessTimer.Start()
+
+        favoritesConnectTimer.Interval = 19000
+        favoritesConnectTimer.Start()
 
         attachDSProcess()
 
@@ -272,6 +276,31 @@ Public Class DSCM
         Catch ex As Exception
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
+    End Sub
+    Private Sub connectToFavorites() Handles favoritesConnectTimer.Tick
+        If (dsProcess Is Nothing OrElse
+                dsProcess.SelfSteamId = "" OrElse
+                dgvFavoriteNodes.RowCount = 0) Then
+            'We can't connect to other players yet
+            Return
+        End If
+        Dim ReservedSteamNodeCount As Integer = 4
+        If dsProcess.NodeCount < dsProcess.MaxNodes - ReservedSteamNodeCount Then
+            Dim blacklist As New List(Of String)
+            For Each n In dsProcess.ConnectedNodes.Values
+                blacklist.Add(n.SteamId)
+            Next
+
+            Dim blackSet As New HashSet(Of String)(blacklist)
+
+            For Each Row In dgvFavoriteNodes.Rows
+                Dim steamId As String = Row.Cells("steamid").Value
+
+                If Not blackSet.Contains(steamId) Then
+                    connectToSteamId(steamId)
+                End If
+            Next
+        End If
     End Sub
     Private Sub connectToIRCNode() Handles ircConnectTimer.Tick
         If (_ircClient Is Nothing OrElse
