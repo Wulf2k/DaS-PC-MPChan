@@ -176,20 +176,20 @@ Public Class DSCM
         'Create regkeys if they don't exist
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
+        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\Options")
 
         'Load favorite node list from registry
         loadFavoriteNodes()
         loadRecentNodes()
+        LoadOptions()
         updateOnlinestate()
+
 
         loadReadme()
 
         onlineTimer.Enabled = True
         onlineTimer.Interval = 10 * 60 * 1000
         onlineTimer.Start()
-
-        chkExpand.Checked = True
-        chkDSCMNet.Checked = True
     End Sub
     Private Sub loadReadme()
         Dim html As XElement =
@@ -237,6 +237,22 @@ Public Class DSCM
             name = name.Split("|")(1)
             dgvRecentNodes.Rows.Add(name, id, tmpRecentID)
         Next
+    End Sub
+    Private Sub loadOptions()
+        Dim key As Microsoft.Win32.RegistryKey
+        Dim regval As String
+
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+
+        regval = key.GetValue("ExpandDSCM")
+        If regval Is Nothing Then key.SetValue("ExpandDSCM", "True")
+
+        regval = key.GetValue("JoinDSCM-Net")
+        If regval Is Nothing Then key.SetValue("JoinDSCM-Net", "True")
+
+
+        chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
+        chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
     End Sub
     Private Sub onlineTimer_Tick() Handles onlineTimer.Tick
         'Contributed by Chronial
@@ -513,6 +529,11 @@ Public Class DSCM
         End If
     End Sub
     Private Sub chkExpand_CheckedChanged(sender As Object, e As EventArgs) Handles chkExpand.CheckedChanged
+        Dim key As Microsoft.Win32.RegistryKey
+
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+        key.SetValue("ExpandDSCM", chkExpand.Checked)
+
         If chkExpand.Checked Then
             Me.Width = 800
             Me.Height = 680
@@ -721,11 +742,16 @@ Public Class DSCM
     End Sub
 
     Private Sub chkDSCMNet_CheckedChanged(sender As Object, e As EventArgs) Handles chkDSCMNet.CheckedChanged
+        Dim key As Microsoft.Win32.RegistryKey
+
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+        key.SetValue("JoinDSCM-Net", chkDSCMNet.Checked)
+
         If chkDSCMNet.Checked Then
             _ircClient = New IRCClient(Me)
             ircConnectTimer.Start()
         Else
-            If _ircClient IsNot Nothing
+            If _ircClient IsNot Nothing Then
                 ircConnectTimer.Stop()
                 _ircClient.Shutdown()
                 _ircClient = Nothing
