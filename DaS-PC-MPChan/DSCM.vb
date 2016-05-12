@@ -33,7 +33,8 @@ Public Class DSCM
 
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _ircClient As IRCClient = Nothing
-    Private ircDisplayList As New SortableBindingList(Of DSNode)()
+    Private ircDisplayList As New DSNodeBindingList()
+    Private activeNodesDisplayList As New DSNodeBindingList()
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
@@ -66,27 +67,33 @@ Public Class DSCM
         Dim AlternateRowColor = Color.FromArgb(&HFFE3E3E3)
 
         With dgvMPNodes
+            .AutoGenerateColumns = False
+            .DataSource = activeNodesDisplayList
             .Columns.Add("name", "Name")
-            .Columns(0).Width = 180
-            .Columns(0).ValueType = GetType(String)
+            .Columns("name").Width = 180
+            .Columns("name").DataPropertyName = "CharacterNameColumn"
             .Columns.Add("steamId", "Steam ID")
-            .Columns(1).Width = 145
-            .Columns(1).ValueType = GetType(String)
+            .Columns("steamId").Width = 145
+            .Columns("steamId").DataPropertyName = "SteamIdColumn"
             .Columns.Add("soulLevel", "SL")
-            .Columns(2).Width = 60
-            .Columns(2).ValueType = GetType(Integer)
+            .Columns("soulLevel").Width = 60
+            .Columns("soulLevel").DataPropertyName = "SoulLevelColumn"
+            .Columns("soulLevel").DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Columns.Add("phantomType", "Phantom Type")
-            .Columns(3).Width = 80
-            .Columns(3).ValueType = GetType(String)
+            .Columns("phantomType").Width = 80
+            .Columns("phantomType").DataPropertyName = "PhantomTypeText"
             .Columns.Add("mpArea", "MP Area")
-            .Columns(4).Width = 80
-            .Columns(4).ValueType = GetType(Integer)
+            .Columns("mpArea").Width = 60
+            .Columns("mpArea").DataPropertyName = "MPZoneColumn"
             .Columns.Add("world", "World")
-            .Columns(5).Width = 200
-            .Columns(5).ValueType = GetType(String)
+            .Columns("world").Width = 200
+            .Columns("world").DataPropertyName = "WorldText"
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
+            .Sort(.Columns("soulLevel"), ListSortDirection.Ascending)
+            .Sort(.Columns("mpArea"), ListSortDirection.Ascending)
+            .Sort(.Columns("world"), ListSortDirection.Descending)
         End With
 
         With dgvFavoriteNodes
@@ -105,6 +112,7 @@ Public Class DSCM
         End With
 
         With dgvRecentNodes
+            .AutoGenerateColumns = False
             .Columns.Add("name", "Name")
             .Columns(0).Width = 180
             .Columns(0).ValueType = GetType(String)
@@ -356,38 +364,8 @@ Public Class DSCM
             txtCurrNodes.Text = dsProcess.NodeCount
         End If
 
-        updateIrcInfo()
-    End Sub
-    Private Sub updateIrcInfo()
         If _ircClient IsNot Nothing Then
-            Dim firstDisplayRow = dgvDSCMNet.FirstDisplayedScrollingRowIndex
-            Dim seenNodes As New HashSet(Of String)
-            Dim i As Integer = -1
-            While i < ircDisplayList.Count - 1
-                i += 1
-                Dim node As DSNode = ircDisplayList(i)
-                If Not _ircClient.ircNodes.ContainsKey(node.SteamId) Then
-                    ircDisplayList.RemoveAt(i)
-                    i -= 1
-                    If i < firstDisplayRow Then firstDisplayRow -= 1
-                Else
-                    seenNodes.Add(node.SteamId)
-                    Dim ircNode As DSNode = _ircClient.ircNodes(node.SteamId).Item1
-                    If Not node.MemberwiseEquals(ircNode) Then
-                        ircDisplayList.ReplaceSorted(i, ircNode)
-                        i -= 1
-                    End If
-                End If
-            End While
-            For Each t In _ircClient.ircNodes.Values
-                If Not seenNodes.Contains(t.Item1.SteamId) Then
-                    Dim index = ircDisplayList.InsertSorted(t.Item1)
-                    If index < firstDisplayRow Then firstDisplayRow += 1
-                End If
-            Next
-            If firstDisplayRow >= 0 And firstDisplayRow < ircDisplayList.Count Then
-                dgvDSCMNet.FirstDisplayedScrollingRowIndex = firstDisplayRow
-            End If
+            ircDisplayList.SyncWithDict(_ircClient.ircNodes, Function(x) x.Item1, dgvDSCMNet)
         End If
 
         If Not tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")" Then
@@ -474,15 +452,15 @@ Public Class DSCM
     End Sub
 
     Private Sub refMpData_Tick() Handles refMpData.Tick
-        Dim nodes As Dictionary(Of String, DSNode)
+        Dim nodes As New Dictionary(Of String, DSNode)
         Dim selfNode As DSNode = Nothing
-        If dsProcess Is Nothing Then
-            nodes = New Dictionary(Of String, DSNode)()
-        Else
+        If dsProcess IsNot Nothing Then
             dsProcess.UpdateNodes()
             If dsProcess.SelfNode.SteamId Is Nothing Then Return
-            nodes = New Dictionary(Of String, DSNode)(dsProcess.ConnectedNodes)
-            selfNode = dsProcess.SelfNode
+            For Each kv In dsProcess.ConnectedNodes
+                nodes(kv.Key) = kv.Value.Clone()
+            Next
+            selfNode = dsProcess.SelfNode.Clone()
         End If
 
         If _ircClient IsNot Nothing
@@ -492,39 +470,12 @@ Public Class DSCM
         If selfNode IsNot Nothing Then
             nodes.Add(selfNode.SteamId, selfNode)
         End If
-        For Each node As DSNode In nodes.Values
-            Dim row As DataGridViewRow = Nothing
-            For j = 0 To dgvMPNodes.Rows.Count - 1
-                If dgvMPNodes.Rows(j).Cells("steamId").Value = node.SteamId Then
-                    row = dgvMPNodes.Rows(j)
-                End If
-            Next
-            If row Is Nothing Then
-                Dim rowIndex = dgvMPNodes.Rows.Add()
-                row = dgvMPNodes.Rows(rowIndex)
-            End If
-            row.Cells("name").Value = node.CharacterName
-            row.Cells("steamId").Value = node.SteamId
-            row.Cells("soulLevel").Value = node.SoulLevel
-            row.Cells("phantomType").Value = node.PhantomTypeText
-            row.Cells("mpArea").Value = node.MPZone
-            row.Cells("world").Value = node.WorldText
-        Next
-       
-        'Delete old nodes.
-        For i = dgvMPNodes.Rows.Count - 1 To 0 Step -1
-            If Not nodes.ContainsKey(dgvMPNodes.Rows(i).Cells("steamId").Value) Then
-                dgvMPNodes.Rows.Remove(dgvMPNodes.Rows(i))
-            End If
-        Next
+        activeNodesDisplayList.SyncWithDict(nodes)
         updateRecentNodes()
     End Sub
     Private Sub updateRecentNodes()
         Dim key As Microsoft.Win32.RegistryKey
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\RecentNodes", True)
-
-        Dim id As String
-        Dim name As String
 
         Dim recentNodeDict As New Dictionary(Of String, DataGridViewRow)
         For Each row In dgvRecentNodes.Rows
@@ -532,17 +483,15 @@ Public Class DSCM
         Next
 
         Dim currentTime As Long = (DateTime.UtcNow - New DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds
-        For Each row In dgvMPNodes.Rows
-            name = row.Cells("name").Value
-            id = row.Cells("steamId").Value
-            If id <> txtSelfSteamID.Text Then
-                If Not recentNodeDict.ContainsKey(id)
-                    dgvRecentNodes.Rows.Add(name, id, currentTime, "Y")
+        For Each node In activeNodesDisplayList
+            If node.SteamId <> txtSelfSteamID.Text Then
+                If Not recentNodeDict.ContainsKey(node.SteamId)
+                    dgvRecentNodes.Rows.Add(node.CharacterName, node.SteamId, currentTime, "Y")
                 Else
-                    recentNodeDict(id).Cells("orderId").Value = currentTime
+                    recentNodeDict(node.SteamId).Cells("orderId").Value = currentTime
                 End If
             End If
-            key.SetValue(id, currentTime.ToString() & "|" & name)
+            key.SetValue(node.SteamId, currentTime.ToString() & "|" & node.CharacterName)
         Next
 
         'Limit recent nodes to 70
@@ -552,10 +501,9 @@ Public Class DSCM
                 recentNodes.Add(row)
             Next
 
-            'Breaking this to fix int32 errors.  Fix later.
             recentNodes = recentNodes.OrderBy(Function(row) CType(row.Cells("orderId").Value, Long)).ToList()
             For i  = 0 To dgvRecentNodes.Rows.Count - 70
-                id = recentNodes(i).Cells(1).Value
+                Dim id As String = recentNodes(i).Cells(1).Value
                 dgvRecentNodes.Rows.Remove(recentNodes(i))
 
                 If Not key.GetValue(id) Is Nothing Then
