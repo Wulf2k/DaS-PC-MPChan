@@ -24,6 +24,7 @@ Class SortComparer(Of T)
         Next
         Return 0
     End Function
+
 End Class
 
 Public Class SortableBindingList(Of T)
@@ -110,4 +111,81 @@ Public Class SortableBindingList(Of T)
             Return _listSortDescriptors(0).SortDirection
         End Get
     End Property
+End Class
+
+Public Class DSNodeBindingList
+    Inherits SortableBindingList(Of DSNode)
+    Public Sub SyncWithDict(dict As IDictionary(Of String, DSNode), _
+                            Optional dgv As DataGridView = Nothing)
+        SyncWithDict(dict, Function(x) x, dgv)
+    End Sub
+    Public Sub SyncWithDict(Of T)(dict As IDictionary(Of String, T), _
+                            getValue As Func(Of T, DSNode), _
+                            Optional dgv As DataGridView = Nothing)
+        ' If dgv is passed, its currently displayed top row is fixed in place
+        Dim firstDisplayRow As Integer = 0
+        If dgv IsNot Nothing Then firstDisplayRow = dgv.FirstDisplayedScrollingRowIndex
+        Dim seenNodes As New HashSet(Of String)
+        Dim i As Integer = -1
+        While i < Me.Count - 1
+            i += 1
+            Dim node As DSNode = Me(i)
+            If Not dict.ContainsKey(node.SteamId) Then
+                Me.RemoveAt(i)
+                i -= 1
+                If i < firstDisplayRow Then firstDisplayRow -= 1
+            Else
+                seenNodes.Add(node.SteamId)
+                Dim otherNode As DSNode = getValue(dict(node.SteamId))
+                If Not node.MemberwiseEquals(otherNode) Then
+                    Me.ReplaceSorted(i, otherNode)
+                    i -= 1
+                End If
+            End If
+        End While
+        For Each t In dict.Values
+            If Not seenNodes.Contains(getValue(t).SteamId) Then
+                Dim index = Me.InsertSorted(getValue(t))
+                If index < firstDisplayRow Then firstDisplayRow += 1
+            End If
+        Next
+        If dgv IsNot Nothing And firstDisplayRow >= 0 And firstDisplayRow < Me.Count Then
+            dgv.FirstDisplayedScrollingRowIndex = firstDisplayRow
+        End If
+    End Sub
+    Private Sub moved(sender As Object, e As ListChangedEventArgs) Handles Me.ListChanged
+        If e.ListChangedType = ListChangedType.ItemMoved Then
+            If Me.Items(e.NewIndex).CharacterName = "Chronial" Or Me.Items(e.OldIndex).CharacterName = "Chronial" Then
+                Dim x = 5
+
+            End If
+            End If
+    End Sub
+End Class
+
+
+Public Class ExtendedDataGridView
+    Inherits DataGridView
+    Private Sub listenToMoves() Handles Me.DataSourceChanged
+        AddHandler DirectCast(Me.DataSource, IBindingList).ListChanged, AddressOf rowMoved
+    End Sub
+    Private Sub rowMoved(sender As Object, e As ListChangedEventArgs)
+        If e.ListChangedType = ListChangedType.ItemMoved Then
+            Dim selectedIndex = Me.CurrentCell.RowIndex
+            If e.OldIndex = selectedIndex Then
+                If e.OldIndex <> e.NewIndex Then
+                    selectedIndex = e.NewIndex - 1
+                End If
+            ElseIf e.NewIndex <> selectedIndex  Then
+                If (e.NewIndex > selectedIndex) <> (e.OldIndex > selectedIndex) Then
+                    If e.NewIndex > selectedIndex Then
+                        selectedIndex -= 1
+                    Else
+                        selectedIndex += 1
+                    End If
+                End If
+            End If
+            Me.CurrentCell = Me.Rows(selectedIndex).Cells(Me.CurrentCell.ColumnIndex)
+        End If
+    End Sub
 End Class

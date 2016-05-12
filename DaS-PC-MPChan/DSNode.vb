@@ -56,6 +56,9 @@ Public Class DSNode
     Public Indictments As Integer = -1
 
 
+    Public Function Clone() As DSNode
+        Return DirectCast(Me.MemberwiseClone(), DSNode)
+    End Function
     Public Function MemberwiseEquals(other As DSNode) As Boolean
         If Object.ReferenceEquals(Me, other) Then Return True
         Return (
