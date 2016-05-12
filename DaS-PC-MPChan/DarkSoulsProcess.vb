@@ -192,14 +192,14 @@ Public Class DarkSoulsProcess
                             &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
 
                 'Modify final JMP above to return to instruction after original hook
-                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodePtr, UInt32))
+                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodePtr, Int32))
                 Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
                 WriteProcessMemory(_targetProcessHandle, namedNodePtr, bytes, TargetBufferSize, 0)
 
                 If ReadUInt8(namedNodePtr) = &H8B& Then
                     'Insert hook to jump to allocated memory above
                     bytes = {&HE9, 0, 0, 0, 0}
-                    bytes2 = BitConverter.GetBytes(CType(namedNodePtr - hookLoc - 5, UInt32))
+                    bytes2 = BitConverter.GetBytes(CType(namedNodePtr - hookLoc - 5, Int32))
                     Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                     WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
                 Else
