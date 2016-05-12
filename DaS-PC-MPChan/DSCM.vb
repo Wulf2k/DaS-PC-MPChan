@@ -358,17 +358,22 @@ Public Class DSCM
             If newstablever Then lblNewVersion.Text = "New stable version available"
         End If
 
-
-        If dsProcess IsNot Nothing
+        If dsProcess Is Nothing
+            nmbMaxNodes.Enabled = False
+            nmbMaxNodes.BackColor = New Color()
+        Else
             'Node display
             'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
             chkDebugDrawing.Checked = dsProcess.DrawNodes
 
             Dim maxNodes = dsProcess.MaxNodes
-            If maxNodes <> 0
-                If maxnodes >= nmbMaxNodes.Minimum And maxnodes <= nmbMaxNodes.Maximum Then
-                    nmbMaxNodes.Value = maxnodes
-                End If
+            If maxNodes > nmbMaxNodes.Minimum And maxNodes < nmbMaxNodes.Maximum Then
+                nmbMaxNodes.Value = dsProcess.MaxNodes
+                nmbMaxNodes.Enabled = True
+                nmbMaxNodes.BackColor = New Color()
+            Else
+                nmbMaxNodes.Enabled = False
+                nmbMaxNodes.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
             End If
             
             'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.

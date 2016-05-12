@@ -273,17 +273,19 @@ Public Class DarkSoulsProcess
     Public Property MaxNodes As Integer
         Get
             Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F834)
+            tmpptr = ReadInt32(dsBase + &HF7F838)
             tmpptr = ReadInt32(tmpptr + &H38)
             If Not tmpptr = 0 Then
-                Return ReadInt32(tmpptr + &H70)
+                Dim value = ReadInt32(tmpptr + &H70)
+                If value > 64 Then Return -1
+                Return value
             Else
-                Return 0
+                Return -1
             End If
         End Get
         Set(value As Integer)
             Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F834)
+            tmpptr = ReadInt32(dsBase + &HF7F838)
             tmpptr = ReadInt32(tmpptr + &H38)
             WriteInt32(tmpptr + &H70, value)
         End Set
