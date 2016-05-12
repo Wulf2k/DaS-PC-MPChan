@@ -362,19 +362,23 @@ Public Class DSCM
         If _ircClient IsNot Nothing Then
             Dim firstDisplayRow = dgvDSCMNet.FirstDisplayedScrollingRowIndex
             Dim seenNodes As New HashSet(Of String)
-            For i = ircDisplayList.Count - 1 To 0 Step -1
+            Dim i As Integer = -1
+            While i < ircDisplayList.Count - 1
+                i += 1
                 Dim node As DSNode = ircDisplayList(i)
                 If Not _ircClient.ircNodes.ContainsKey(node.SteamId) Then
                     ircDisplayList.RemoveAt(i)
+                    i -= 1
                     If i < firstDisplayRow Then firstDisplayRow -= 1
                 Else
                     seenNodes.Add(node.SteamId)
                     Dim ircNode As DSNode = _ircClient.ircNodes(node.SteamId).Item1
                     If Not node.MemberwiseEquals(ircNode) Then
                         ircDisplayList.ReplaceSorted(i, ircNode)
+                        i -= 1
                     End If
                 End If
-            Next
+            End While
             For Each t In _ircClient.ircNodes.Values
                 If Not seenNodes.Contains(t.Item1.SteamId) Then
                     Dim index = ircDisplayList.InsertSorted(t.Item1)
@@ -383,8 +387,6 @@ Public Class DSCM
             Next
             If firstDisplayRow >= 0 And firstDisplayRow < ircDisplayList.Count Then
                 dgvDSCMNet.FirstDisplayedScrollingRowIndex = firstDisplayRow
-            Else
-                Dim x =  6
             End If
         End If
 
