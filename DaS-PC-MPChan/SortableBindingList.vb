@@ -174,7 +174,11 @@ Public Class ExtendedDataGridView
             Dim selectedIndex = Me.CurrentCell.RowIndex
             If e.OldIndex = selectedIndex Then
                 If e.OldIndex <> e.NewIndex Then
-                    selectedIndex = e.NewIndex - 1
+                    If e.OldIndex < e.NewIndex Then
+                        selectedIndex = e.NewIndex - 1
+                    Else
+                        selectedIndex = e.NewIndex + 1
+                    End If
                 End If
             ElseIf e.NewIndex <> selectedIndex  Then
                 If (e.NewIndex > selectedIndex) <> (e.OldIndex > selectedIndex) Then
