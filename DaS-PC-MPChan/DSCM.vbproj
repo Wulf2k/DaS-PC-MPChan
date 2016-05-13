@@ -67,6 +67,12 @@
     <ApplicationIcon>
     </ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Wulf2k-DSCM.pfx</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommonMark">
       <HintPath>..\packages\CommonMark.NET.0.12.0\lib\net45\CommonMark.dll</HintPath>
@@ -120,9 +126,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="SortableBindingList.vb">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="SortableBindingList.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DSCM.resx">
@@ -148,6 +152,7 @@
     </None>
     <None Include="App.config" />
     <None Include="Resources\Readme--copy.md" />
+    <None Include="Wulf2k-DSCM.pfx" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">

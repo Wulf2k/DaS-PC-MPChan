@@ -38,7 +38,7 @@ Partial Class DSCM
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
         Me.chkExpand = New System.Windows.Forms.CheckBox()
-        Me.dgvMPNodes = New ExtendedDataGridView()
+        Me.dgvMPNodes = New Global.DSCM.ExtendedDataGridView()
         Me.txtCurrNodes = New System.Windows.Forms.TextBox()
         Me.lblNodes = New System.Windows.Forms.Label()
         Me.lblNodeDiv = New System.Windows.Forms.Label()
@@ -56,7 +56,7 @@ Partial Class DSCM
         Me.dgvRecentNodes = New System.Windows.Forms.DataGridView()
         Me.tabDSCMNet = New System.Windows.Forms.TabPage()
         Me.txtIRCDebug = New System.Windows.Forms.TextBox()
-        Me.dgvDSCMNet = New ExtendedDataGridView()
+        Me.dgvDSCMNet = New Global.DSCM.ExtendedDataGridView()
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
@@ -99,7 +99,7 @@ Partial Class DSCM
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.05.09.14"
+        Me.lblVer.Text = "2016.05.12.22"
         '
         'chkExpand
         '
@@ -542,7 +542,6 @@ End Sub
     Friend WithEvents chkDebugDrawing As System.Windows.Forms.CheckBox
     Friend WithEvents lblVer As Label
     Friend WithEvents chkExpand As CheckBox
-    Friend WithEvents dgvMPNodes As DataGridView
     Friend WithEvents txtCurrNodes As TextBox
     Friend WithEvents lblNodes As Label
     Friend WithEvents lblNodeDiv As Label
@@ -563,10 +562,11 @@ End Sub
     Friend WithEvents lblNewVersion As Label
     Friend WithEvents lblUrl As Label
     Friend WithEvents tabDSCMNet As TabPage
-    Friend WithEvents dgvDSCMNet As DataGridView
     Friend WithEvents chkDSCMNet As CheckBox
     Friend WithEvents txtIRCDebug As System.Windows.Forms.TextBox
     Friend WithEvents dsProcessStatus As System.Windows.Forms.TextBox
     Friend WithEvents tabHelp As System.Windows.Forms.TabPage
     Friend WithEvents helpView As System.Windows.Forms.WebBrowser
+    Friend WithEvents dgvMPNodes As Global.DSCM.ExtendedDataGridView
+    Friend WithEvents dgvDSCMNet As Global.DSCM.ExtendedDataGridView
 End Class
