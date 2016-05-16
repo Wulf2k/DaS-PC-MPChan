@@ -68,7 +68,7 @@
     </ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>Wulf2k-DSCM.pfx</AssemblyOriginatorKeyFile>
@@ -126,7 +126,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="SortableBindingList.vb" />
+    <Compile Include="SortableBindingList.vb">
+      <SubType>Component</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DSCM.resx">

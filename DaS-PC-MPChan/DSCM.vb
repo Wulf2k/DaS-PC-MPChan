@@ -350,9 +350,8 @@ Public Class DSCM
         Dim dbgboost As Integer = 0
         Dim tmpptr As Integer = 0
 
-        'Text indicating new version is hidden if DSCM is expanded, only care if it's seen at the start anyway.
         If newtestver Or newstablever Then
-            lblNewVersion.Visible = true
+            lblNewVersion.Visible = True
             lblUrl.Visible = lblNewVersion.Visible
             If newtestver Then lblNewVersion.Text = "New testing version available"
             If newstablever Then lblNewVersion.Text = "New stable version available"
