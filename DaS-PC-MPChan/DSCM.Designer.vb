@@ -65,6 +65,12 @@ Partial Class DSCM
         Me.lblUrl = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
+        Me.tabDarkmoon = New System.Windows.Forms.TabPage()
+        Me.DkmSinnersOnlyHelpLabel = New System.Windows.Forms.Label()
+        Me.DkmCheckBoxSinnersOnly = New System.Windows.Forms.CheckBox()
+        Me.DkmPrefHelpTextBox = New System.Windows.Forms.TextBox()
+        Me.DkmPrefBoxLabel = New System.Windows.Forms.Label()
+        Me.DkmPrefBox = New System.Windows.Forms.ComboBox()
         CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).BeginInit
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabs.SuspendLayout
@@ -75,7 +81,8 @@ Partial Class DSCM
         CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabDSCMNet.SuspendLayout
         CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).BeginInit
-        Me.tabHelp.SuspendLayout
+        Me.tabHelp.SuspendLayout()
+        Me.tabDarkmoon.SuspendLayout()
         Me.SuspendLayout
         '
         'chkDebugDrawing
@@ -243,6 +250,7 @@ Partial Class DSCM
         Me.tabs.Controls.Add(Me.tabFavorites)
         Me.tabs.Controls.Add(Me.tabRecent)
         Me.tabs.Controls.Add(Me.tabDSCMNet)
+        Me.tabs.Controls.Add(Me.tabDarkmoon)
         Me.tabs.Controls.Add(Me.tabHelp)
         Me.tabs.Location = New System.Drawing.Point(10, 115)
         Me.tabs.Name = "tabs"
@@ -432,6 +440,70 @@ Partial Class DSCM
         Me.helpView.Size = New System.Drawing.Size(751, 458)
         Me.helpView.TabIndex = 0
         '
+        'tabDarkmoon
+        '
+        Me.tabDarkmoon.BackColor = System.Drawing.SystemColors.Control
+        Me.tabDarkmoon.Controls.Add(Me.DkmSinnersOnlyHelpLabel)
+        Me.tabDarkmoon.Controls.Add(Me.DkmCheckBoxSinnersOnly)
+        Me.tabDarkmoon.Controls.Add(Me.DkmPrefHelpTextBox)
+        Me.tabDarkmoon.Controls.Add(Me.DkmPrefBoxLabel)
+        Me.tabDarkmoon.Controls.Add(Me.DkmPrefBox)
+        Me.tabDarkmoon.Location = New System.Drawing.Point(4, 22)
+        Me.tabDarkmoon.Margin = New System.Windows.Forms.Padding(2)
+        Me.tabDarkmoon.Name = "tabDarkmoon"
+        Me.tabDarkmoon.Padding = New System.Windows.Forms.Padding(2)
+        Me.tabDarkmoon.Size = New System.Drawing.Size(757, 464)
+        Me.tabDarkmoon.TabIndex = 5
+        Me.tabDarkmoon.Text = "Darkmoon"
+        '
+        'DkmSinnersOnlyHelpLabel
+        '
+        Me.DkmSinnersOnlyHelpLabel.Location = New System.Drawing.Point(5, 120)
+        Me.DkmSinnersOnlyHelpLabel.Name = "DkmSinnersOnlyHelpLabel"
+        Me.DkmSinnersOnlyHelpLabel.Size = New System.Drawing.Size(308, 83)
+        Me.DkmSinnersOnlyHelpLabel.TabIndex = 4
+        Me.DkmSinnersOnlyHelpLabel.Text = resources.GetString("DkmSinnersOnlyHelpLabel.Text")
+        '
+        'DkmCheckBoxSinnersOnly
+        '
+        Me.DkmCheckBoxSinnersOnly.AutoSize = True
+        Me.DkmCheckBoxSinnersOnly.Location = New System.Drawing.Point(5, 100)
+        Me.DkmCheckBoxSinnersOnly.Name = "DkmCheckBoxSinnersOnly"
+        Me.DkmCheckBoxSinnersOnly.Size = New System.Drawing.Size(205, 17)
+        Me.DkmCheckBoxSinnersOnly.TabIndex = 3
+        Me.DkmCheckBoxSinnersOnly.Text = "[DSCM-Net] Connect only to the guilty"
+        Me.DkmCheckBoxSinnersOnly.UseVisualStyleBackColor = True
+        '
+        'DkmPrefHelpTextBox
+        '
+        Me.DkmPrefHelpTextBox.Location = New System.Drawing.Point(4, 26)
+        Me.DkmPrefHelpTextBox.Margin = New System.Windows.Forms.Padding(2)
+        Me.DkmPrefHelpTextBox.Multiline = True
+        Me.DkmPrefHelpTextBox.Name = "DkmPrefHelpTextBox"
+        Me.DkmPrefHelpTextBox.ReadOnly = True
+        Me.DkmPrefHelpTextBox.Size = New System.Drawing.Size(309, 52)
+        Me.DkmPrefHelpTextBox.TabIndex = 2
+        Me.DkmPrefHelpTextBox.Text = "placeholder"
+        '
+        'DkmPrefBoxLabel
+        '
+        Me.DkmPrefBoxLabel.AutoSize = True
+        Me.DkmPrefBoxLabel.Location = New System.Drawing.Point(7, 7)
+        Me.DkmPrefBoxLabel.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
+        Me.DkmPrefBoxLabel.Name = "DkmPrefBoxLabel"
+        Me.DkmPrefBoxLabel.Size = New System.Drawing.Size(110, 13)
+        Me.DkmPrefBoxLabel.TabIndex = 1
+        Me.DkmPrefBoxLabel.Text = "Preference of Justice:"
+        '
+        'DkmPrefBox
+        '
+        Me.DkmPrefBox.FormattingEnabled = True
+        Me.DkmPrefBox.Location = New System.Drawing.Point(117, 4)
+        Me.DkmPrefBox.Margin = New System.Windows.Forms.Padding(2)
+        Me.DkmPrefBox.Name = "DkmPrefBox"
+        Me.DkmPrefBox.Size = New System.Drawing.Size(95, 21)
+        Me.DkmPrefBox.TabIndex = 0
+        '
         'btnAddFavorite
         '
         Me.btnAddFavorite.Location = New System.Drawing.Point(269, 615)
@@ -534,7 +606,9 @@ Partial Class DSCM
         Me.tabDSCMNet.ResumeLayout(false)
         Me.tabDSCMNet.PerformLayout
         CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).EndInit
-        Me.tabHelp.ResumeLayout(false)
+        Me.tabHelp.ResumeLayout(False)
+        Me.tabDarkmoon.ResumeLayout(False)
+        Me.tabDarkmoon.PerformLayout()
         Me.ResumeLayout(false)
         Me.PerformLayout
 
@@ -569,4 +643,10 @@ End Sub
     Friend WithEvents helpView As System.Windows.Forms.WebBrowser
     Friend WithEvents dgvMPNodes As Global.DSCM.ExtendedDataGridView
     Friend WithEvents dgvDSCMNet As Global.DSCM.ExtendedDataGridView
+    Friend WithEvents tabDarkmoon As TabPage
+    Friend WithEvents DkmSinnersOnlyHelpLabel As Label
+    Friend WithEvents DkmCheckBoxSinnersOnly As CheckBox
+    Friend WithEvents DkmPrefHelpTextBox As TextBox
+    Friend WithEvents DkmPrefBoxLabel As Label
+    Friend WithEvents DkmPrefBox As ComboBox
 End Class

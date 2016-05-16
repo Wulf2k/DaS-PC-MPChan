@@ -97,6 +97,18 @@ favorite nodes (max 100 combined). Steam privacy settings can make a node appear
 offline when they are not.
 
 
+Darkmoon Tab
+------------
+The Darkmoon tab is specifically targeted towards members of the Blades 
+of the Darkmoon Covenant. Here, the player can enable or disable this 
+mode. While enabled (that is, "Preference of Justice" is set to anything 
+besides "Disabled"), some new features will become available. For now, 
+the only thing that can be done is checking the "[DSCM-Net] Connect only 
+to the Guilty" box, which will cause the nodes pulled from DSCM-Net to 
+only be those with at least 1 sin. The user can still get innocent 
+players from Steam though. 
+
+
 Disable FPS Disconnects
 -----------------------
 

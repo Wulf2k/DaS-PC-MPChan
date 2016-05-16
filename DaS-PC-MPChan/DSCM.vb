@@ -166,6 +166,8 @@ Public Class DSCM
             .Sort(.Columns("soulLevel"), ListSortDirection.Descending)
         End With
 
+        InitDarkmoonTab()
+
 
         'Check version number in new thread, so main thread isn't delayed.
         'Compares value on server to date in label on main form
@@ -762,5 +764,44 @@ Public Class DSCM
                 ircDisplayList.Clear()
             End If
         End If
+    End Sub
+
+    Private Sub InitDarkmoonTab()
+        'Darkmoon tab purpose: enhanced matchmaking experience for members of the "Blade of the Darkmoon" covenant.
+        'Intended features:
+        '-Scrape players with sin from DSCM-Net
+        '-Scrape sinners by a preferred order
+        '-Scrape sinners starting closest to player
+        '-Flush nodes of non-sinners to provide space for sinners
+        With tabDarkmoon
+            Dim dkmPreferencesList As New ArrayList()
+            With dkmPreferencesList
+                .Add(New DkmPref("Disabled", 0, "Searching that prefers nodes of sinners is disabled."))
+                .Add(New DkmPref("Indiscriminate", -1, "Justice indiscriminate. Sinners are selected from DSCM-Net without any additional sorting beyond the normal."))
+                '.Add(New DkmPref("Random", 1, "Retribution strikes at random, striking fear into all. Sinners are explicitly selected at random from DSCM-Net."))
+                '.Add(New DkmPref("Weak Sinners", -2, "The power of the Blades of the Darkmoon is overpowering. Sinners are selected from DSCM-Net starting with the ones with the lowest permissible Soul Level."))
+                '.Add(New DkmPref("Strong Sinners", 2, "The Blades of the Darkmoon pursue the most dangerous sinners. Sinners are selected from DSCM-Net starting with the ones with the highest permissible Soul Level."))
+                '.Add(New DkmPref("Petty Sinners", -3, "Even the smallest of crimes do not go unpunished. Sinners are selected from DSCM-Net starting with the ones who have sinned the least."))
+                '.Add(New DkmPref("Dire Sinners", 3, "The most guilty are the ones most deserving of punishment. Sinners are selected from DSCM-Net starting with the ones who have sinned the most."))
+            End With
+            With DkmPrefBox
+                .DataSource = dkmPreferencesList
+                .DisplayMember = "Name"
+                .ValueMember = "Value"
+                .AutoCompleteMode = AutoCompleteMode.Suggest
+                .DropDownStyle = ComboBoxStyle.DropDownList
+                .SelectedIndex = 1
+            End With
+            With DkmPrefHelpTextBox
+                Dim Pref As DkmPref = DkmPrefBox.SelectedItem
+                .Text = Pref.HelpText
+            End With
+        End With
+    End Sub
+
+    Private Sub DkmPrefBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles DkmPrefBox.SelectedIndexChanged
+        Dim PrefBox As ComboBox = sender
+        Dim Pref As DkmPref = DkmPrefBox.SelectedItem
+        DkmPrefHelpTextBox.Text = Pref.HelpText
     End Sub
 End Class
