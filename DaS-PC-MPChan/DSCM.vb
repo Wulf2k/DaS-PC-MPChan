@@ -588,20 +588,26 @@ Public Class DSCM
             Dim reader As XmlTextReader = New XmlTextReader(URLString)
             Dim lastOpen As String = ""
             Do While (reader.Read())
-                Select Case reader.NodeType
-                    Case XmlNodeType.Element 'Display beginning of element.
-                        lastOpen = reader.Name
-                    Case XmlNodeType.Text 'Display the text in each element.
+                Select Case reader.NodeType.ToString
+                    Case XmlNodeType.Element.ToString
+                        lastOpen = reader.Name.ToString
+                    Case XmlNodeType.Text
+                        Console.WriteLine(reader.Value)
                         If lastOpen = "steamID64" Then
                             txtTargetSteamID.Text = reader.Value
                             txtTargetSteamID.Focus()
                             TargetSteamIDConverter.Focus()
                             Exit Do
                         End If
+                    Case "CDATA"
+                        If lastOpen = "error" Then
+                            MsgBox(reader.Value.ToString, MsgBoxStyle.OkOnly)
+                            Exit Do
+                        End If
                 End Select
             Loop
         Catch ex As Net.WebException
-            MsgBox("Cannot retrieve online data !")
+            MsgBox("Cannot retrieve online data !", MsgBoxStyle.OkOnly)
         End Try
     End Sub
     Private Sub connectToSteamId(steamId As String)
