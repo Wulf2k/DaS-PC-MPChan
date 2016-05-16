@@ -161,4 +161,14 @@ Public Class DSNode
     Public Function canCoop(other As DSNode) As Boolean
         Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)
     End Function
+
+    Public Function canInvadeGuilty(other As DSNode) As Boolean
+        If other.Indictments < 1 Then Return False
+        If SoulLevel - other.SoulLevel > 0 Then
+            'Player is invading down
+            Return other.SoulLevel >= Math.Ceiling(0.8 * SoulLevel - 50)
+        End If
+        'Player is invading up
+        Return other.SoulLevel <= Math.Floor(1.1 * SoulLevel + 10)
+    End Function
 End Class

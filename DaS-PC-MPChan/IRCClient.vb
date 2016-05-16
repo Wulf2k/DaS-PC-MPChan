@@ -52,21 +52,42 @@ Public Class IRCClient
         Dim blackSet As New HashSet(Of String)(blacklist)
         blackSet.Add(self.SteamId)
 
+        Dim DkmSelectedPref As DkmPref = DSCM.DkmPrefBox.SelectedItem
         Dim candidates As New List(Of DSNode)
         For Each t In ircNodes.Values
             Dim node As DSNode = t.Item1
+            'WIP: Darkmoon proprocessing for Blacklist
+            If DkmSelectedPref.Value <> 0 Then
+                If DSCM.DkmCheckBoxSinnersOnly.Checked Then
+                    If node.Indictments < 1 Then
+                        Continue For
+                    End If
+                End If
+            End If
             If blackSet.Contains(node.SteamId) Then Continue For
             candidates.Add(node)
         Next
 
         If candidates.Count = 0 Then Return Nothing
 
-        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
+        Dim sorted As IOrderedEnumerable(Of DSNode)
+        If DkmSelectedPref.Value = 0 Then
+            'Standard sorting
+            sorted = candidates _
             .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.World <> "-1--1")) _
             .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
+        Else
+            'Darkmoon sorting, using canInvadeGuilty()
+            sorted = candidates _
+            .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canInvadeGuilty(n)) _
+            .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canInvadeGuilty(n)) _
+            .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canInvadeGuilty(n)) _
+            .ThenByDescending(Function(n) (n.World <> "-1--1")) _
+            .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
+        End If
 
         Return sorted(0)
     End Function
