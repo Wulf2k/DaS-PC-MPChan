@@ -192,14 +192,14 @@ Public Class DarkSoulsProcess
                             &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
 
                 'Modify final JMP above to return to instruction after original hook
-                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodePtr, UInt32))
+                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodePtr, Int32))
                 Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
                 WriteProcessMemory(_targetProcessHandle, namedNodePtr, bytes, TargetBufferSize, 0)
 
                 If ReadUInt8(namedNodePtr) = &H8B& Then
                     'Insert hook to jump to allocated memory above
                     bytes = {&HE9, 0, 0, 0, 0}
-                    bytes2 = BitConverter.GetBytes(CType(namedNodePtr - hookLoc - 5, UInt32))
+                    bytes2 = BitConverter.GetBytes(CType(namedNodePtr - hookLoc - 5, Int32))
                     Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                     WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
                 Else
@@ -248,14 +248,14 @@ Public Class DarkSoulsProcess
         Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
 
         'Adjust the jump home
-        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpPtr, UInt32))
+        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpPtr, Int32))
         Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
         WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
 
         If ReadUInt8(nodeDumpPtr) = &H50& Then
             'Insert the hook
             bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr - hookLoc - 5, UInt32))
+            bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr - hookLoc - 5, Int32))
             Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
         Else
@@ -273,17 +273,19 @@ Public Class DarkSoulsProcess
     Public Property MaxNodes As Integer
         Get
             Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F834)
+            tmpptr = ReadInt32(dsBase + &HF7F838)
             tmpptr = ReadInt32(tmpptr + &H38)
             If Not tmpptr = 0 Then
-                Return ReadInt32(tmpptr + &H70)
+                Dim value = ReadInt32(tmpptr + &H70)
+                If value > 64 Then Return -1
+                Return value
             Else
-                Return 0
+                Return -1
             End If
         End Get
         Set(value As Integer)
             Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F834)
+            tmpptr = ReadInt32(dsBase + &HF7F838)
             tmpptr = ReadInt32(tmpptr + &H38)
             WriteInt32(tmpptr + &H70, value)
         End Set
@@ -353,7 +355,7 @@ Public Class DarkSoulsProcess
             &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
         'Set steam_api.SteamNetworking call
-        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, UInt32))
+        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, Int32))
         Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
 
         Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
@@ -384,10 +386,11 @@ Public Class DarkSoulsProcess
             Dim steamData2 As Integer = ReadInt32(steamData1 + &HC)
             node.SteamId = ReadSteamIdUnicode(steamData2 + &H30)
             node.CharacterName = ReadSteamName(steamData1 + &H30)
-            basicNodeInfo(node.SteamId) = node.CharacterName
             If node.SteamId = SelfSteamId Then
                 SelfNode.SteamId = node.SteamId
                 SelfNode.CharacterName = node.CharacterName
+            Else
+                basicNodeInfo(node.SteamId) = node.CharacterName
             End If
             steamNodesPtr = ReadInt32(steamNodesPtr)
         Next
@@ -442,7 +445,8 @@ Public Class DarkSoulsProcess
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
         Dim _rtnBytes(0) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 1, vbNull)
-        Return _rtnBytes(0)
+        If _rtnBytes(0) < 128 Then Return _rtnBytes(0)
+        Return _rtnBytes(0) - 256
     End Function
     Public Function ReadInt16(ByVal addr As IntPtr) As Int16
         Dim _rtnBytes(1) As Byte

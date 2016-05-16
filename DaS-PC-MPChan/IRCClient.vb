@@ -52,22 +52,18 @@ Public Class IRCClient
         Dim blackSet As New HashSet(Of String)(blacklist)
         blackSet.Add(self.SteamId)
 
-        Dim candidates As New List(Of DSNode)
-
         Dim DkmSelectedPref As DkmPref = DSCM.DkmPrefBox.SelectedItem
-
+        Dim candidates As New List(Of DSNode)
         For Each t In ircNodes.Values
             Dim node As DSNode = t.Item1
-
             'WIP: Darkmoon proprocessing for Blacklist
             If DkmSelectedPref.Value <> 0 Then
                 If DSCM.DkmCheckBoxSinnersOnly.Checked Then
                     If node.Indictments < 1 Then
-                        blackSet.Add(node.SteamId)
+                        Continue For
                     End If
                 End If
             End If
-
             If blackSet.Contains(node.SteamId) Then Continue For
             candidates.Add(node)
         Next
@@ -75,7 +71,6 @@ Public Class IRCClient
         If candidates.Count = 0 Then Return Nothing
 
         Dim sorted As IOrderedEnumerable(Of DSNode)
-
         If DkmSelectedPref.Value = 0 Then
             'Standard sorting
             sorted = candidates _
@@ -94,7 +89,6 @@ Public Class IRCClient
             .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
         End If
 
-        Debug.Print(String.Concat("Dkm: ", sorted(0).CharacterName, ", SL ", sorted(0).SoulLevel, ", Sin ", sorted(0).Indictments))
         Return sorted(0)
     End Function
 
@@ -124,7 +118,7 @@ Public Class IRCClient
     End Sub
 
     Private Sub connectToServer()
-        Dim nick As String = "DSCM-Dkm[" & mainWindow.Version.Replace(".", "-") & "]" & Guid.NewGuid.ToString().Split("-")(0)
+        Dim nick As String = "DSCM[" & mainWindow.Version.Replace(".", "-") & "]" & Guid.NewGuid.ToString().Split("-")(0)
         Dim owner As String = "DSCMbot"
         Dim server As String = "dscm.wulf2k.ca"
         Dim port As Integer = 8123
