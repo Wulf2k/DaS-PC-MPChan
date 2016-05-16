@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Net.Sockets
 Imports System.ComponentModel
-
+Imports System.Xml
 
 Public Class DSCM
     'Timers
@@ -181,7 +181,7 @@ Public Class DSCM
         'Load favorite node list from registry
         loadFavoriteNodes()
         loadRecentNodes()
-        LoadOptions()
+        loadOptions()
         updateOnlinestate()
 
 
@@ -345,7 +345,7 @@ Public Class DSCM
             End If
         End If
     End Sub
-    
+
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
         Dim tmpptr As Integer = 0
@@ -357,7 +357,7 @@ Public Class DSCM
             If newstablever Then lblNewVersion.Text = "New stable version available"
         End If
 
-        If dsProcess Is Nothing
+        If dsProcess Is Nothing Then
             nmbMaxNodes.Enabled = False
             nmbMaxNodes.BackColor = New Color()
         Else
@@ -371,10 +371,9 @@ Public Class DSCM
                 nmbMaxNodes.Enabled = True
                 nmbMaxNodes.BackColor = New Color()
             Else
-                nmbMaxNodes.Enabled = False
                 nmbMaxNodes.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
             End If
-            
+
             'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.
             'Probably don't need to update this more than once anyway, but why not?
             If Not txtSelfSteamID.Focused Then
@@ -438,6 +437,7 @@ Public Class DSCM
         txtSelfSteamID.Location = New Point(Me.Width - 155, 32)
         lblTargetId.Location = New Point(Me.Width - 281, 61)
         txtTargetSteamID.Location = New Point(Me.Width - 155, 58)
+        TargetSteamIDConverter.Location = New Point(Me.Width - 70, 58)
         btnAttemptId.Location = New Point(Me.Width - 155, 85)
 
         btnAddFavorite.Location = New Point(250, Me.Height - 65)
@@ -445,13 +445,13 @@ Public Class DSCM
     End Sub
 
     Private Sub attachDSProcess() Handles dsProcessTimer.Tick
-        If dsProcess isNot Nothing Then
-            If Not dsProcess.IsAttached
+        If dsProcess IsNot Nothing Then
+            If Not dsProcess.IsAttached Then
                 dsProcess.Dispose()
                 dsProcess = Nothing
             End If
         End If
-        If dsProcess is Nothing Then
+        If dsProcess Is Nothing Then
             Try
                 dsProcess = New DarkSoulsProcess()
                 dsProcessStatus.Text = " Attached to Dark Souls process"
@@ -483,7 +483,7 @@ Public Class DSCM
             selfNode = dsProcess.SelfNode.Clone()
         End If
 
-        If _ircClient IsNot Nothing
+        If _ircClient IsNot Nothing Then
             _ircClient.setLocalNodes(selfNode, nodes.Values)
         End If
 
@@ -505,7 +505,7 @@ Public Class DSCM
         Dim currentTime As Long = (DateTime.UtcNow - New DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds
         For Each node In activeNodesDisplayList
             If node.SteamId <> txtSelfSteamID.Text Then
-                If Not recentNodeDict.ContainsKey(node.SteamId)
+                If Not recentNodeDict.ContainsKey(node.SteamId) Then
                     dgvRecentNodes.Rows.Add(node.CharacterName, node.SteamId, currentTime, "Y")
                 Else
                     recentNodeDict(node.SteamId).Cells("orderId").Value = currentTime
@@ -522,7 +522,7 @@ Public Class DSCM
             Next
 
             recentNodes = recentNodes.OrderBy(Function(row) CType(row.Cells("orderId").Value, Long)).ToList()
-            For i  = 0 To dgvRecentNodes.Rows.Count - 70
+            For i = 0 To dgvRecentNodes.Rows.Count - 70
                 Dim id As String = recentNodes(i).Cells(1).Value
                 dgvRecentNodes.Rows.Remove(recentNodes(i))
 
@@ -578,6 +578,32 @@ Public Class DSCM
             End If
         End If
     End Sub
+    Private Sub TargetSteamIDConverter_Click(sender As Object, e As EventArgs) Handles TargetSteamIDConverter.Click
+        Dim steamname As String = InputBox("Enter steam name:", "SteamName resolver", "", (Me.Width / 2), Me.Height / 2)
+        If steamname Is "" Then
+            Exit Sub
+        End If
+        Dim URLString As String = "http://steamcommunity.com/id/" + steamname + "/?xml=1"
+        Try
+            Dim reader As XmlTextReader = New XmlTextReader(URLString)
+            Dim lastOpen As String = ""
+            Do While (reader.Read())
+                Select Case reader.NodeType
+                    Case XmlNodeType.Element 'Display beginning of element.
+                        lastOpen = reader.Name
+                    Case XmlNodeType.Text 'Display the text in each element.
+                        If lastOpen = "steamID64" Then
+                            txtTargetSteamID.Text = reader.Value
+                            txtTargetSteamID.Focus()
+                            TargetSteamIDConverter.Focus()
+                            Exit Do
+                        End If
+                End Select
+            Loop
+        Catch ex As Net.WebException
+            MsgBox("Cannot retrieve online data !")
+        End Try
+    End Sub
     Private Sub connectToSteamId(steamId As String)
         If dsProcess IsNot Nothing Then
             Try
@@ -599,8 +625,8 @@ Public Class DSCM
         'Added to make future automated connection attempts simpler
         connectToSteamId(txtTargetSteamID.Text)
     End Sub
-    Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
-        dgvRecentNodes.CellEnter, dgvDSCMNet.CellEnter
+    Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellClick,
+        dgvRecentNodes.CellClick, dgvDSCMNet.CellClick
 
         If sender.SelectedCells.Count > 0 Then
             Dim rowindex As Integer = sender.SelectedCells(0).RowIndex
