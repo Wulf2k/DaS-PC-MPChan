@@ -799,4 +799,10 @@ Public Class DSCM
             End With
         End With
     End Sub
+
+    Private Sub DkmPrefBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles DkmPrefBox.SelectedIndexChanged
+        Dim PrefBox As ComboBox = sender
+        Dim Pref As DkmPref = DkmPrefBox.SelectedItem
+        DkmPrefHelpTextBox.Text = Pref.HelpText
+    End Sub
 End Class
