@@ -45,7 +45,6 @@ Partial Class MainWindow
         Me.txtTargetSteamID = New System.Windows.Forms.TextBox()
         Me.lblYourId = New System.Windows.Forms.Label()
         Me.txtSelfSteamID = New System.Windows.Forms.TextBox()
-        Me.lblTargetId = New System.Windows.Forms.Label()
         Me.btnAttemptId = New System.Windows.Forms.Button()
         Me.tabs = New System.Windows.Forms.TabControl()
         Me.tabActive = New System.Windows.Forms.TabPage()
@@ -162,10 +161,11 @@ Partial Class MainWindow
         '
         Me.txtTargetSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtTargetSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.txtTargetSteamID.Location = New System.Drawing.Point(645, 58)
+        Me.txtTargetSteamID.Location = New System.Drawing.Point(534, 58)
         Me.txtTargetSteamID.Name = "txtTargetSteamID"
-        Me.txtTargetSteamID.Size = New System.Drawing.Size(132, 23)
+        Me.txtTargetSteamID.Size = New System.Drawing.Size(243, 23)
         Me.txtTargetSteamID.TabIndex = 59
+        Me.txtTargetSteamID.Text = "Target"
         '
         'lblYourId
         '
@@ -188,26 +188,15 @@ Partial Class MainWindow
         Me.txtSelfSteamID.Size = New System.Drawing.Size(132, 23)
         Me.txtSelfSteamID.TabIndex = 62
         '
-        'lblTargetId
-        '
-        Me.lblTargetId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.lblTargetId.AutoSize = true
-        Me.lblTargetId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblTargetId.Location = New System.Drawing.Point(519, 61)
-        Me.lblTargetId.Name = "lblTargetId"
-        Me.lblTargetId.Size = New System.Drawing.Size(123, 16)
-        Me.lblTargetId.TabIndex = 63
-        Me.lblTargetId.Text = "Target Steam64 ID:"
-        '
         'btnAttemptId
         '
         Me.btnAttemptId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.btnAttemptId.Location = New System.Drawing.Point(645, 85)
+        Me.btnAttemptId.Location = New System.Drawing.Point(534, 85)
         Me.btnAttemptId.Name = "btnAttemptId"
-        Me.btnAttemptId.Size = New System.Drawing.Size(134, 23)
+        Me.btnAttemptId.Size = New System.Drawing.Size(245, 23)
         Me.btnAttemptId.TabIndex = 65
-        Me.btnAttemptId.Text = "Attempt Connection"
+        Me.btnAttemptId.Text = "Attempt Connection to Player"
         Me.btnAttemptId.UseVisualStyleBackColor = true
         '
         'tabs
@@ -539,7 +528,6 @@ Partial Class MainWindow
         Me.Controls.Add(Me.btnAddFavorite)
         Me.Controls.Add(Me.tabs)
         Me.Controls.Add(Me.btnAttemptId)
-        Me.Controls.Add(Me.lblTargetId)
         Me.Controls.Add(Me.txtSelfSteamID)
         Me.Controls.Add(Me.lblYourId)
         Me.Controls.Add(Me.txtTargetSteamID)
@@ -579,7 +567,6 @@ End Sub
     Friend WithEvents txtTargetSteamID As TextBox
     Friend WithEvents lblYourId As Label
     Friend WithEvents txtSelfSteamID As TextBox
-    Friend WithEvents lblTargetId As Label
     Friend WithEvents btnAttemptId As System.Windows.Forms.Button
     Friend WithEvents tabs As TabControl
     Friend WithEvents tabActive As TabPage

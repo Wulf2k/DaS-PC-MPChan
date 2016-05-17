@@ -43,6 +43,10 @@ Public Class MainWindow
     End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Version = lblVer.Text
+
+        txtTargetSteamID.SetPlaceholder(txtTargetSteamID.Text)
+        txtTargetSteamID.Text = ""
+
         'Start Refresh timer
         refTimer.Interval = 200
         refTimer.Start()
@@ -181,7 +185,7 @@ Public Class MainWindow
         'Load favorite node list from registry
         loadFavoriteNodes()
         loadRecentNodes()
-        LoadOptions()
+        loadOptions()
         updateOnlinestate()
 
 
@@ -345,7 +349,7 @@ Public Class MainWindow
             End If
         End If
     End Sub
-    
+
     Private Sub refTimer_Tick() Handles refTimer.Tick
         Dim dbgboost As Integer = 0
         Dim tmpptr As Integer = 0
@@ -357,7 +361,7 @@ Public Class MainWindow
             If newstablever Then lblNewVersion.Text = "New stable version available"
         End If
 
-        If dsProcess Is Nothing
+        If dsProcess Is Nothing Then
             nmbMaxNodes.Enabled = False
             nmbMaxNodes.BackColor = New Color()
         Else
@@ -374,7 +378,7 @@ Public Class MainWindow
                 nmbMaxNodes.Enabled = False
                 nmbMaxNodes.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
             End If
-            
+
             'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.
             'Probably don't need to update this more than once anyway, but why not?
             If Not txtSelfSteamID.Focused Then
@@ -415,13 +419,13 @@ Public Class MainWindow
         MainWindow.twoheld = twoKey
     End Sub
     Private Sub attachDSProcess() Handles dsProcessTimer.Tick
-        If dsProcess isNot Nothing Then
-            If Not dsProcess.IsAttached
+        If dsProcess IsNot Nothing Then
+            If Not dsProcess.IsAttached Then
                 dsProcess.Dispose()
                 dsProcess = Nothing
             End If
         End If
-        If dsProcess is Nothing Then
+        If dsProcess Is Nothing Then
             Try
                 dsProcess = New DarkSoulsProcess()
                 dsProcessStatus.Text = " Attached to Dark Souls process"
@@ -453,7 +457,7 @@ Public Class MainWindow
             selfNode = dsProcess.SelfNode.Clone()
         End If
 
-        If _ircClient IsNot Nothing
+        If _ircClient IsNot Nothing Then
             _ircClient.setLocalNodes(selfNode, nodes.Values)
         End If
 
@@ -475,7 +479,7 @@ Public Class MainWindow
         Dim currentTime As Long = (DateTime.UtcNow - New DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds
         For Each node In activeNodesDisplayList
             If node.SteamId <> txtSelfSteamID.Text Then
-                If Not recentNodeDict.ContainsKey(node.SteamId)
+                If Not recentNodeDict.ContainsKey(node.SteamId) Then
                     dgvRecentNodes.Rows.Add(node.CharacterName, node.SteamId, currentTime, "Y")
                 Else
                     recentNodeDict(node.SteamId).Cells("orderId").Value = currentTime
@@ -492,7 +496,7 @@ Public Class MainWindow
             Next
 
             recentNodes = recentNodes.OrderBy(Function(row) CType(row.Cells("orderId").Value, Long)).ToList()
-            For i  = 0 To dgvRecentNodes.Rows.Count - 70
+            For i = 0 To dgvRecentNodes.Rows.Count - 70
                 Dim id As String = recentNodes(i).Cells(1).Value
                 dgvRecentNodes.Rows.Remove(recentNodes(i))
 
@@ -527,27 +531,6 @@ Public Class MainWindow
             dsProcess.MaxNodes = nmbMaxNodes.Value
         End If
     End Sub
-    Private Sub txtTargetSteamID_LostFocus(sender As Object, e As EventArgs) Handles txtTargetSteamID.LostFocus
-        'Auto-convert Steam ID after clicking out of the textbox
-
-        Dim steamIdInt As Int64
-        If txtTargetSteamID.Text.Length > 1 Then
-            txtTargetSteamID.Text = txtTargetSteamID.Text.Replace(" ", "")
-            'Regex code contributed by Chronial
-            'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
-            Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
-            Dim m As Match = r.Match(txtTargetSteamID.Text)
-            If m.Success Then
-                steamIdInt = m.Groups.Item(1).Value
-            ElseIf txtTargetSteamID.Text(0) = "7" Then
-                'If it starts with a 7, assume it's the Steam64 ID in int64 form.
-                steamIdInt = txtTargetSteamID.Text
-            End If
-            If steamIdInt Then
-                txtTargetSteamID.Text = "0" & Hex(steamIdInt).ToLower
-            End If
-        End If
-    End Sub
     Private Sub connectToSteamId(steamId As String)
         If dsProcess IsNot Nothing Then
             Try
@@ -566,7 +549,45 @@ Public Class MainWindow
         End If
     End Sub
     Private Sub btnAttemptId_MouseClick(sender As Object, e As EventArgs) Handles btnAttemptId.Click
-        connectToSteamId(txtTargetSteamID.Text)
+        If String.IsNullOrWhiteSpace(txtTargetSteamID.Text) Then
+            MsgBox("No target for connection given", MsgBoxStyle.Critical)
+            Return
+        End If
+        Dim idString As String = txtTargetSteamID.Text.Replace(" ", "")
+        'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
+        Try
+            Dim steamIdInt As Int64
+            Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
+            Dim m As Match = r.Match(idString)
+            If m.Success Then
+                steamIdInt = m.Groups.Item(1).Value
+            ElseIf idString(0) = "7" Then
+                'If it starts with a 7, assume it's the Steam64 ID in int64 form.
+                steamIdInt = idString
+            End If
+            If steamIdInt Then
+                idString = "0" & Hex(steamIdInt).ToLower
+            End If
+        Catch ex As InvalidCastException
+        End Try
+
+        Dim validTarget As Boolean = False
+        If idString.Length = 16 Then
+            Try
+                Convert.ToInt64(idString, 16)
+                validTarget = True
+            Catch ex As Exception
+            End Try
+        End If
+        If Not validTarget Then
+            MsgBox("Given target is not a valid steam id", MsgBoxStyle.Critical)
+            Return
+        End If
+        If dsProcess Is Nothing Then
+            MsgBox("You can only connect to other nodes while Dark Souls is running.", MsgBoxStyle.Critical)
+            Return
+        End If
+        connectToSteamId(idString)
     End Sub
     Private Function getSelectedNode() As Tuple(Of String, String)
         Dim currentGrid As DataGridView = Nothing
