@@ -550,7 +550,7 @@ Public Class MainWindow
             If m.Success Then
                 'The url contains the steamid, no need for a network request
                 idString = m.Groups.Item(1).Value
-            ElseIf Regex.IsMatch(idString, "^https?://steamcommunity.com/")
+            ElseIf Regex.IsMatch(idString, "^https?://steamcommunity.com/") Then
                 'Get the steamid via api request
                 Try
                     Dim url As String = idString.Split("?")(0) & "?xml=1"
@@ -560,6 +560,23 @@ Public Class MainWindow
                     idString = idNode.InnerText
                 Catch ex As Exception
                     'We display an error message later on
+                End Try
+            Else
+                'Get the steamid from username via api request
+                Dim document As New Xml.XmlDocument()
+                Try
+                    Dim url As String = "https://steamcommunity.com/id/" & idString & "?xml=1"
+                    document.Load(url)
+                    Dim idNode = document.SelectSingleNode("/profile/steamID64")
+                    idString = idNode.InnerText
+                Catch ex As Exception
+                    Try
+                        Dim errorMessage As String = document.SelectSingleNode("/response/error/text()").Value
+                        MsgBox("The given target could not be converted to a Steam64 ID:" & vbCrLf & txtTargetSteamID.Text & vbCrLf & "Reason: " & errorMessage, MsgBoxStyle.Critical)
+                        Return
+                    Catch ex_ As Exception
+                        'We display an error message later on
+                    End Try
                 End Try
             End If
         End If

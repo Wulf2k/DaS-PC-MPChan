@@ -164,7 +164,7 @@ Partial Class MainWindow
         Me.txtTargetSteamID.Name = "txtTargetSteamID"
         Me.txtTargetSteamID.Size = New System.Drawing.Size(243, 20)
         Me.txtTargetSteamID.TabIndex = 59
-        Me.txtTargetSteamID.Text = "Target (Steam64 ID or Profile URL)"
+        Me.txtTargetSteamID.Text = "Target (Steam64 ID / Profile URL / Username)"
         '
         'lblYourId
         '
