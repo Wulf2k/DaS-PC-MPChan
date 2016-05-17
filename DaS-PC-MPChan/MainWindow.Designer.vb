@@ -461,7 +461,7 @@ Partial Class MainWindow
         '
         'btnAddFavorite
         '
-        Me.btnAddFavorite.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
+        Me.btnAddFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
         Me.btnAddFavorite.Location = New System.Drawing.Point(269, 615)
         Me.btnAddFavorite.Name = "btnAddFavorite"
         Me.btnAddFavorite.Size = New System.Drawing.Size(113, 23)
@@ -472,7 +472,7 @@ Partial Class MainWindow
         '
         'btnRemFavorite
         '
-        Me.btnRemFavorite.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
+        Me.btnRemFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
         Me.btnRemFavorite.Location = New System.Drawing.Point(388, 615)
         Me.btnRemFavorite.Name = "btnRemFavorite"
         Me.btnRemFavorite.Size = New System.Drawing.Size(113, 23)
