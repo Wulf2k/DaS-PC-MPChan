@@ -3,6 +3,7 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Net.Sockets
 Imports System.ComponentModel
+Imports System.Text
 
 
 Public Class DSCM
@@ -17,19 +18,12 @@ Public Class DSCM
     'For hotkey support
     Public Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Integer) As Short
 
-    'Thread to check for updates
-    Private updTrd As Thread
-
-
     'Hotkeys
     Dim ctrlHeld As Boolean
     Dim oneHeld As Boolean
     Dim twoheld As Boolean
 
     Public Version As String
-    'New version of DSCM available?
-    Dim newstablever As Boolean = False
-    Dim newtestver As Boolean = False
 
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _ircClient As IRCClient = Nothing
@@ -167,11 +161,7 @@ Public Class DSCM
         End With
 
 
-        'Check version number in new thread, so main thread isn't delayed.
-        'Compares value on server to date in label on main form
-        updTrd = New Thread(AddressOf updatecheck)
-        updTrd.IsBackground = True
-        updTrd.Start()
+        updatecheck()
 
         'Create regkeys if they don't exist
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
@@ -258,7 +248,7 @@ Public Class DSCM
         'Contributed by Chronial
         updateOnlinestate()
     End Sub
-    Private Sub updateOnlinestate()
+    Private Async Sub updateOnlinestate()
         'Contributed by Chronial
         'Remote server set up and maintained by Chronial
         Dim steamIds = New HashSet(Of String)
@@ -268,14 +258,15 @@ Public Class DSCM
         For Each Row In dgvFavoriteNodes.Rows
             If steamIds.Count < 100 Then steamIds.Add(Row.Cells("steamId").Value)
         Next
-        Dim converter = New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
+        Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
         Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
-        Dim url = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
-        Dim client = New Net.WebClient()
+        Dim uri = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
+        Dim client As New Net.WebClient()
+        Dim contents() As Byte = Await client.DownloadDataTaskAsync(uri)
+
         Dim onlineInfo = New Dictionary(Of Int64, Boolean)
         Try
-            Dim stream = client.OpenRead(url)
-            Dim parser = New FileIO.TextFieldParser(stream)
+            Dim parser As New FileIO.TextFieldParser(New MemoryStream(contents))
             parser.SetDelimiters({","})
 
             While Not parser.EndOfData
@@ -285,10 +276,9 @@ Public Class DSCM
         Catch
             Return
         End Try
-
         For Each Row In dgvRecentNodes.Rows
             Try
-                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                If onlineInfo(Converter(Row.Cells("steamId").Value())) Then
                     Row.Cells("isOnline").Value = "Y"
                 Else
                     Row.Cells("isOnline").Value = "N"
@@ -298,7 +288,7 @@ Public Class DSCM
         Next
         For Each Row In dgvFavoriteNodes.Rows
             Try
-                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                If onlineInfo(Converter(Row.Cells("steamId").Value())) Then
                     Row.Cells("isOnline").Value = "Y"
                 Else
                     Row.Cells("isOnline").Value = "N"
@@ -307,15 +297,25 @@ Public Class DSCM
             End Try
         Next
     End Sub
-    Private Sub updatecheck()
+    Private Async Sub updatecheck()
         Try
-            'Update level is contents of remote text file compared to version label on main form.
-            My.Computer.Network.DownloadFile("http://wulf2k.ca/pc/das/dscm-ver.txt", Path.GetTempPath & "\dscm-ver.txt", "", "", False, 9800, True)
-            Dim stablever = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(0)
-            Dim testver = File.ReadAllLines(Path.GetTempPath & "\dscm-ver.txt")(1)
+            Dim client As New Net.WebClient()
+            Dim uri = "http://wulf2k.ca/pc/das/dscm-ver.txt"
+            Dim content As String = Await client.DownloadStringTaskAsync(uri)
 
-            newstablever = (stablever > Version.Replace(".", ""))
-            newtestver = (testver > Version.Replace(".", ""))
+            Dim lines() As String = content.Split({Chr(10), Chr(13)})
+            Dim stablever = lines(0)
+            Dim testver = lines(1)
+
+            If stablever > Version.Replace(".", "") Then
+                lblNewVersion.Visible = True
+                lblUrl.Visible = True
+                lblNewVersion.Text = "New stable version available"
+            ElseIf testver > Version.Replace(".", "") Then
+                lblNewVersion.Visible = True
+                lblUrl.Visible = True
+                lblNewVersion.Text = "New testing version available"
+            End If
         Catch ex As Exception
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
@@ -347,16 +347,6 @@ Public Class DSCM
     End Sub
     
     Private Sub refTimer_Tick() Handles refTimer.Tick
-        Dim dbgboost As Integer = 0
-        Dim tmpptr As Integer = 0
-
-        If newtestver Or newstablever Then
-            lblNewVersion.Visible = True
-            lblUrl.Visible = lblNewVersion.Visible
-            If newtestver Then lblNewVersion.Text = "New testing version available"
-            If newstablever Then lblNewVersion.Text = "New stable version available"
-        End If
-
         If dsProcess Is Nothing
             nmbMaxNodes.Enabled = False
             nmbMaxNodes.BackColor = New Color()
