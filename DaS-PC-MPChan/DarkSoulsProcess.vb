@@ -62,13 +62,13 @@ Public Class DarkSoulsProcess
 
     Sub New()
         attachToProcess()
+        'TODO (chronial): Is this safe here, or should we wait a second because Dark Souls might be booting up?
+        findDllAddresses()
         Dim beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
         If beta Then
             detachFromProcess()
             Throw New DSProcessAttachException("Dark Souls beta is not supported")
         End If
-        'TODO (chronial): Is this safe here, or should we wait a second because Dark Souls might be booting up?
-        findDllAddresses()
         disableLowFPSDisonnect()
         SetupNodeDumpHook()
     End Sub
