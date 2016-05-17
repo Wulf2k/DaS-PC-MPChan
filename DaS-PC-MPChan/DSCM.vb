@@ -356,8 +356,8 @@ Public Class DSCM
             chkDebugDrawing.Checked = dsProcess.DrawNodes
 
             Dim maxNodes = dsProcess.MaxNodes
-            If maxNodes > nmbMaxNodes.Minimum And maxNodes < nmbMaxNodes.Maximum Then
-                nmbMaxNodes.Value = dsProcess.MaxNodes
+            If maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
+                nmbMaxNodes.Value = maxNodes
                 nmbMaxNodes.Enabled = True
                 nmbMaxNodes.BackColor = New Color()
             Else
