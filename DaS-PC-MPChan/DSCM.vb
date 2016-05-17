@@ -18,10 +18,6 @@ Public Class DSCM
     'For hotkey support
     Public Declare Function GetAsyncKeyState Lib "user32" (ByVal vKey As Integer) As Short
 
-    'Thread to check for updates
-    Private updTrd As Thread
-
-
     'Hotkeys
     Dim ctrlHeld As Boolean
     Dim oneHeld As Boolean
