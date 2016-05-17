@@ -5,7 +5,7 @@ Imports System.Net.Sockets
 Imports System.ComponentModel
 
 
-Public Class DSCM
+Public Class MainWindow
     'Timers
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
@@ -401,18 +401,18 @@ Public Class DSCM
         oneKey = GetAsyncKeyState(Keys.D1)
         twoKey = GetAsyncKeyState(Keys.D2)
 
-        If (ctrlkey And oneKey) And Not (DSCM.ctrlHeld And DSCM.oneHeld) Then
-            DSCM.chkDebugDrawing.Checked = Not DSCM.chkDebugDrawing.Checked
+        If (ctrlkey And oneKey) And Not (MainWindow.ctrlHeld And MainWindow.oneHeld) Then
+            MainWindow.chkDebugDrawing.Checked = Not MainWindow.chkDebugDrawing.Checked
         End If
 
 
-        If (ctrlkey And twoKey) And Not (DSCM.ctrlHeld And DSCM.twoheld) Then
+        If (ctrlkey And twoKey) And Not (MainWindow.ctrlHeld And MainWindow.twoheld) Then
             'Hotkey available
         End If
 
-        DSCM.ctrlHeld = ctrlkey
-        DSCM.oneHeld = oneKey
-        DSCM.twoheld = twoKey
+        MainWindow.ctrlHeld = ctrlkey
+        MainWindow.oneHeld = oneKey
+        MainWindow.twoheld = twoKey
     End Sub
     Private Sub attachDSProcess() Handles dsProcessTimer.Tick
         If dsProcess isNot Nothing Then

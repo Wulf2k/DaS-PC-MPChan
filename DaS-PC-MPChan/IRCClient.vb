@@ -13,7 +13,7 @@ Class IRCConnectionError
 End Class
 
 Public Class IRCClient
-    Private mainWindow As DSCM
+    Private mainWindow As MainWindow
 
     Private _thread As Thread
     Private tcpClient As System.Net.Sockets.TcpClient
@@ -28,7 +28,7 @@ Public Class IRCClient
     Private selfNode As DSNode
     Public ircNodes As New ConcurrentDictionary(Of String, Tuple(Of DSNode, Date))
 
-    Public Sub New(mainWindow As DSCM)
+    Public Sub New(mainWindow As MainWindow)
         Me.mainWindow = mainWindow
         _thread = New Thread(AddressOf main)
         _thread.IsBackground = True

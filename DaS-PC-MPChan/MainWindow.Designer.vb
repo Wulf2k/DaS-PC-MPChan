@@ -1,5 +1,5 @@
 ﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
-Partial Class DSCM
+Partial Class MainWindow
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
@@ -34,7 +34,7 @@ Partial Class DSCM
         Dim DataGridViewCellStyle10 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle11 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle12 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(DSCM))
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(MainWindow))
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
         Me.chkExpand = New System.Windows.Forms.CheckBox()
@@ -49,14 +49,14 @@ Partial Class DSCM
         Me.btnAttemptId = New System.Windows.Forms.Button()
         Me.tabs = New System.Windows.Forms.TabControl()
         Me.tabActive = New System.Windows.Forms.TabPage()
-        Me.dgvMPNodes = New ExtendedDataGridView()
+        Me.dgvMPNodes = New DSCM.ExtendedDataGridView()
         Me.tabFavorites = New System.Windows.Forms.TabPage()
         Me.dgvFavoriteNodes = New System.Windows.Forms.DataGridView()
         Me.tabRecent = New System.Windows.Forms.TabPage()
         Me.dgvRecentNodes = New System.Windows.Forms.DataGridView()
         Me.tabDSCMNet = New System.Windows.Forms.TabPage()
         Me.txtIRCDebug = New System.Windows.Forms.TextBox()
-        Me.dgvDSCMNet = New Global.DSCM.ExtendedDataGridView()
+        Me.dgvDSCMNet = New DSCM.ExtendedDataGridView()
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
@@ -526,7 +526,7 @@ Partial Class DSCM
         Me.dsProcessStatus.Size = New System.Drawing.Size(187, 20)
         Me.dsProcessStatus.TabIndex = 74
         '
-        'DSCM
+        'MainWindow
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
@@ -551,7 +551,7 @@ Partial Class DSCM
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
         Me.Icon = CType(resources.GetObject("$this.Icon"),System.Drawing.Icon)
-        Me.Name = "DSCM"
+        Me.Name = "MainWindow"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabs.ResumeLayout(false)
