@@ -626,14 +626,9 @@ Public Class DSCM
         Dim steamId As String = currentGrid.CurrentRow.Cells("steamId").Value
         Return Tuple.Create(steamId, name)
     End Function
-    Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
+    Private Sub dgvNodes_doubleclick(sender As DataGridView, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
         dgvRecentNodes.DoubleClick, dgvDSCMNet.DoubleClick
-        Dim selectedNode = getSelectedNode()
-        If selectedNode Is Nothing Then
-            MsgBox("No selection detected.")
-            Return
-        End If
-        connectToSteamId(selectedNode.Item1)
+        connectToSteamId(sender.CurrentRow.Cells("steamId").Value)
     End Sub
     Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
