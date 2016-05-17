@@ -16,9 +16,7 @@ Manual Connecting
 You can also manually connect to a specific player like this:
 1. Make sure you are connected to less than 20 nodes. You might want to disable
    DCSM-Net, so you get less nodes.
-2. Obtain the other player's SteamID64 (it should start with 7 or 0110). You can do 
-   this by pasting the url of their profile into <https://steamid.io/>.
-2. Copy the SteamID64 into the `Target Steam64 ID` field.
+2. Copy the other player's steam profile URL or SteamID64 into the `Target` field.
 3. Click `Attempt Connection`
 4. After a few seconds, they should appear in the `Active` tab.
 5. You might want to add the player to your favorites by selecting them in the
@@ -100,7 +98,7 @@ offline when they are not.
 Disable FPS Disconnects
 -----------------------
 
-DSCM now disables Dark Souls check that will kick you offline when your FPS dips
+DSCM now disables Dark Souls' check that will kick you offline when your FPS dips
 low.
 
 

@@ -554,23 +554,35 @@ Public Class MainWindow
             Return
         End If
         Dim idString As String = txtTargetSteamID.Text.Replace(" ", "")
-        'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
-        Try
-            Dim steamIdInt As Int64
-            Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
-            Dim m As Match = r.Match(idString)
-            If m.Success Then
-                steamIdInt = m.Groups.Item(1).Value
-            ElseIf idString(0) = "7" Then
-                'If it starts with a 7, assume it's the Steam64 ID in int64 form.
-                steamIdInt = idString
-            End If
-            If steamIdInt Then
-                idString = "0" & Hex(steamIdInt).ToLower
-            End If
-        Catch ex As InvalidCastException
-        End Try
 
+        If Not Regex.IsMatch(idString, "^\d+$") Then
+            Dim m As Match = Regex.Match(idString, "https?://steamcommunity.com/profiles/(7\d+)")
+            If m.Success Then
+                'The url contains the steamid, no need for a network request
+                idString = m.Groups.Item(1).Value
+            ElseIf Regex.IsMatch(idString, "^https?://steamcommunity.com/")
+                'Get the steamid via api request
+                Try
+                    Dim url As String = idString.Split("?")(0) & "?xml=1"
+                    Dim document As New Xml.XmlDocument()
+                    document.Load(url)
+                    Dim idNode = document.SelectSingleNode("/profile/steamID64")
+                    idString = idNode.InnerText
+                Catch ex As Exception
+                    'We display an error message later on
+                End Try
+            End If
+        End If
+
+        If idString(0) = "7" Then
+            'If it starts with a 7, assume it's the Steam64 ID in int64 form.
+            Try
+                Dim steamIdInt As Int64 = idString
+                idString = "0" & Hex(steamIdInt).ToLower
+            Catch ex As InvalidCastException
+                'We display an error message later on
+            End Try
+        End If
         Dim validTarget As Boolean = False
         If idString.Length = 16 Then
             Try
@@ -580,11 +592,11 @@ Public Class MainWindow
             End Try
         End If
         If Not validTarget Then
-            MsgBox("Given target is not a valid steam id", MsgBoxStyle.Critical)
+            MsgBox("The given target could not be converted to a Steam64 ID:" & vbCrLf & txtTargetSteamID.Text, MsgBoxStyle.Critical)
             Return
         End If
         If dsProcess Is Nothing Then
-            MsgBox("You can only connect to other nodes while Dark Souls is running.", MsgBoxStyle.Critical)
+            MsgBox("You can only connect to other players while Dark Souls is running.", MsgBoxStyle.Critical)
             Return
         End If
         connectToSteamId(idString)

@@ -160,12 +160,11 @@ Partial Class MainWindow
         'txtTargetSteamID
         '
         Me.txtTargetSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.txtTargetSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.txtTargetSteamID.Location = New System.Drawing.Point(534, 58)
+        Me.txtTargetSteamID.Location = New System.Drawing.Point(534, 64)
         Me.txtTargetSteamID.Name = "txtTargetSteamID"
-        Me.txtTargetSteamID.Size = New System.Drawing.Size(243, 23)
+        Me.txtTargetSteamID.Size = New System.Drawing.Size(243, 20)
         Me.txtTargetSteamID.TabIndex = 59
-        Me.txtTargetSteamID.Text = "Target"
+        Me.txtTargetSteamID.Text = "Target (Steam64 ID or Profile URL)"
         '
         'lblYourId
         '
@@ -194,7 +193,7 @@ Partial Class MainWindow
         Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.btnAttemptId.Location = New System.Drawing.Point(534, 85)
         Me.btnAttemptId.Name = "btnAttemptId"
-        Me.btnAttemptId.Size = New System.Drawing.Size(245, 23)
+        Me.btnAttemptId.Size = New System.Drawing.Size(243, 23)
         Me.btnAttemptId.TabIndex = 65
         Me.btnAttemptId.Text = "Attempt Connection to Player"
         Me.btnAttemptId.UseVisualStyleBackColor = true
