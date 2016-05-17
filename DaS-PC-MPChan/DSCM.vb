@@ -367,7 +367,7 @@ Public Class DSCM
 
             Dim maxNodes = dsProcess.MaxNodes
             If maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
-                nmbMaxNodes.Value = dsProcess.MaxNodes
+                nmbMaxNodes.Value = maxNodes
                 nmbMaxNodes.Enabled = True
                 nmbMaxNodes.BackColor = New Color()
             Else
