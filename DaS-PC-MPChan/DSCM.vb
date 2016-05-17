@@ -596,17 +596,7 @@ Public Class DSCM
         End If
     End Sub
     Private Sub btnAttemptId_MouseClick(sender As Object, e As EventArgs) Handles btnAttemptId.Click
-        'Added to make future automated connection attempts simpler
         connectToSteamId(txtTargetSteamID.Text)
-    End Sub
-    Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
-        dgvRecentNodes.CellEnter, dgvDSCMNet.CellEnter
-
-        If sender.SelectedCells.Count > 0 Then
-            Dim rowindex As Integer = sender.SelectedCells(0).RowIndex
-            Dim id As String = sender.Rows(rowindex).Cells(1).Value
-            txtTargetSteamID.Text = id
-        End If
     End Sub
     Private Function getSelectedNode() As Tuple(Of String, String)
         Dim currentGrid As DataGridView = Nothing
