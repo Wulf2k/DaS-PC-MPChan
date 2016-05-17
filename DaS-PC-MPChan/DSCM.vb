@@ -3,6 +3,7 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Net.Sockets
 Imports System.ComponentModel
+Imports System.Text
 
 
 Public Class DSCM
@@ -268,14 +269,17 @@ Public Class DSCM
         For Each Row In dgvFavoriteNodes.Rows
             If steamIds.Count < 100 Then steamIds.Add(Row.Cells("steamId").Value)
         Next
-        Dim converter = New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
+        Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
         Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
-        Dim url = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
-        Dim client = New Net.WebClient()
+        Dim uri As New Uri("http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery)
+        Dim client As New Net.WebClient()
+        AddHandler client.DownloadDataCompleted, AddressOf updateOnlinestateCompleted
+        client.DownloadDataAsync(uri)
+    End Sub
+    Private Sub updateOnlinestateCompleted(sender As Object, e As Net.DownloadDataCompletedEventArgs)
         Dim onlineInfo = New Dictionary(Of Int64, Boolean)
         Try
-            Dim stream = client.OpenRead(url)
-            Dim parser = New FileIO.TextFieldParser(stream)
+            Dim parser As New FileIO.TextFieldParser(New MemoryStream(e.Result))
             parser.SetDelimiters({","})
 
             While Not parser.EndOfData
@@ -286,9 +290,10 @@ Public Class DSCM
             Return
         End Try
 
+        Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
         For Each Row In dgvRecentNodes.Rows
             Try
-                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                If onlineInfo(Converter(Row.Cells("steamId").Value())) Then
                     Row.Cells("isOnline").Value = "Y"
                 Else
                     Row.Cells("isOnline").Value = "N"
@@ -298,7 +303,7 @@ Public Class DSCM
         Next
         For Each Row In dgvFavoriteNodes.Rows
             Try
-                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                If onlineInfo(Converter(Row.Cells("steamId").Value())) Then
                     Row.Cells("isOnline").Value = "Y"
                 Else
                     Row.Cells("isOnline").Value = "N"
