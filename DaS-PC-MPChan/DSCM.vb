@@ -259,7 +259,7 @@ Public Class DSCM
         'Contributed by Chronial
         updateOnlinestate()
     End Sub
-    Private Sub updateOnlinestate()
+    Private Async Sub updateOnlinestate()
         'Contributed by Chronial
         'Remote server set up and maintained by Chronial
         Dim steamIds = New HashSet(Of String)
@@ -271,15 +271,13 @@ Public Class DSCM
         Next
         Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
         Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
-        Dim uri As New Uri("http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery)
+        Dim uri = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
         Dim client As New Net.WebClient()
-        AddHandler client.DownloadDataCompleted, AddressOf updateOnlinestateCompleted
-        client.DownloadDataAsync(uri)
-    End Sub
-    Private Sub updateOnlinestateCompleted(sender As Object, e As Net.DownloadDataCompletedEventArgs)
+        Dim contents() As Byte = Await client.DownloadDataTaskAsync(uri)
+
         Dim onlineInfo = New Dictionary(Of Int64, Boolean)
         Try
-            Dim parser As New FileIO.TextFieldParser(New MemoryStream(e.Result))
+            Dim parser As New FileIO.TextFieldParser(New MemoryStream(contents))
             parser.SetDelimiters({","})
 
             While Not parser.EndOfData
@@ -289,8 +287,6 @@ Public Class DSCM
         Catch
             Return
         End Try
-
-        Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
         For Each Row In dgvRecentNodes.Rows
             Try
                 If onlineInfo(Converter(Row.Cells("steamId").Value())) Then
