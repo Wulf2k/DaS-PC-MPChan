@@ -414,36 +414,6 @@ Public Class DSCM
         DSCM.oneHeld = oneKey
         DSCM.twoheld = twoKey
     End Sub
-    Private Sub frmResize() Handles Me.Resize
-        tabs.Width = Me.Width - 35
-        tabs.Height = Me.Height - 190
-        dgvMPNodes.Width = Me.Width - 50
-        dgvMPNodes.Height = Me.Height - 225
-        dgvDSCMNet.Width = Me.Width - 50
-        dgvDSCMNet.Height = Me.Height - 250
-        txtIRCDebug.Location = New Point(6, dgvDSCMNet.Location.Y + dgvDSCMNet.Height + 5)
-        txtIRCDebug.Width = dgvDSCMNet.Width
-
-        dgvFavoriteNodes.Height = Me.Height - 225
-        dgvRecentNodes.Height = Me.Height - 225
-
-        dsProcessStatus.Location = New Point(10, Me.Height - 63)
-        lblVer.Location = New Point(Me.Width - 100, Me.Height - 55)
-
-        lblNodes.Location = New Point(Me.Width - 167, 6)
-        txtCurrNodes.Location = New Point(Me.Width - 112, 5)
-        lblNodeDiv.Location = New Point(Me.Width - 74, 6)
-        nmbMaxNodes.Location = New Point(Me.Width - 63, 3)
-        lblYourId.Location = New Point(Me.Width - 267, 35)
-        txtSelfSteamID.Location = New Point(Me.Width - 155, 32)
-        lblTargetId.Location = New Point(Me.Width - 281, 61)
-        txtTargetSteamID.Location = New Point(Me.Width - 155, 58)
-        btnAttemptId.Location = New Point(Me.Width - 155, 85)
-
-        btnAddFavorite.Location = New Point(250, Me.Height - 65)
-        btnRemFavorite.Location = New Point(400, Me.Height - 65)
-    End Sub
-
     Private Sub attachDSProcess() Handles dsProcessTimer.Tick
         If dsProcess isNot Nothing Then
             If Not dsProcess.IsAttached
