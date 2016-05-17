@@ -6,7 +6,7 @@ Imports System.ComponentModel
 Imports System.Text
 
 
-Public Class DSCM
+Public Class MainWindow
     'Timers
     Private WithEvents refMpData As New System.Windows.Forms.Timer()
     Private WithEvents refTimer As New System.Windows.Forms.Timer()
@@ -37,6 +37,10 @@ Public Class DSCM
     End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Version = lblVer.Text
+
+        txtTargetSteamID.SetPlaceholder(txtTargetSteamID.Text)
+        txtTargetSteamID.Text = ""
+
         'Start Refresh timer
         refTimer.Interval = 200
         refTimer.Start()
@@ -171,7 +175,7 @@ Public Class DSCM
         'Load favorite node list from registry
         loadFavoriteNodes()
         loadRecentNodes()
-        LoadOptions()
+        loadOptions()
         updateOnlinestate()
 
 
@@ -345,9 +349,9 @@ Public Class DSCM
             End If
         End If
     End Sub
-    
+
     Private Sub refTimer_Tick() Handles refTimer.Tick
-        If dsProcess Is Nothing
+        If dsProcess Is Nothing Then
             nmbMaxNodes.Enabled = False
             nmbMaxNodes.BackColor = New Color()
         Else
@@ -364,7 +368,7 @@ Public Class DSCM
                 nmbMaxNodes.Enabled = False
                 nmbMaxNodes.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
             End If
-            
+
             'Don't update the text box if it's clicked in, so people can copy/paste without losing cursor.
             'Probably don't need to update this more than once anyway, but why not?
             If Not txtSelfSteamID.Focused Then
@@ -391,57 +395,27 @@ Public Class DSCM
         oneKey = GetAsyncKeyState(Keys.D1)
         twoKey = GetAsyncKeyState(Keys.D2)
 
-        If (ctrlkey And oneKey) And Not (DSCM.ctrlHeld And DSCM.oneHeld) Then
-            DSCM.chkDebugDrawing.Checked = Not DSCM.chkDebugDrawing.Checked
+        If (ctrlkey And oneKey) And Not (MainWindow.ctrlHeld And MainWindow.oneHeld) Then
+            MainWindow.chkDebugDrawing.Checked = Not MainWindow.chkDebugDrawing.Checked
         End If
 
 
-        If (ctrlkey And twoKey) And Not (DSCM.ctrlHeld And DSCM.twoheld) Then
+        If (ctrlkey And twoKey) And Not (MainWindow.ctrlHeld And MainWindow.twoheld) Then
             'Hotkey available
         End If
 
-        DSCM.ctrlHeld = ctrlkey
-        DSCM.oneHeld = oneKey
-        DSCM.twoheld = twoKey
+        MainWindow.ctrlHeld = ctrlkey
+        MainWindow.oneHeld = oneKey
+        MainWindow.twoheld = twoKey
     End Sub
-    Private Sub frmResize() Handles Me.Resize
-        tabs.Width = Me.Width - 35
-        tabs.Height = Me.Height - 190
-        dgvMPNodes.Width = Me.Width - 50
-        dgvMPNodes.Height = Me.Height - 225
-        dgvDSCMNet.Width = Me.Width - 50
-        dgvDSCMNet.Height = Me.Height - 250
-        txtIRCDebug.Location = New Point(6, dgvDSCMNet.Location.Y + dgvDSCMNet.Height + 5)
-        txtIRCDebug.Width = dgvDSCMNet.Width
-
-        dgvFavoriteNodes.Height = Me.Height - 225
-        dgvRecentNodes.Height = Me.Height - 225
-
-        dsProcessStatus.Location = New Point(10, Me.Height - 63)
-        lblVer.Location = New Point(Me.Width - 100, Me.Height - 55)
-
-        lblNodes.Location = New Point(Me.Width - 167, 6)
-        txtCurrNodes.Location = New Point(Me.Width - 112, 5)
-        lblNodeDiv.Location = New Point(Me.Width - 74, 6)
-        nmbMaxNodes.Location = New Point(Me.Width - 63, 3)
-        lblYourId.Location = New Point(Me.Width - 267, 35)
-        txtSelfSteamID.Location = New Point(Me.Width - 155, 32)
-        lblTargetId.Location = New Point(Me.Width - 281, 61)
-        txtTargetSteamID.Location = New Point(Me.Width - 155, 58)
-        btnAttemptId.Location = New Point(Me.Width - 155, 85)
-
-        btnAddFavorite.Location = New Point(250, Me.Height - 65)
-        btnRemFavorite.Location = New Point(400, Me.Height - 65)
-    End Sub
-
     Private Sub attachDSProcess() Handles dsProcessTimer.Tick
-        If dsProcess isNot Nothing Then
-            If Not dsProcess.IsAttached
+        If dsProcess IsNot Nothing Then
+            If Not dsProcess.IsAttached Then
                 dsProcess.Dispose()
                 dsProcess = Nothing
             End If
         End If
-        If dsProcess is Nothing Then
+        If dsProcess Is Nothing Then
             Try
                 dsProcess = New DarkSoulsProcess()
                 dsProcessStatus.Text = " Attached to Dark Souls process"
@@ -473,7 +447,7 @@ Public Class DSCM
             selfNode = dsProcess.SelfNode.Clone()
         End If
 
-        If _ircClient IsNot Nothing
+        If _ircClient IsNot Nothing Then
             _ircClient.setLocalNodes(selfNode, nodes.Values)
         End If
 
@@ -495,7 +469,7 @@ Public Class DSCM
         Dim currentTime As Long = (DateTime.UtcNow - New DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds
         For Each node In activeNodesDisplayList
             If node.SteamId <> txtSelfSteamID.Text Then
-                If Not recentNodeDict.ContainsKey(node.SteamId)
+                If Not recentNodeDict.ContainsKey(node.SteamId) Then
                     dgvRecentNodes.Rows.Add(node.CharacterName, node.SteamId, currentTime, "Y")
                 Else
                     recentNodeDict(node.SteamId).Cells("orderId").Value = currentTime
@@ -512,7 +486,7 @@ Public Class DSCM
             Next
 
             recentNodes = recentNodes.OrderBy(Function(row) CType(row.Cells("orderId").Value, Long)).ToList()
-            For i  = 0 To dgvRecentNodes.Rows.Count - 70
+            For i = 0 To dgvRecentNodes.Rows.Count - 70
                 Dim id As String = recentNodes(i).Cells(1).Value
                 dgvRecentNodes.Rows.Remove(recentNodes(i))
 
@@ -547,27 +521,6 @@ Public Class DSCM
             dsProcess.MaxNodes = nmbMaxNodes.Value
         End If
     End Sub
-    Private Sub txtTargetSteamID_LostFocus(sender As Object, e As EventArgs) Handles txtTargetSteamID.LostFocus
-        'Auto-convert Steam ID after clicking out of the textbox
-
-        Dim steamIdInt As Int64
-        If txtTargetSteamID.Text.Length > 1 Then
-            txtTargetSteamID.Text = txtTargetSteamID.Text.Replace(" ", "")
-            'Regex code contributed by Chronial
-            'Allows copy/pasting entire Steam profile URL, assuming the URL ends with the SteamID
-            Dim r As Regex = New Regex("https?://steamcommunity.com/profiles/(7\d+)/", RegexOptions.IgnoreCase)
-            Dim m As Match = r.Match(txtTargetSteamID.Text)
-            If m.Success Then
-                steamIdInt = m.Groups.Item(1).Value
-            ElseIf txtTargetSteamID.Text(0) = "7" Then
-                'If it starts with a 7, assume it's the Steam64 ID in int64 form.
-                steamIdInt = txtTargetSteamID.Text
-            End If
-            If steamIdInt Then
-                txtTargetSteamID.Text = "0" & Hex(steamIdInt).ToLower
-            End If
-        End If
-    End Sub
     Private Sub connectToSteamId(steamId As String)
         If dsProcess IsNot Nothing Then
             Try
@@ -586,153 +539,116 @@ Public Class DSCM
         End If
     End Sub
     Private Sub btnAttemptId_MouseClick(sender As Object, e As EventArgs) Handles btnAttemptId.Click
-        'Added to make future automated connection attempts simpler
-        connectToSteamId(txtTargetSteamID.Text)
-    End Sub
-    Private Sub dgvNodes_selected(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.CellEnter,
-        dgvRecentNodes.CellEnter, dgvDSCMNet.CellEnter
-
-        If sender.SelectedCells.Count > 0 Then
-            Dim rowindex As Integer = sender.SelectedCells(0).RowIndex
-            Dim id As String = sender.Rows(rowindex).Cells(1).Value
-            txtTargetSteamID.Text = id
+        If String.IsNullOrWhiteSpace(txtTargetSteamID.Text) Then
+            MsgBox("No target for connection given", MsgBoxStyle.Critical)
+            Return
         End If
+        Dim idString As String = txtTargetSteamID.Text.Replace(" ", "")
+
+        If Not Regex.IsMatch(idString, "^\d+$") Then
+            Dim m As Match = Regex.Match(idString, "https?://steamcommunity.com/profiles/(7\d+)")
+            If m.Success Then
+                'The url contains the steamid, no need for a network request
+                idString = m.Groups.Item(1).Value
+            ElseIf Regex.IsMatch(idString, "^https?://steamcommunity.com/")
+                'Get the steamid via api request
+                Try
+                    Dim url As String = idString.Split("?")(0) & "?xml=1"
+                    Dim document As New Xml.XmlDocument()
+                    document.Load(url)
+                    Dim idNode = document.SelectSingleNode("/profile/steamID64")
+                    idString = idNode.InnerText
+                Catch ex As Exception
+                    'We display an error message later on
+                End Try
+            End If
+        End If
+
+        If idString(0) = "7" Then
+            'If it starts with a 7, assume it's the Steam64 ID in int64 form.
+            Try
+                Dim steamIdInt As Int64 = idString
+                idString = "0" & Hex(steamIdInt).ToLower
+            Catch ex As InvalidCastException
+                'We display an error message later on
+            End Try
+        End If
+        Dim validTarget As Boolean = False
+        If idString.Length = 16 Then
+            Try
+                Convert.ToInt64(idString, 16)
+                validTarget = True
+            Catch ex As Exception
+            End Try
+        End If
+        If Not validTarget Then
+            MsgBox("The given target could not be converted to a Steam64 ID:" & vbCrLf & txtTargetSteamID.Text, MsgBoxStyle.Critical)
+            Return
+        End If
+        If dsProcess Is Nothing Then
+            MsgBox("You can only connect to other players while Dark Souls is running.", MsgBoxStyle.Critical)
+            Return
+        End If
+        connectToSteamId(idString)
     End Sub
-    Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
+    Private Function getSelectedNode() As Tuple(Of String, String)
+        Dim currentGrid As DataGridView = Nothing
+        If tabs.SelectedTab Is tabActive Then
+            currentGrid = dgvMPNodes
+        ElseIf tabs.SelectedTab Is tabRecent Then
+            currentGrid = dgvRecentNodes
+        ElseIf tabs.SelectedTab Is tabFavorites Then
+            currentGrid = dgvFavoriteNodes
+        ElseIf tabs.SelectedTab Is tabDSCMNet Then
+            currentGrid = dgvDSCMNet
+        Else
+            Return Nothing
+        End If
+
+        Dim name As String = currentGrid.CurrentRow.Cells("name").Value
+        Dim steamId As String = currentGrid.CurrentRow.Cells("steamId").Value
+        Return Tuple.Create(steamId, name)
+    End Function
+    Private Sub dgvNodes_doubleclick(sender As DataGridView, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
         dgvRecentNodes.DoubleClick, dgvDSCMNet.DoubleClick
-        btnAttemptId.PerformClick()
+        connectToSteamId(sender.CurrentRow.Cells("steamId").Value)
     End Sub
     Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
 
-        Select Case tabs.SelectedIndex
-            'Active nodes selected
-            Case 0
-                If dgvMPNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvMPNodes.SelectedCells(0).RowIndex
-                    Dim name As String = dgvMPNodes.Rows(rowindex).Cells(0).Value
-                    Dim id As String = dgvMPNodes.Rows(rowindex).Cells(1).Value
+        Dim selectedNode = getSelectedNode()
+        If selectedNode Is Nothing Then
+            MsgBox("No selection detected.")
+            Return
+        End If
 
-                    If key.GetValue(id) Is Nothing Then
-                        key.SetValue(id, name)
-                        dgvFavoriteNodes.Rows.Add(name, id)
-                    End If
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'Recent nodes selected
-            Case 2
-                If dgvRecentNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvRecentNodes.SelectedCells(0).RowIndex
-                    Dim name As String = dgvRecentNodes.Rows(rowindex).Cells(0).Value
-                    Dim id As String = dgvRecentNodes.Rows(rowindex).Cells(1).Value
-
-                    If key.GetValue(id) Is Nothing Then
-                        key.SetValue(id, name)
-                        dgvFavoriteNodes.Rows.Add(name, id)
-                    End If
-                Else
-                    MsgBox("No selection detected.")
-                End If
-            Case 3
-                If dgvDSCMNet.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvDSCMNet.SelectedCells(0).RowIndex
-                    Dim name As String = dgvDSCMNet.Rows(rowindex).Cells(0).Value
-                    Dim id As String = dgvDSCMNet.Rows(rowindex).Cells(1).Value
-
-                    If key.GetValue(id) Is Nothing Then
-                        key.SetValue(id, name)
-                        dgvFavoriteNodes.Rows.Add(name, id)
-                    End If
-                Else
-                    MsgBox("No selection detected.")
-                End If
-        End Select
+        If key.GetValue(selectedNode.Item1) Is Nothing Then
+            key.SetValue(selectedNode.Item1, selectedNode.Item2)
+            dgvFavoriteNodes.Rows.Add(selectedNode.Item2, selectedNode.Item1)
+        End If
     End Sub
     Private Sub btnRemFavorite_Click(sender As Object, e As EventArgs) Handles btnRemFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
 
-        Select Case tabs.SelectedIndex
+        Dim selectedNode = getSelectedNode()
+        If selectedNode Is Nothing Then
+            MsgBox("No selection detected.")
+            Return
+        End If
 
-            'Active nodes selected
-            Case 0
-                If dgvMPNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvMPNodes.SelectedCells(0).RowIndex
-                    Dim id As String = dgvMPNodes.Rows(rowindex).Cells(1).Value
+        Dim steamId As String = selectedNode.Item1
 
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
+        If Not key.GetValue(steamId) Is Nothing Then
+            key.DeleteValue(steamId)
+        End If
 
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'Favorite nodes selected
-            Case 1
-                If dgvFavoriteNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvFavoriteNodes.SelectedCells(0).RowIndex
-                    Dim id As String = dgvFavoriteNodes.Rows(rowindex).Cells(1).Value
-
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
-
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'Recent nodes selected
-            Case 2
-                If dgvRecentNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvRecentNodes.SelectedCells(0).RowIndex
-                    Dim id As String = dgvRecentNodes.Rows(rowindex).Cells(1).Value
-
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
-
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'DSCMNet selected
-            Case 3
-                If dgvDSCMNet.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvDSCMNet.SelectedCells(0).RowIndex
-                    Dim id As String = dgvDSCMNet.Rows(rowindex).Cells(1).Value
-
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
-
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-        End Select
+        For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+            If dgvFavoriteNodes.Rows(i).Cells("steamId").Value = steamId Then
+                dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
+            End If
+        Next
     End Sub
 
     Private Sub chkDSCMNet_CheckedChanged(sender As Object, e As EventArgs) Handles chkDSCMNet.CheckedChanged

@@ -2,6 +2,23 @@
 Imports System.ComponentModel
 Imports System.Reflection
 Imports System.Linq
+Imports System.Runtime.InteropServices
+Imports System.Runtime.CompilerServices
+
+
+Module TextBoxPlaceholderExtension
+    Private Const ECM_FIRST As UInt32 = &H1500
+    Private Const EM_SETCUEBANNER As UInt32 = ECM_FIRST + 1
+
+    <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Auto)> _
+    Private Function SendMessage(ByVal hWnd As IntPtr, ByVal Msg As UInteger, ByVal wParam As IntPtr, ByVal lParam As String) As IntPtr
+    End Function
+
+    <Extension()>
+    Public Sub SetPlaceholder(textBox As TextBox, placeholderText As String)
+        SendMessage(textBox.Handle, EM_SETCUEBANNER, 0, placeholderText)
+    End Sub
+End Module
 
 Class SortComparer(Of T)
     Implements IComparer(Of T)
@@ -34,7 +51,7 @@ Public Class SortableBindingList(Of T)
 
     Public Sub ReplaceSorted(oldIndex As Integer, item As T)
         Me.Items.RemoveAt(oldIndex)
-        
+
         Dim comparer As New SortComparer(Of T)(_listSortDescriptors)
         Dim index = Items.ToList().BinarySearch(item, comparer)
         If index < 0 Then
@@ -159,7 +176,7 @@ Public Class DSNodeBindingList
                 Dim x = 5
 
             End If
-            End If
+        End If
     End Sub
 End Class
 
@@ -180,7 +197,7 @@ Public Class ExtendedDataGridView
                         selectedIndex = e.NewIndex + 1
                     End If
                 End If
-            ElseIf e.NewIndex <> selectedIndex  Then
+            ElseIf e.NewIndex <> selectedIndex Then
                 If (e.NewIndex > selectedIndex) <> (e.OldIndex > selectedIndex) Then
                     If e.NewIndex > selectedIndex Then
                         selectedIndex -= 1

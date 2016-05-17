@@ -102,11 +102,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DarkSoulsProcess.vb" />
-    <Compile Include="DSCM.vb">
+    <Compile Include="MainWindow.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="DSCM.Designer.vb">
-      <DependentUpon>DSCM.vb</DependentUpon>
+    <Compile Include="MainWindow.Designer.vb">
+      <DependentUpon>MainWindow.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="DSNode.vb" />
@@ -131,8 +131,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="DSCM.resx">
-      <DependentUpon>DSCM.vb</DependentUpon>
+    <EmbeddedResource Include="MainWindow.resx">
+      <DependentUpon>MainWindow.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>

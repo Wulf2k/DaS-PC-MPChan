@@ -1,5 +1,5 @@
 ﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
-Partial Class DSCM
+Partial Class MainWindow
     Inherits System.Windows.Forms.Form
 
     'Form overrides dispose to clean up the component list.
@@ -34,11 +34,10 @@ Partial Class DSCM
         Dim DataGridViewCellStyle10 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle11 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle12 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(DSCM))
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(MainWindow))
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
         Me.chkExpand = New System.Windows.Forms.CheckBox()
-        Me.dgvMPNodes = New Global.DSCM.ExtendedDataGridView()
         Me.txtCurrNodes = New System.Windows.Forms.TextBox()
         Me.lblNodes = New System.Windows.Forms.Label()
         Me.lblNodeDiv = New System.Windows.Forms.Label()
@@ -46,17 +45,17 @@ Partial Class DSCM
         Me.txtTargetSteamID = New System.Windows.Forms.TextBox()
         Me.lblYourId = New System.Windows.Forms.Label()
         Me.txtSelfSteamID = New System.Windows.Forms.TextBox()
-        Me.lblTargetId = New System.Windows.Forms.Label()
         Me.btnAttemptId = New System.Windows.Forms.Button()
         Me.tabs = New System.Windows.Forms.TabControl()
         Me.tabActive = New System.Windows.Forms.TabPage()
+        Me.dgvMPNodes = New DSCM.ExtendedDataGridView()
         Me.tabFavorites = New System.Windows.Forms.TabPage()
         Me.dgvFavoriteNodes = New System.Windows.Forms.DataGridView()
         Me.tabRecent = New System.Windows.Forms.TabPage()
         Me.dgvRecentNodes = New System.Windows.Forms.DataGridView()
         Me.tabDSCMNet = New System.Windows.Forms.TabPage()
         Me.txtIRCDebug = New System.Windows.Forms.TextBox()
-        Me.dgvDSCMNet = New Global.DSCM.ExtendedDataGridView()
+        Me.dgvDSCMNet = New DSCM.ExtendedDataGridView()
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
@@ -65,10 +64,10 @@ Partial Class DSCM
         Me.lblUrl = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
-        CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).BeginInit
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabs.SuspendLayout
         Me.tabActive.SuspendLayout
+        CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabFavorites.SuspendLayout
         CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabRecent.SuspendLayout
@@ -92,6 +91,7 @@ Partial Class DSCM
         '
         'lblVer
         '
+        Me.lblVer.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.lblVer.AutoSize = true
         Me.lblVer.BackColor = System.Drawing.SystemColors.Control
         Me.lblVer.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
@@ -113,11 +113,127 @@ Partial Class DSCM
         Me.chkExpand.Text = "Expand DSCM"
         Me.chkExpand.UseVisualStyleBackColor = false
         '
+        'txtCurrNodes
+        '
+        Me.txtCurrNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.txtCurrNodes.Location = New System.Drawing.Point(688, 5)
+        Me.txtCurrNodes.Name = "txtCurrNodes"
+        Me.txtCurrNodes.ReadOnly = true
+        Me.txtCurrNodes.Size = New System.Drawing.Size(38, 20)
+        Me.txtCurrNodes.TabIndex = 54
+        '
+        'lblNodes
+        '
+        Me.lblNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.lblNodes.AutoSize = true
+        Me.lblNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.lblNodes.Location = New System.Drawing.Point(633, 6)
+        Me.lblNodes.Name = "lblNodes"
+        Me.lblNodes.Size = New System.Drawing.Size(49, 16)
+        Me.lblNodes.TabIndex = 55
+        Me.lblNodes.Text = "Nodes"
+        '
+        'lblNodeDiv
+        '
+        Me.lblNodeDiv.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.lblNodeDiv.AutoSize = true
+        Me.lblNodeDiv.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.lblNodeDiv.Location = New System.Drawing.Point(726, 6)
+        Me.lblNodeDiv.Name = "lblNodeDiv"
+        Me.lblNodeDiv.Size = New System.Drawing.Size(12, 16)
+        Me.lblNodeDiv.TabIndex = 56
+        Me.lblNodeDiv.Text = "/"
+        '
+        'nmbMaxNodes
+        '
+        Me.nmbMaxNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.nmbMaxNodes.Enabled = false
+        Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.nmbMaxNodes.Location = New System.Drawing.Point(737, 3)
+        Me.nmbMaxNodes.Maximum = New Decimal(New Integer() {32, 0, 0, 0})
+        Me.nmbMaxNodes.Minimum = New Decimal(New Integer() {10, 0, 0, 0})
+        Me.nmbMaxNodes.Name = "nmbMaxNodes"
+        Me.nmbMaxNodes.Size = New System.Drawing.Size(40, 22)
+        Me.nmbMaxNodes.TabIndex = 57
+        Me.nmbMaxNodes.Value = New Decimal(New Integer() {20, 0, 0, 0})
+        '
+        'txtTargetSteamID
+        '
+        Me.txtTargetSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.txtTargetSteamID.Location = New System.Drawing.Point(534, 64)
+        Me.txtTargetSteamID.Name = "txtTargetSteamID"
+        Me.txtTargetSteamID.Size = New System.Drawing.Size(243, 20)
+        Me.txtTargetSteamID.TabIndex = 59
+        Me.txtTargetSteamID.Text = "Target (Steam64 ID or Profile URL)"
+        '
+        'lblYourId
+        '
+        Me.lblYourId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.lblYourId.AutoSize = true
+        Me.lblYourId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.lblYourId.Location = New System.Drawing.Point(531, 35)
+        Me.lblYourId.Name = "lblYourId"
+        Me.lblYourId.Size = New System.Drawing.Size(111, 16)
+        Me.lblYourId.TabIndex = 61
+        Me.lblYourId.Text = "Your Steam64 ID:"
+        '
+        'txtSelfSteamID
+        '
+        Me.txtSelfSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.txtSelfSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.txtSelfSteamID.Location = New System.Drawing.Point(645, 32)
+        Me.txtSelfSteamID.Name = "txtSelfSteamID"
+        Me.txtSelfSteamID.ReadOnly = true
+        Me.txtSelfSteamID.Size = New System.Drawing.Size(132, 23)
+        Me.txtSelfSteamID.TabIndex = 62
+        '
+        'btnAttemptId
+        '
+        Me.btnAttemptId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.btnAttemptId.Location = New System.Drawing.Point(534, 85)
+        Me.btnAttemptId.Name = "btnAttemptId"
+        Me.btnAttemptId.Size = New System.Drawing.Size(243, 23)
+        Me.btnAttemptId.TabIndex = 65
+        Me.btnAttemptId.Text = "Attempt Connection to Player"
+        Me.btnAttemptId.UseVisualStyleBackColor = true
+        '
+        'tabs
+        '
+        Me.tabs.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left)  _
+            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.tabs.Controls.Add(Me.tabActive)
+        Me.tabs.Controls.Add(Me.tabFavorites)
+        Me.tabs.Controls.Add(Me.tabRecent)
+        Me.tabs.Controls.Add(Me.tabDSCMNet)
+        Me.tabs.Controls.Add(Me.tabHelp)
+        Me.tabs.Location = New System.Drawing.Point(10, 115)
+        Me.tabs.Name = "tabs"
+        Me.tabs.SelectedIndex = 0
+        Me.tabs.Size = New System.Drawing.Size(765, 490)
+        Me.tabs.TabIndex = 67
+        Me.tabs.Visible = false
+        '
+        'tabActive
+        '
+        Me.tabActive.BackColor = System.Drawing.SystemColors.Control
+        Me.tabActive.Controls.Add(Me.dgvMPNodes)
+        Me.tabActive.Location = New System.Drawing.Point(4, 22)
+        Me.tabActive.Name = "tabActive"
+        Me.tabActive.Padding = New System.Windows.Forms.Padding(3)
+        Me.tabActive.Size = New System.Drawing.Size(757, 464)
+        Me.tabActive.TabIndex = 0
+        Me.tabActive.Text = "Active"
+        '
         'dgvMPNodes
         '
         Me.dgvMPNodes.AllowUserToAddRows = false
         Me.dgvMPNodes.AllowUserToDeleteRows = false
         Me.dgvMPNodes.AllowUserToResizeRows = false
+        Me.dgvMPNodes.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left)  _
+            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control
         DataGridViewCellStyle1.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
@@ -150,118 +266,6 @@ Partial Class DSCM
         Me.dgvMPNodes.Size = New System.Drawing.Size(740, 450)
         Me.dgvMPNodes.TabIndex = 53
         '
-        'txtCurrNodes
-        '
-        Me.txtCurrNodes.Location = New System.Drawing.Point(688, 5)
-        Me.txtCurrNodes.Name = "txtCurrNodes"
-        Me.txtCurrNodes.ReadOnly = true
-        Me.txtCurrNodes.Size = New System.Drawing.Size(38, 20)
-        Me.txtCurrNodes.TabIndex = 54
-        '
-        'lblNodes
-        '
-        Me.lblNodes.AutoSize = true
-        Me.lblNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblNodes.Location = New System.Drawing.Point(633, 6)
-        Me.lblNodes.Name = "lblNodes"
-        Me.lblNodes.Size = New System.Drawing.Size(49, 16)
-        Me.lblNodes.TabIndex = 55
-        Me.lblNodes.Text = "Nodes"
-        '
-        'lblNodeDiv
-        '
-        Me.lblNodeDiv.AutoSize = true
-        Me.lblNodeDiv.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblNodeDiv.Location = New System.Drawing.Point(726, 6)
-        Me.lblNodeDiv.Name = "lblNodeDiv"
-        Me.lblNodeDiv.Size = New System.Drawing.Size(12, 16)
-        Me.lblNodeDiv.TabIndex = 56
-        Me.lblNodeDiv.Text = "/"
-        '
-        'nmbMaxNodes
-        '
-        Me.nmbMaxNodes.Enabled = false
-        Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.nmbMaxNodes.Location = New System.Drawing.Point(737, 3)
-        Me.nmbMaxNodes.Maximum = New Decimal(New Integer() {32, 0, 0, 0})
-        Me.nmbMaxNodes.Minimum = New Decimal(New Integer() {10, 0, 0, 0})
-        Me.nmbMaxNodes.Name = "nmbMaxNodes"
-        Me.nmbMaxNodes.Size = New System.Drawing.Size(40, 22)
-        Me.nmbMaxNodes.TabIndex = 57
-        Me.nmbMaxNodes.Value = New Decimal(New Integer() {20, 0, 0, 0})
-        '
-        'txtTargetSteamID
-        '
-        Me.txtTargetSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.txtTargetSteamID.Location = New System.Drawing.Point(645, 58)
-        Me.txtTargetSteamID.Name = "txtTargetSteamID"
-        Me.txtTargetSteamID.Size = New System.Drawing.Size(132, 23)
-        Me.txtTargetSteamID.TabIndex = 59
-        '
-        'lblYourId
-        '
-        Me.lblYourId.AutoSize = true
-        Me.lblYourId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblYourId.Location = New System.Drawing.Point(531, 35)
-        Me.lblYourId.Name = "lblYourId"
-        Me.lblYourId.Size = New System.Drawing.Size(111, 16)
-        Me.lblYourId.TabIndex = 61
-        Me.lblYourId.Text = "Your Steam64 ID:"
-        '
-        'txtSelfSteamID
-        '
-        Me.txtSelfSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.txtSelfSteamID.Location = New System.Drawing.Point(645, 32)
-        Me.txtSelfSteamID.Name = "txtSelfSteamID"
-        Me.txtSelfSteamID.ReadOnly = true
-        Me.txtSelfSteamID.Size = New System.Drawing.Size(132, 23)
-        Me.txtSelfSteamID.TabIndex = 62
-        '
-        'lblTargetId
-        '
-        Me.lblTargetId.AutoSize = true
-        Me.lblTargetId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblTargetId.Location = New System.Drawing.Point(519, 61)
-        Me.lblTargetId.Name = "lblTargetId"
-        Me.lblTargetId.Size = New System.Drawing.Size(123, 16)
-        Me.lblTargetId.TabIndex = 63
-        Me.lblTargetId.Text = "Target Steam64 ID:"
-        '
-        'btnAttemptId
-        '
-        Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.btnAttemptId.Location = New System.Drawing.Point(645, 85)
-        Me.btnAttemptId.Name = "btnAttemptId"
-        Me.btnAttemptId.Size = New System.Drawing.Size(134, 23)
-        Me.btnAttemptId.TabIndex = 65
-        Me.btnAttemptId.Text = "Attempt Connection"
-        Me.btnAttemptId.UseVisualStyleBackColor = true
-        '
-        'tabs
-        '
-        Me.tabs.Controls.Add(Me.tabActive)
-        Me.tabs.Controls.Add(Me.tabFavorites)
-        Me.tabs.Controls.Add(Me.tabRecent)
-        Me.tabs.Controls.Add(Me.tabDSCMNet)
-        Me.tabs.Controls.Add(Me.tabHelp)
-        Me.tabs.Location = New System.Drawing.Point(10, 115)
-        Me.tabs.Name = "tabs"
-        Me.tabs.SelectedIndex = 0
-        Me.tabs.Size = New System.Drawing.Size(765, 490)
-        Me.tabs.TabIndex = 67
-        Me.tabs.Visible = false
-        '
-        'tabActive
-        '
-        Me.tabActive.BackColor = System.Drawing.SystemColors.Control
-        Me.tabActive.Controls.Add(Me.dgvMPNodes)
-        Me.tabActive.Location = New System.Drawing.Point(4, 22)
-        Me.tabActive.Name = "tabActive"
-        Me.tabActive.Padding = New System.Windows.Forms.Padding(3)
-        Me.tabActive.Size = New System.Drawing.Size(757, 464)
-        Me.tabActive.TabIndex = 0
-        Me.tabActive.Text = "Active"
-        '
         'tabFavorites
         '
         Me.tabFavorites.BackColor = System.Drawing.SystemColors.Control
@@ -278,6 +282,8 @@ Partial Class DSCM
         Me.dgvFavoriteNodes.AllowUserToAddRows = false
         Me.dgvFavoriteNodes.AllowUserToDeleteRows = false
         Me.dgvFavoriteNodes.AllowUserToResizeRows = false
+        Me.dgvFavoriteNodes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control
         DataGridViewCellStyle4.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
@@ -325,6 +331,8 @@ Partial Class DSCM
         Me.dgvRecentNodes.AllowUserToAddRows = false
         Me.dgvRecentNodes.AllowUserToDeleteRows = false
         Me.dgvRecentNodes.AllowUserToResizeRows = false
+        Me.dgvRecentNodes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control
         DataGridViewCellStyle7.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
@@ -370,6 +378,8 @@ Partial Class DSCM
         '
         'txtIRCDebug
         '
+        Me.txtIRCDebug.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left)  _
+            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtIRCDebug.Location = New System.Drawing.Point(6, 438)
         Me.txtIRCDebug.Name = "txtIRCDebug"
         Me.txtIRCDebug.Size = New System.Drawing.Size(740, 20)
@@ -380,6 +390,9 @@ Partial Class DSCM
         Me.dgvDSCMNet.AllowUserToAddRows = false
         Me.dgvDSCMNet.AllowUserToDeleteRows = false
         Me.dgvDSCMNet.AllowUserToResizeRows = false
+        Me.dgvDSCMNet.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left)  _
+            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Control
         DataGridViewCellStyle10.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
@@ -425,7 +438,9 @@ Partial Class DSCM
         '
         'helpView
         '
-        Me.helpView.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.helpView.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left)  _
+            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.helpView.Location = New System.Drawing.Point(3, 3)
         Me.helpView.MinimumSize = New System.Drawing.Size(20, 20)
         Me.helpView.Name = "helpView"
@@ -434,6 +449,7 @@ Partial Class DSCM
         '
         'btnAddFavorite
         '
+        Me.btnAddFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
         Me.btnAddFavorite.Location = New System.Drawing.Point(269, 615)
         Me.btnAddFavorite.Name = "btnAddFavorite"
         Me.btnAddFavorite.Size = New System.Drawing.Size(113, 23)
@@ -444,6 +460,7 @@ Partial Class DSCM
         '
         'btnRemFavorite
         '
+        Me.btnRemFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
         Me.btnRemFavorite.Location = New System.Drawing.Point(388, 615)
         Me.btnRemFavorite.Name = "btnRemFavorite"
         Me.btnRemFavorite.Size = New System.Drawing.Size(113, 23)
@@ -490,13 +507,14 @@ Partial Class DSCM
         '
         'dsProcessStatus
         '
+        Me.dsProcessStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
         Me.dsProcessStatus.Location = New System.Drawing.Point(10, 617)
         Me.dsProcessStatus.Name = "dsProcessStatus"
         Me.dsProcessStatus.ReadOnly = true
         Me.dsProcessStatus.Size = New System.Drawing.Size(187, 20)
         Me.dsProcessStatus.TabIndex = 74
         '
-        'DSCM
+        'MainWindow
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
@@ -509,7 +527,6 @@ Partial Class DSCM
         Me.Controls.Add(Me.btnAddFavorite)
         Me.Controls.Add(Me.tabs)
         Me.Controls.Add(Me.btnAttemptId)
-        Me.Controls.Add(Me.lblTargetId)
         Me.Controls.Add(Me.txtSelfSteamID)
         Me.Controls.Add(Me.lblYourId)
         Me.Controls.Add(Me.txtTargetSteamID)
@@ -521,12 +538,12 @@ Partial Class DSCM
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
         Me.Icon = CType(resources.GetObject("$this.Icon"),System.Drawing.Icon)
-        Me.Name = "DSCM"
+        Me.Name = "MainWindow"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
-        CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).EndInit
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabs.ResumeLayout(false)
         Me.tabActive.ResumeLayout(false)
+        CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabFavorites.ResumeLayout(false)
         CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabRecent.ResumeLayout(false)
@@ -549,7 +566,6 @@ End Sub
     Friend WithEvents txtTargetSteamID As TextBox
     Friend WithEvents lblYourId As Label
     Friend WithEvents txtSelfSteamID As TextBox
-    Friend WithEvents lblTargetId As Label
     Friend WithEvents btnAttemptId As System.Windows.Forms.Button
     Friend WithEvents tabs As TabControl
     Friend WithEvents tabActive As TabPage
