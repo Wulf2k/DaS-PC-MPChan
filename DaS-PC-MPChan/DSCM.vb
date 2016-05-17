@@ -608,141 +608,69 @@ Public Class DSCM
             txtTargetSteamID.Text = id
         End If
     End Sub
+    Private Function getSelectedNode() As Tuple(Of String, String)
+        Dim currentGrid As DataGridView = Nothing
+        If tabs.SelectedTab Is tabActive Then
+            currentGrid = dgvMPNodes
+        ElseIf tabs.SelectedTab Is tabRecent Then
+            currentGrid = dgvRecentNodes
+        ElseIf tabs.SelectedTab Is tabFavorites Then
+            currentGrid = dgvFavoriteNodes
+        ElseIf tabs.SelectedTab Is tabDSCMNet Then
+            currentGrid = dgvDSCMNet
+        Else
+            Return Nothing
+        End If
+
+        Dim name As String = currentGrid.CurrentRow.Cells("name").Value
+        Dim steamId As String = currentGrid.CurrentRow.Cells("steamId").Value
+        Return Tuple.Create(steamId, name)
+    End Function
     Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
         dgvRecentNodes.DoubleClick, dgvDSCMNet.DoubleClick
-        btnAttemptId.PerformClick()
+        Dim selectedNode = getSelectedNode()
+        If selectedNode Is Nothing Then
+            MsgBox("No selection detected.")
+            Return
+        End If
+        connectToSteamId(selectedNode.Item1)
     End Sub
     Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
 
-        Select Case tabs.SelectedIndex
-            'Active nodes selected
-            Case 0
-                If dgvMPNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvMPNodes.SelectedCells(0).RowIndex
-                    Dim name As String = dgvMPNodes.Rows(rowindex).Cells(0).Value
-                    Dim id As String = dgvMPNodes.Rows(rowindex).Cells(1).Value
+        Dim selectedNode = getSelectedNode()
+        If selectedNode Is Nothing Then
+            MsgBox("No selection detected.")
+            Return
+        End If
 
-                    If key.GetValue(id) Is Nothing Then
-                        key.SetValue(id, name)
-                        dgvFavoriteNodes.Rows.Add(name, id)
-                    End If
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'Recent nodes selected
-            Case 2
-                If dgvRecentNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvRecentNodes.SelectedCells(0).RowIndex
-                    Dim name As String = dgvRecentNodes.Rows(rowindex).Cells(0).Value
-                    Dim id As String = dgvRecentNodes.Rows(rowindex).Cells(1).Value
-
-                    If key.GetValue(id) Is Nothing Then
-                        key.SetValue(id, name)
-                        dgvFavoriteNodes.Rows.Add(name, id)
-                    End If
-                Else
-                    MsgBox("No selection detected.")
-                End If
-            Case 3
-                If dgvDSCMNet.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvDSCMNet.SelectedCells(0).RowIndex
-                    Dim name As String = dgvDSCMNet.Rows(rowindex).Cells(0).Value
-                    Dim id As String = dgvDSCMNet.Rows(rowindex).Cells(1).Value
-
-                    If key.GetValue(id) Is Nothing Then
-                        key.SetValue(id, name)
-                        dgvFavoriteNodes.Rows.Add(name, id)
-                    End If
-                Else
-                    MsgBox("No selection detected.")
-                End If
-        End Select
+        If key.GetValue(selectedNode.Item1) Is Nothing Then
+            key.SetValue(selectedNode.Item1, selectedNode.Item2)
+            dgvFavoriteNodes.Rows.Add(selectedNode.Item2, selectedNode.Item1)
+        End If
     End Sub
     Private Sub btnRemFavorite_Click(sender As Object, e As EventArgs) Handles btnRemFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\FavoriteNodes", True)
 
-        Select Case tabs.SelectedIndex
+        Dim selectedNode = getSelectedNode()
+        If selectedNode Is Nothing Then
+            MsgBox("No selection detected.")
+            Return
+        End If
 
-            'Active nodes selected
-            Case 0
-                If dgvMPNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvMPNodes.SelectedCells(0).RowIndex
-                    Dim id As String = dgvMPNodes.Rows(rowindex).Cells(1).Value
+        Dim steamId As String = selectedNode.Item1
 
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
+        If Not key.GetValue(steamId) Is Nothing Then
+            key.DeleteValue(steamId)
+        End If
 
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'Favorite nodes selected
-            Case 1
-                If dgvFavoriteNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvFavoriteNodes.SelectedCells(0).RowIndex
-                    Dim id As String = dgvFavoriteNodes.Rows(rowindex).Cells(1).Value
-
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
-
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'Recent nodes selected
-            Case 2
-                If dgvRecentNodes.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvRecentNodes.SelectedCells(0).RowIndex
-                    Dim id As String = dgvRecentNodes.Rows(rowindex).Cells(1).Value
-
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
-
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-
-            'DSCMNet selected
-            Case 3
-                If dgvDSCMNet.SelectedCells.Count > 0 Then
-                    Dim rowindex As Integer = dgvDSCMNet.SelectedCells(0).RowIndex
-                    Dim id As String = dgvDSCMNet.Rows(rowindex).Cells(1).Value
-
-                    If Not key.GetValue(id) Is Nothing Then
-                        key.DeleteValue(id)
-                    End If
-
-                    For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
-                        If dgvFavoriteNodes.Rows(i).Cells(1).Value = id Then
-                            dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
-                        End If
-                    Next
-                Else
-                    MsgBox("No selection detected.")
-                End If
-        End Select
+        For i = dgvFavoriteNodes.Rows.Count - 1 To 0 Step -1
+            If dgvFavoriteNodes.Rows(i).Cells("steamId").Value = steamId Then
+                dgvFavoriteNodes.Rows.Remove(dgvFavoriteNodes.Rows(i))
+            End If
+        Next
     End Sub
 
     Private Sub chkDSCMNet_CheckedChanged(sender As Object, e As EventArgs) Handles chkDSCMNet.CheckedChanged
