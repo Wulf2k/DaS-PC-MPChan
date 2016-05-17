@@ -371,6 +371,20 @@ Public Class DarkSoulsProcess
         End Try
     End Sub
 
+    Public Sub DisconnectSteamId(ByVal steamId As String)
+        Dim data(70) As Byte
+        data(0) = &H2
+        Dim selfSteamName As String = ReadSteamName(ReadInt32(dsBase + &HF62DD4) + &H30)
+        Dim selfSteamNameBytes() As Byte = Encoding.Unicode.GetBytes(selfSteamName)
+        Array.Copy(selfSteamNameBytes, 0, data, 1, selfSteamNameBytes.Length)
+
+        Try
+            sendP2PPacket(steamId, data)
+        Catch ex As Exception
+            Throw New DSConnectException(ex.Message)
+        End Try
+    End Sub
+
     Private Sub sendP2PPacket(targetSteamId As String, data As Byte())
         If targetSteamId.Length <> 16 Then
             Throw New ApplicationException("Invalid Steam ID: " & targetSteamId)
