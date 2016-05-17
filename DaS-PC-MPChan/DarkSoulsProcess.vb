@@ -16,6 +16,46 @@ Public Class DSConnectException
     End Sub
 End Class
 
+Public Class AllocatedMemory
+    Implements IDisposable
+    Private Declare Function VirtualAllocEx Lib "kernel32.dll" (hProcess As IntPtr, lpAddress As IntPtr, dwSize As IntPtr, flAllocationType As Integer, flProtect As Integer) As IntPtr
+    Private Declare Function VirtualProtectEx Lib "kernel32.dll" (hProcess As IntPtr, lpAddress As IntPtr, ByVal lpSize As IntPtr, ByVal dwNewProtect As UInt32, ByRef dwOldProtect As UInt32) As Boolean
+    Private Declare Function VirtualFreeEx Lib "kernel32.dll" (hProcess As IntPtr, lpAddress As IntPtr, ByVal dwSize As Integer, ByVal dwFreeType As Integer) As Boolean
+    Public Const MEM_COMMIT = 4096
+    Public Const MEM_RELEASE = &H8000
+    Public Const PAGE_READWRITE = 4
+    Public Const PAGE_EXECUTE_READWRITE = &H40
+
+    Private _process As IntPtr
+    Private _address As IntPtr
+    Sub New(targetProcessHandle As IntPtr, size As Integer)
+        _process = targetProcessHandle
+        _address = VirtualAllocEx(_process, 0, size, MEM_COMMIT, PAGE_READWRITE)
+        If _address = 0 Then
+            Throw New ApplicationException("Failed to allocate Memory")
+        End If
+        Dim oldProtectionOut As UInteger
+        VirtualProtectEx(_process, _address, size, PAGE_EXECUTE_READWRITE, oldProtectionOut)
+    End Sub
+    Public Overloads Sub Dispose() Implements IDisposable.Dispose
+        If _address <> 0 Then
+            VirtualFreeEx(_process, _address, 0, MEM_RELEASE)
+            _address = 0
+        End If
+    End Sub
+    Protected Overrides Sub Finalize()
+        Dispose()
+    End Sub
+    Public Shared Widening Operator CType(ByVal m As AllocatedMemory) As IntPtr
+        Return m._address
+    End Operator
+    Public ReadOnly Property address As IntPtr
+        Get
+            Return _address
+        End Get
+    End Property
+End Class
+
 Public Class DarkSoulsProcess
     Implements IDisposable
     'Process/Memory Manipulation
@@ -23,15 +63,10 @@ Public Class DarkSoulsProcess
     Private Declare Function ReadProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesRead As Integer) As Boolean
     Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByVal lpNumberOfBytesWritten As Integer) As Boolean
     Private Declare Function CloseHandle Lib "kernel32.dll" (ByVal hObject As IntPtr) As Boolean
-    Private Declare Function VirtualAllocEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal dwSize As IntPtr, ByVal flAllocationType As Integer, ByVal flProtect As Integer) As IntPtr
-    Private Declare Function VirtualProtectEx Lib "kernel32.dll" (ByVal hProcess As IntPtr, ByVal lpAddress As IntPtr, ByVal lpSize As IntPtr, ByVal dwNewProtect As UInt32, ByRef dwOldProtect As UInt32) As Boolean
-    Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As Integer, ByVal lpThreadAttributes As Integer, ByVal dwStackSize As Integer, ByVal lpStartAddress As Integer, ByVal lpParameter As Integer, ByVal dwCreationFlags As Integer, ByRef lpThreadId As Integer) As Integer
+    Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpThreadAttributes As IntPtr, ByVal dwStackSize As Integer, ByVal lpStartAddress As IntPtr, ByVal lpParameter As IntPtr, ByVal dwCreationFlags As Integer, ByRef lpThreadId As IntPtr) As Integer
 
     Public Const PROCESS_VM_READ = &H10
     Public Const TH32CS_SNAPPROCESS = &H2
-    Public Const MEM_COMMIT = 4096
-    Public Const PAGE_READWRITE = 4
-    Public Const PAGE_EXECUTE_READWRITE = &H40
     Public Const PROCESS_CREATE_THREAD = &H2
     Public Const PROCESS_VM_OPERATION = &H8
     Public Const PROCESS_VM_WRITE = &H20
@@ -41,9 +76,9 @@ Public Class DarkSoulsProcess
     Private _targetProcessHandle As IntPtr = IntPtr.Zero
 
     'Addresses of the various inserted functions
-    Private namedNodePtr As IntPtr = 0
-    Private nodeDumpPtr As IntPtr = 0
-    Private attemptIdPtr As IntPtr = 0
+    Private namedNodeMemory As AllocatedMemory
+    Private nodeDumpMemory As AllocatedMemory
+    Private connectMemory As AllocatedMemory
 
     'Dark Souls
     Private dsBase As IntPtr = 0
@@ -79,6 +114,11 @@ Public Class DarkSoulsProcess
                 'WriteBytes(watchdogBase + &H6E41, {&HE8, &H8E, &HD5, &HFF, &HFF})
             End If
 
+            If connectMemory IsNot Nothing Then
+                connectMemory.Dispose()
+                connectMemory = Nothing
+            End If
+            DrawNodes = False
             TearDownNodeDumpHook()
             detachFromProcess()
             disposed = True
@@ -170,17 +210,13 @@ Public Class DarkSoulsProcess
             Dim bytjmp As Integer = &H6B
             Dim hookLoc As IntPtr = dsBase + &H15A550
 
-
             If value Then
                 'Changes instruction doing the compare rather than changing the value it compares against
                 WriteBytes(cmpLoc, {&H1})
 
                 'If memory has not previously been allocated then allocate, otherwise use previous allocation
-                'Memory leaks still exists if somebody were to repeatedly reattach to the process, so...  don't do that.
-                If namedNodePtr = 0 Then
-                    namedNodePtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-                    Dim oldProtectionOut As UInteger
-                    VirtualProtectEx(_targetProcessHandle, namedNodePtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
+                If namedNodeMemory Is Nothing Then
+                    namedNodeMemory = New AllocatedMemory(_targetProcessHandle, TargetBufferSize)
                 End If
 
                 'ASM in Resources\ASM-NamedNodes.txt
@@ -193,18 +229,19 @@ Public Class DarkSoulsProcess
                             &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
 
                 'Modify final JMP above to return to instruction after original hook
-                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodePtr, Int32))
+                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodeMemory.address, Int32))
                 Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
-                WriteProcessMemory(_targetProcessHandle, namedNodePtr, bytes, TargetBufferSize, 0)
+                WriteProcessMemory(_targetProcessHandle, namedNodeMemory, bytes, TargetBufferSize, 0)
 
-                If ReadUInt8(namedNodePtr) = &H8B& Then
+                If ReadUInt8(namedNodeMemory) = &H8B& Then
                     'Insert hook to jump to allocated memory above
                     bytes = {&HE9, 0, 0, 0, 0}
-                    bytes2 = BitConverter.GetBytes(CType(namedNodePtr - hookLoc - 5, Int32))
+                    bytes2 = BitConverter.GetBytes(CType(namedNodeMemory - hookLoc - 5, Int32))
                     Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                     WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
                 Else
-                    namedNodePtr = 0
+                    namedNodeMemory.Dispose
+                    namedNodeMemory = Nothing
                     Throw New ApplicationException("DrawNodes code injection appears to have failed.")
                 End If
             Else
@@ -214,6 +251,12 @@ Public Class DarkSoulsProcess
 
                 'Disable Node Drawing
                 WriteBytes(cmpLoc, {&H0})
+
+                ' Free memory
+                If namedNodeMemory IsNot Nothing Then
+                    namedNodeMemory.Dispose()
+                    namedNodeMemory = Nothing
+                End If
             End If
         End Set
     End Property
@@ -228,10 +271,8 @@ Public Class DarkSoulsProcess
         Dim bytjmp As Integer = &H78
         Dim hookLoc As IntPtr = dsBase + &H7E637E
 
-        If nodeDumpPtr = 0 Then
-            nodeDumpPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-            Dim oldProtectionOut As UInteger
-            VirtualProtectEx(_targetProcessHandle, nodeDumpPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
+        If nodeDumpMemory Is Nothing Then
+            nodeDumpMemory = New AllocatedMemory(_targetProcessHandle, TargetBufferSize)
         End If
 
         'ASM in Resources\ASM-NodeDump.txt
@@ -245,22 +286,23 @@ Public Class DarkSoulsProcess
                     &H5B, &H58, &H66, &HF, &HD6, &H46, &H14, &HE9, &H0, &H0, &H0, &H0}
 
         'Adjust EDI
-        bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr + &H200, UInt32))
+        bytes2 = BitConverter.GetBytes(CType(nodeDumpMemory.address + &H200, UInt32))
         Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
 
         'Adjust the jump home
-        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpPtr, Int32))
+        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpMemory.address, Int32))
         Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
-        WriteProcessMemory(_targetProcessHandle, nodeDumpPtr, bytes, TargetBufferSize, 0)
+        WriteProcessMemory(_targetProcessHandle, nodeDumpMemory, bytes, TargetBufferSize, 0)
 
-        If ReadUInt8(nodeDumpPtr) = &H50& Then
+        If ReadUInt8(nodeDumpMemory) = &H50& Then
             'Insert the hook
             bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes(CType(nodeDumpPtr - hookLoc - 5, Int32))
+            bytes2 = BitConverter.GetBytes(CType(nodeDumpMemory - hookLoc - 5, Int32))
             Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
             WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
         Else
-            nodeDumpPtr = 0
+            nodeDumpMemory.Dispose()
+            nodeDumpMemory = Nothing
             Throw New DSProcessAttachException("NodeDump code injection appears to have failed.")
         End If
     End Sub
@@ -269,6 +311,10 @@ Public Class DarkSoulsProcess
         Dim bytes() As Byte = {&H66, &HF, &HD6, &H46, &H14}
         Dim hookLoc As Integer = dsBase + &H7E637E
         WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
+        If nodeDumpMemory IsNot Nothing Then
+            nodeDumpMemory.Dispose()
+            nodeDumpMemory = Nothing
+        End If
     End Sub
 
     Public Property MaxNodes As Integer
@@ -336,16 +382,13 @@ Public Class DarkSoulsProcess
         End If
 
         'If 0 then allocate memory, otherwise use previously allocated memory.
-        If attemptIdPtr = 0 Then
-            Dim TargetBufferSize = 1024
-            attemptIdPtr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-            Dim oldProtectionOut As UInteger
-            VirtualProtectEx(_targetProcessHandle, attemptIdPtr, TargetBufferSize, PAGE_EXECUTE_READWRITE, oldProtectionOut)
+        If connectMemory Is Nothing Then
+            connectMemory = New AllocatedMemory(_targetProcessHandle, 1024)
         End If
 
         'Set up data packet
         If data.Length > 512 Then Throw New ApplicationException("Data packet to big")
-        Dim dataPacketPtr As IntPtr = attemptIdPtr + &H100
+        Dim dataPacketPtr As IntPtr = connectMemory.address + &H100
         WriteProcessMemory(_targetProcessHandle, dataPacketPtr, data, data.Length, 0)
 
         'Set up code
@@ -356,7 +399,7 @@ Public Class DarkSoulsProcess
             &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
         'Set steam_api.SteamNetworking call
-        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - attemptIdPtr - 5, Int32))
+        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - connectMemory.address - 5, Int32))
         Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
 
         Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
@@ -371,9 +414,9 @@ Public Class DarkSoulsProcess
         Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
         Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
 
-        WriteProcessMemory(_targetProcessHandle, attemptIdPtr, code, code.Length, 0)
+        WriteProcessMemory(_targetProcessHandle, connectMemory, code, code.Length, 0)
 
-        CreateRemoteThread(_targetProcessHandle, 0, 0, attemptIdPtr, 0, 0, 0)
+        CreateRemoteThread(_targetProcessHandle, 0, 0, connectMemory, 0, 0, 0)
     End Sub
 
     Public Sub UpdateNodes()
@@ -405,7 +448,7 @@ Public Class DarkSoulsProcess
 
         Dim nodeSteamId As String
         Dim nodePtr As Integer
-        nodePtr = nodeDumpPtr + &H200
+        nodePtr = nodeDumpMemory.address + &H200
         While True
             nodeSteamId = ReadSteamIdAscii(nodePtr)
             WriteInt32(nodePtr, 0)
