@@ -66,6 +66,8 @@ Enabling this shows a visualization of currently active connections.
 * In-game proximity is represented here. If a player is near you in-game, like
   you're standing in the same spot in a level, your circles will be close to
   each other.
+* The fact that the player names are not drawn near the nodes they belong to is
+  a known issue.
 
 DSCM-Net
 --------
