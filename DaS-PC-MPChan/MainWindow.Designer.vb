@@ -22,6 +22,9 @@ Partial Class MainWindow
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
+        Dim lblNodes As System.Windows.Forms.Label
+        Dim lblNodeDiv As System.Windows.Forms.Label
+        Dim lblYourId As System.Windows.Forms.Label
         Dim DataGridViewCellStyle1 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
@@ -39,11 +42,8 @@ Partial Class MainWindow
         Me.lblVer = New System.Windows.Forms.Label()
         Me.chkExpand = New System.Windows.Forms.CheckBox()
         Me.txtCurrNodes = New System.Windows.Forms.TextBox()
-        Me.lblNodes = New System.Windows.Forms.Label()
-        Me.lblNodeDiv = New System.Windows.Forms.Label()
         Me.nmbMaxNodes = New System.Windows.Forms.NumericUpDown()
         Me.txtTargetSteamID = New System.Windows.Forms.TextBox()
-        Me.lblYourId = New System.Windows.Forms.Label()
         Me.txtSelfSteamID = New System.Windows.Forms.TextBox()
         Me.btnAttemptId = New System.Windows.Forms.Button()
         Me.tabs = New System.Windows.Forms.TabControl()
@@ -64,6 +64,9 @@ Partial Class MainWindow
         Me.lblUrl = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
+        lblNodes = New System.Windows.Forms.Label()
+        lblNodeDiv = New System.Windows.Forms.Label()
+        lblYourId = New System.Windows.Forms.Label()
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabs.SuspendLayout
         Me.tabActive.SuspendLayout
@@ -95,7 +98,7 @@ Partial Class MainWindow
         Me.lblVer.AutoSize = true
         Me.lblVer.BackColor = System.Drawing.SystemColors.Control
         Me.lblVer.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblVer.Location = New System.Drawing.Point(700, 625)
+        Me.lblVer.Location = New System.Drawing.Point(700, 463)
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
@@ -124,25 +127,25 @@ Partial Class MainWindow
         '
         'lblNodes
         '
-        Me.lblNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.lblNodes.AutoSize = true
-        Me.lblNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblNodes.Location = New System.Drawing.Point(633, 6)
-        Me.lblNodes.Name = "lblNodes"
-        Me.lblNodes.Size = New System.Drawing.Size(49, 16)
-        Me.lblNodes.TabIndex = 55
-        Me.lblNodes.Text = "Nodes"
+        lblNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        lblNodes.AutoSize = true
+        lblNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        lblNodes.Location = New System.Drawing.Point(633, 6)
+        lblNodes.Name = "lblNodes"
+        lblNodes.Size = New System.Drawing.Size(49, 16)
+        lblNodes.TabIndex = 55
+        lblNodes.Text = "Nodes"
         '
         'lblNodeDiv
         '
-        Me.lblNodeDiv.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.lblNodeDiv.AutoSize = true
-        Me.lblNodeDiv.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblNodeDiv.Location = New System.Drawing.Point(726, 6)
-        Me.lblNodeDiv.Name = "lblNodeDiv"
-        Me.lblNodeDiv.Size = New System.Drawing.Size(12, 16)
-        Me.lblNodeDiv.TabIndex = 56
-        Me.lblNodeDiv.Text = "/"
+        lblNodeDiv.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        lblNodeDiv.AutoSize = true
+        lblNodeDiv.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        lblNodeDiv.Location = New System.Drawing.Point(726, 6)
+        lblNodeDiv.Name = "lblNodeDiv"
+        lblNodeDiv.Size = New System.Drawing.Size(12, 16)
+        lblNodeDiv.TabIndex = 56
+        lblNodeDiv.Text = "/"
         '
         'nmbMaxNodes
         '
@@ -168,14 +171,14 @@ Partial Class MainWindow
         '
         'lblYourId
         '
-        Me.lblYourId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.lblYourId.AutoSize = true
-        Me.lblYourId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.lblYourId.Location = New System.Drawing.Point(531, 35)
-        Me.lblYourId.Name = "lblYourId"
-        Me.lblYourId.Size = New System.Drawing.Size(111, 16)
-        Me.lblYourId.TabIndex = 61
-        Me.lblYourId.Text = "Your Steam64 ID:"
+        lblYourId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        lblYourId.AutoSize = true
+        lblYourId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        lblYourId.Location = New System.Drawing.Point(531, 35)
+        lblYourId.Name = "lblYourId"
+        lblYourId.Size = New System.Drawing.Size(111, 16)
+        lblYourId.TabIndex = 61
+        lblYourId.Text = "Your Steam64 ID:"
         '
         'txtSelfSteamID
         '
@@ -211,7 +214,7 @@ Partial Class MainWindow
         Me.tabs.Location = New System.Drawing.Point(10, 115)
         Me.tabs.Name = "tabs"
         Me.tabs.SelectedIndex = 0
-        Me.tabs.Size = New System.Drawing.Size(765, 490)
+        Me.tabs.Size = New System.Drawing.Size(765, 328)
         Me.tabs.TabIndex = 67
         Me.tabs.Visible = false
         '
@@ -222,7 +225,7 @@ Partial Class MainWindow
         Me.tabActive.Location = New System.Drawing.Point(4, 22)
         Me.tabActive.Name = "tabActive"
         Me.tabActive.Padding = New System.Windows.Forms.Padding(3)
-        Me.tabActive.Size = New System.Drawing.Size(757, 464)
+        Me.tabActive.Size = New System.Drawing.Size(757, 302)
         Me.tabActive.TabIndex = 0
         Me.tabActive.Text = "Active"
         '
@@ -263,7 +266,7 @@ Partial Class MainWindow
         DataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvMPNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle3
         Me.dgvMPNodes.RowHeadersVisible = false
-        Me.dgvMPNodes.Size = New System.Drawing.Size(740, 450)
+        Me.dgvMPNodes.Size = New System.Drawing.Size(740, 288)
         Me.dgvMPNodes.TabIndex = 53
         '
         'tabFavorites
@@ -450,7 +453,7 @@ Partial Class MainWindow
         'btnAddFavorite
         '
         Me.btnAddFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
-        Me.btnAddFavorite.Location = New System.Drawing.Point(269, 615)
+        Me.btnAddFavorite.Location = New System.Drawing.Point(269, 453)
         Me.btnAddFavorite.Name = "btnAddFavorite"
         Me.btnAddFavorite.Size = New System.Drawing.Size(113, 23)
         Me.btnAddFavorite.TabIndex = 68
@@ -461,7 +464,7 @@ Partial Class MainWindow
         'btnRemFavorite
         '
         Me.btnRemFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
-        Me.btnRemFavorite.Location = New System.Drawing.Point(388, 615)
+        Me.btnRemFavorite.Location = New System.Drawing.Point(388, 453)
         Me.btnRemFavorite.Name = "btnRemFavorite"
         Me.btnRemFavorite.Size = New System.Drawing.Size(113, 23)
         Me.btnRemFavorite.TabIndex = 70
@@ -508,7 +511,7 @@ Partial Class MainWindow
         'dsProcessStatus
         '
         Me.dsProcessStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
-        Me.dsProcessStatus.Location = New System.Drawing.Point(10, 617)
+        Me.dsProcessStatus.Location = New System.Drawing.Point(10, 455)
         Me.dsProcessStatus.Name = "dsProcessStatus"
         Me.dsProcessStatus.ReadOnly = true
         Me.dsProcessStatus.Size = New System.Drawing.Size(187, 20)
@@ -518,7 +521,7 @@ Partial Class MainWindow
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(784, 642)
+        Me.ClientSize = New System.Drawing.Size(784, 480)
         Me.Controls.Add(Me.dsProcessStatus)
         Me.Controls.Add(Me.chkDSCMNet)
         Me.Controls.Add(Me.lblUrl)
@@ -528,11 +531,11 @@ Partial Class MainWindow
         Me.Controls.Add(Me.tabs)
         Me.Controls.Add(Me.btnAttemptId)
         Me.Controls.Add(Me.txtSelfSteamID)
-        Me.Controls.Add(Me.lblYourId)
+        Me.Controls.Add(lblYourId)
         Me.Controls.Add(Me.txtTargetSteamID)
         Me.Controls.Add(Me.nmbMaxNodes)
-        Me.Controls.Add(Me.lblNodeDiv)
-        Me.Controls.Add(Me.lblNodes)
+        Me.Controls.Add(lblNodeDiv)
+        Me.Controls.Add(lblNodes)
         Me.Controls.Add(Me.txtCurrNodes)
         Me.Controls.Add(Me.chkExpand)
         Me.Controls.Add(Me.lblVer)
@@ -560,11 +563,8 @@ End Sub
     Friend WithEvents lblVer As Label
     Friend WithEvents chkExpand As CheckBox
     Friend WithEvents txtCurrNodes As TextBox
-    Friend WithEvents lblNodes As Label
-    Friend WithEvents lblNodeDiv As Label
     Friend WithEvents nmbMaxNodes As NumericUpDown
     Friend WithEvents txtTargetSteamID As TextBox
-    Friend WithEvents lblYourId As Label
     Friend WithEvents txtSelfSteamID As TextBox
     Friend WithEvents btnAttemptId As System.Windows.Forms.Button
     Friend WithEvents tabs As TabControl

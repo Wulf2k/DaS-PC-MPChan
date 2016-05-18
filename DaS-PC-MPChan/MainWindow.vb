@@ -8,11 +8,11 @@ Imports System.Text
 
 Public Class MainWindow
     'Timers
-    Private WithEvents refMpData As New System.Windows.Forms.Timer()
-    Private WithEvents refTimer As New System.Windows.Forms.Timer()
-    Private WithEvents onlineTimer As New System.Windows.Forms.Timer()
-    Private WithEvents ircConnectTimer As New System.Windows.Forms.Timer()
-    Private WithEvents dsProcessTimer As New System.Windows.Forms.Timer()
+    Private WithEvents updateActiveNodesTimer As New System.Windows.Forms.Timer()
+    Private WithEvents updateUITimer As New System.Windows.Forms.Timer()
+    Private WithEvents updateOnlineStateTimer As New System.Windows.Forms.Timer()
+    Private WithEvents ircNodeConnectTimer As New System.Windows.Forms.Timer()
+    Private WithEvents dsAttachmentTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
     'For hotkey support
@@ -41,20 +41,17 @@ Public Class MainWindow
         txtTargetSteamID.SetPlaceholder(txtTargetSteamID.Text)
         txtTargetSteamID.Text = ""
 
-        'Start Refresh timer
-        refTimer.Interval = 200
-        refTimer.Start()
-
+        updateUITimer.Interval = 200
+        updateUITimer.Start()
         hotkeyTimer.Interval = 10
         hotkeyTimer.Start()
-
-        refMpData.Interval = 5000
-        refMpData.Start()
-
-        ircConnectTimer.Interval = 20000
-
-        dsProcessTimer.Interval = 1000
-        dsProcessTimer.Start()
+        updateActiveNodesTimer.Interval = 5000
+        updateActiveNodesTimer.Start()
+        dsAttachmentTimer.Interval = 1000
+        dsAttachmentTimer.Start()
+        updateOnlineStateTimer.Interval = 10 * 60 * 1000
+        updateOnlineStateTimer.Start()
+        ircNodeConnectTimer.Interval = 20 * 1000
 
         attachDSProcess()
 
@@ -62,6 +59,22 @@ Public Class MainWindow
         Me.Width = 450
         Me.Height = 190
 
+        setupGridViews()
+
+        'Create regkeys if they don't exist
+        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
+        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
+        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\Options")
+
+        loadFavoriteNodes()
+        loadRecentNodes()
+        loadOptions()
+        loadReadme()
+
+        updatecheck()
+        updateOnlinestate()
+    End Sub
+    Private Sub setupGridViews()
         Dim AlternateRowColor = Color.FromArgb(&HFFE3E3E3)
 
         With dgvMPNodes
@@ -163,27 +176,6 @@ Public Class MainWindow
             .Sort(.Columns("steamId"), ListSortDirection.Ascending)
             .Sort(.Columns("soulLevel"), ListSortDirection.Descending)
         End With
-
-
-        updatecheck()
-
-        'Create regkeys if they don't exist
-        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\FavoriteNodes")
-        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\RecentNodes")
-        My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\Options")
-
-        'Load favorite node list from registry
-        loadFavoriteNodes()
-        loadRecentNodes()
-        loadOptions()
-        updateOnlinestate()
-
-
-        loadReadme()
-
-        onlineTimer.Enabled = True
-        onlineTimer.Interval = 10 * 60 * 1000
-        onlineTimer.Start()
     End Sub
     Private Sub loadReadme()
         Dim html As XElement =
@@ -248,13 +240,10 @@ Public Class MainWindow
         chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
     End Sub
-    Private Sub onlineTimer_Tick() Handles onlineTimer.Tick
-        'Contributed by Chronial
+    Private Sub updateOnlineState_Tick() Handles updateOnlineStateTimer.Tick
         updateOnlinestate()
     End Sub
-    Private Async Sub updateOnlinestate()
-        'Contributed by Chronial
-        'Remote server set up and maintained by Chronial
+    Private Async Sub updateOnlineState()
         Dim steamIds = New HashSet(Of String)
         For Each Row In dgvRecentNodes.Rows
             steamIds.Add(Row.Cells("steamId").Value)
@@ -324,7 +313,7 @@ Public Class MainWindow
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
     End Sub
-    Private Sub connectToIRCNode() Handles ircConnectTimer.Tick
+    Private Sub connectToIRCNode() Handles ircNodeConnectTimer.Tick
         If (_ircClient Is Nothing OrElse
                 dsProcess Is Nothing OrElse
                 dsProcess.SelfSteamId = "" OrElse
@@ -350,7 +339,7 @@ Public Class MainWindow
         End If
     End Sub
 
-    Private Sub refTimer_Tick() Handles refTimer.Tick
+    Private Sub updateUI() Handles updateUITimer.Tick
         If dsProcess Is Nothing Then
             nmbMaxNodes.Enabled = False
             nmbMaxNodes.BackColor = New Color()
@@ -408,7 +397,7 @@ Public Class MainWindow
         MainWindow.oneHeld = oneKey
         MainWindow.twoheld = twoKey
     End Sub
-    Private Sub attachDSProcess() Handles dsProcessTimer.Tick
+    Private Sub attachDSProcess() Handles dsAttachmentTimer.Tick
         If dsProcess IsNot Nothing Then
             If Not dsProcess.IsAttached Then
                 dsProcess.Dispose()
@@ -435,7 +424,7 @@ Public Class MainWindow
         dsProcess.DrawNodes = chkDebugDrawing.Checked
     End Sub
 
-    Private Sub refMpData_Tick() Handles refMpData.Tick
+    Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
         Dim nodes As New Dictionary(Of String, DSNode)
         Dim selfNode As DSNode = Nothing
         If dsProcess IsNot Nothing Then
@@ -659,10 +648,10 @@ Public Class MainWindow
 
         If chkDSCMNet.Checked Then
             _ircClient = New IRCClient(Me)
-            ircConnectTimer.Start()
+            ircNodeConnectTimer.Start()
         Else
             If _ircClient IsNot Nothing Then
-                ircConnectTimer.Stop()
+                ircNodeConnectTimer.Stop()
                 _ircClient.Shutdown()
                 _ircClient = Nothing
                 ircDisplayList.Clear()
