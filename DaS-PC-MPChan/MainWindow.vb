@@ -55,10 +55,6 @@ Public Class MainWindow
 
         attachDSProcess()
 
-        'Set initial form size to non-expanded
-        Me.Width = 450
-        Me.Height = 190
-
         setupGridViews()
 
         'Create regkeys if they don't exist
@@ -70,6 +66,9 @@ Public Class MainWindow
         loadRecentNodes()
         loadOptions()
         loadReadme()
+
+        'Resize window
+        chkExpand_CheckedChanged()
 
         updatecheck()
         updateOnlineState()
@@ -290,6 +289,10 @@ Public Class MainWindow
             End Try
         Next
     End Sub
+    Private Function versionToUrl(version As String) As String
+        Dim fileVersion = Regex.Replace(version, "^(\d{4})(\d{2})(\d{2})(\d{2})$", "$1-$2-$3-$4")
+        Return "http://wulf2k.ca/PC/DaS/DSCM-" & fileVersion & ".rar"
+    End Function
     Private Async Sub updatecheck()
         Try
             Dim client As New Net.WebClient()
@@ -302,16 +305,30 @@ Public Class MainWindow
 
             If stablever > Version.Replace(".", "") Then
                 lblNewVersion.Visible = True
-                lblUrl.Visible = True
+                btnUpdate.Visible = True
+                btnUpdate.Tag = versionToUrl(stablever)
                 lblNewVersion.Text = "New stable version available"
             ElseIf testver > Version.Replace(".", "") Then
                 lblNewVersion.Visible = True
-                lblUrl.Visible = True
+                btnUpdate.Visible = True
+                btnUpdate.Tag = versionToUrl(testver)
                 lblNewVersion.Text = "New testing version available"
             End If
         Catch ex As Exception
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
+    End Sub
+    Private Sub btnUpdate_Click(sender As Button, e As EventArgs) Handles btnUpdate.Click
+        Dim updateWindow As New UpdateWindow(sender.Tag)
+        updateWindow.ShowDialog()
+        If updateWindow.WasSuccessful Then
+            If dsProcess IsNot Nothing Then
+                dsProcess.Dispose()
+                dsProcess = Nothing
+            End If
+            Process.Start(updateWindow.NewAssembly)
+            Me.Close()
+        End If
     End Sub
     Private Sub connectToIRCNode() Handles ircNodeConnectTimer.Tick
         If (_ircClient Is Nothing OrElse
@@ -485,7 +502,7 @@ Public Class MainWindow
             Next
         End If
     End Sub
-    Private Sub chkExpand_CheckedChanged(sender As Object, e As EventArgs) Handles chkExpand.CheckedChanged
+    Private Sub chkExpand_CheckedChanged() Handles chkExpand.CheckedChanged
         Dim key As Microsoft.Win32.RegistryKey
 
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
@@ -498,7 +515,7 @@ Public Class MainWindow
             btnAddFavorite.Visible = True
             btnRemFavorite.Visible = True
         Else
-            Me.Width = 450
+            Me.Width = 500
             Me.Height = 190
             tabs.Visible = False
             btnAddFavorite.Visible = False
