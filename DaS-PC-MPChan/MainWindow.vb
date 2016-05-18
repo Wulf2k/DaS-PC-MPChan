@@ -32,9 +32,6 @@ Public Class MainWindow
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
-    Private Sub DSCM_Close(sender As Object, e As EventArgs) Handles MyBase.FormClosed
-        chkDebugDrawing.Checked = False
-    End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Version = lblVer.Text
 
