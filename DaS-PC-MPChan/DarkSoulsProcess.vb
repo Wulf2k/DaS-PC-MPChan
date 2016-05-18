@@ -1,4 +1,5 @@
 ﻿Imports System.Text
+Imports System.Threading
 
 Public Class DSProcessAttachException
     Inherits System.ApplicationException
@@ -97,7 +98,8 @@ Public Class DarkSoulsProcess
 
     Sub New()
         attachToProcess()
-        'TODO (chronial): Is this safe here, or should we wait a second because Dark Souls might be booting up?
+        'Give the process a little time to start up
+        Thread.Sleep(200)
         findDllAddresses()
         Dim beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
         If beta Then
