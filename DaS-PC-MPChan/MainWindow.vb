@@ -72,7 +72,7 @@ Public Class MainWindow
         loadReadme()
 
         updatecheck()
-        updateOnlinestate()
+        updateOnlineState()
     End Sub
     Private Sub setupGridViews()
         Dim AlternateRowColor = Color.FromArgb(&HFFE3E3E3)
@@ -241,7 +241,7 @@ Public Class MainWindow
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
     End Sub
     Private Sub updateOnlineState_Tick() Handles updateOnlineStateTimer.Tick
-        updateOnlinestate()
+        updateOnlineState()
     End Sub
     Private Async Sub updateOnlineState()
         Dim steamIds = New HashSet(Of String)
@@ -271,7 +271,7 @@ Public Class MainWindow
         End Try
         For Each Row In dgvRecentNodes.Rows
             Try
-                If onlineInfo(Converter(Row.Cells("steamId").Value())) Then
+                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
                     Row.Cells("isOnline").Value = "Y"
                 Else
                     Row.Cells("isOnline").Value = "N"
@@ -281,7 +281,7 @@ Public Class MainWindow
         Next
         For Each Row In dgvFavoriteNodes.Rows
             Try
-                If onlineInfo(Converter(Row.Cells("steamId").Value())) Then
+                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
                     Row.Cells("isOnline").Value = "Y"
                 Else
                     Row.Cells("isOnline").Value = "N"
@@ -539,7 +539,7 @@ Public Class MainWindow
             If m.Success Then
                 'The url contains the steamid, no need for a network request
                 idString = m.Groups.Item(1).Value
-            ElseIf Regex.IsMatch(idString, "^https?://steamcommunity.com/")
+            ElseIf Regex.IsMatch(idString, "^https?://steamcommunity.com/") Then
                 'Get the steamid via api request
                 Try
                     Dim url As String = idString.Split("?")(0) & "?xml=1"

@@ -29,17 +29,17 @@
         World.Add("18-0", "Kiln")
         World.Add("18-1", "Undead Asylum")
 
-        Covenant.Add(-1,"")
-        Covenant.Add(0,"None")
-        Covenant.Add(1,"Way of White")
-        Covenant.Add(2,"Princess's Guard")
-        Covenant.Add(3,"Warrior of Sunlight")
-        Covenant.Add(4,"Darkwraith")
-        Covenant.Add(5,"Path of the Dragon")
-        Covenant.Add(6,"Gravelord Servant")
-        Covenant.Add(7,"Forest Hunter")
-        Covenant.Add(8,"Darkmoon Blade")
-        Covenant.Add(9,"Chaos Servant")
+        Covenant.Add(-1, "")
+        Covenant.Add(0, "None")
+        Covenant.Add(1, "Way of White")
+        Covenant.Add(2, "Princess's Guard")
+        Covenant.Add(3, "Warrior of Sunlight")
+        Covenant.Add(4, "Darkwraith")
+        Covenant.Add(5, "Path of the Dragon")
+        Covenant.Add(6, "Gravelord Servant")
+        Covenant.Add(7, "Forest Hunter")
+        Covenant.Add(8, "Darkmoon Blade")
+        Covenant.Add(9, "Chaos Servant")
     End Sub
 End Module
 
@@ -67,7 +67,7 @@ Public Class DSNode
             SoulLevel = other.SoulLevel AndAlso
             PhantomType = other.PhantomType AndAlso
             MPZone = other.MPZone AndAlso
-            World = other.World AndAlso 
+            World = other.World AndAlso
             Covenant = other.Covenant AndAlso
             Indictments = other.Indictments)
     End Function
@@ -134,10 +134,10 @@ Public Class DSNode
             End Try
         End Get
     End Property
-    Public ReadOnly property CovenantColumn As String
+    Public ReadOnly Property CovenantColumn As String
         Get
             Try
-                return DSDataMaps.Covenant(Covenant)
+                Return DSDataMaps.Covenant(Covenant)
             Catch ex As KeyNotFoundException
                 Return Covenant.ToString()
             End Try

@@ -242,7 +242,7 @@ Public Class DarkSoulsProcess
                     Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
                     WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
                 Else
-                    namedNodeMemory.Dispose
+                    namedNodeMemory.Dispose()
                     namedNodeMemory = Nothing
                     Throw New ApplicationException("DrawNodes code injection appears to have failed.")
                 End If
