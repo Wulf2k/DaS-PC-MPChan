@@ -343,7 +343,7 @@ Partial Class MainWindow
         '
         Me.txtIRCDebug.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.txtIRCDebug.Location = New System.Drawing.Point(6, 438)
+        Me.txtIRCDebug.Location = New System.Drawing.Point(6, 279)
         Me.txtIRCDebug.Name = "txtIRCDebug"
         Me.txtIRCDebug.Size = New System.Drawing.Size(740, 20)
         Me.txtIRCDebug.TabIndex = 55
@@ -512,7 +512,7 @@ Partial Class MainWindow
         DataGridViewCellStyle12.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvDSCMNet.RowHeadersDefaultCellStyle = DataGridViewCellStyle12
         Me.dgvDSCMNet.RowHeadersVisible = False
-        Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 293)
+        Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 267)
         Me.dgvDSCMNet.TabIndex = 54
         '
         'MainWindow
