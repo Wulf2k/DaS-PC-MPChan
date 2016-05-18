@@ -38,6 +38,29 @@ Public Class MainWindow
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Version = lblVer.Text
 
+        Dim oldFileArg As String = Nothing
+        For Each arg In Environment.GetCommandLineArgs().Skip(1)
+            If arg.StartsWith("--old-file=") Then
+                oldFileArg = arg.Substring("--old-file=".Length)
+            Else
+                MsgBox("Unknown command line arguments")
+                oldFileArg = Nothing
+                Exit For
+            End If
+        Next
+        If oldFileArg IsNot Nothing Then
+            If oldFileArg.EndsWith(".old") Then
+                Try
+                    File.Delete(oldFileArg)
+                Catch ex As Exception
+                    MsgBox("Deleting old version failed: " & vbCrLf & ex.Message, MsgBoxStyle.Exclamation)
+                End Try
+            Else
+                MsgBox("Deleting old version failed: Invalid filename ", MsgBoxStyle.Exclamation)
+            End If
+        End If
+
+
         txtTargetSteamID.SetPlaceholder(txtTargetSteamID.Text)
         txtTargetSteamID.Text = ""
 
@@ -326,7 +349,7 @@ Public Class MainWindow
                 dsProcess.Dispose()
                 dsProcess = Nothing
             End If
-            Process.Start(updateWindow.NewAssembly)
+            Process.Start(updateWindow.NewAssembly, """--old-file=" & updateWindow.OldAssembly & """")
             Me.Close()
         End If
     End Sub

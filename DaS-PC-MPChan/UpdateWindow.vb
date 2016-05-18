@@ -75,7 +75,7 @@ Public Class UpdateWindow
                 tmpFile.Write(extractedContents, 0, extractedContents.Length)
             End Using
             'Generate path in same directory to make sure we have write access there
-            Dim tmpAssemblyPath = assemblyPath & ".tmp"
+            Dim tmpAssemblyPath = assemblyPath & ".old"
             If File.Exists(tmpAssemblyPath) Then File.Delete(tmpAssemblyPath)
             File.Move(assemblyPath, tmpAssemblyPath)
             File.Move(tmpPath, assemblyPath)
@@ -94,12 +94,13 @@ Public Class UpdateWindow
         Using compressedStream As New MemoryStream(compressedContents)
             Dim reader = SharpCompress.Reader.ReaderFactory.Open(compressedStream)
             While reader.MoveToNextEntry()
-                If ignoreExtensions.Contains(Path.GetExtension(reader.Entry.Key)) Then
+                Dim entryExtension = Path.GetExtension(reader.Entry.Key).ToLower()
+                If ignoreExtensions.Contains(entryExtension) Then
                     Continue While
                 End If
                 If (extractedContents IsNot Nothing Or
                         reader.Entry.IsDirectory Or
-                        Not Path.GetExtension(reader.Entry.Key) = ".exe") Then
+                        Not entryExtension = ".exe") Then
                     Throw New ApplicationException("Unkown structure, please update manually")
                 End If
                 extractedContents = New Byte(reader.Entry.Size) {}
