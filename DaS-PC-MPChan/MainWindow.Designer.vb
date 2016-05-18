@@ -276,7 +276,7 @@ Partial Class MainWindow
         DataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvFavoriteNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle6
         Me.dgvFavoriteNodes.RowHeadersVisible = False
-        Me.dgvFavoriteNodes.Size = New System.Drawing.Size(370, 450)
+        Me.dgvFavoriteNodes.Size = New System.Drawing.Size(370, 290)
         Me.dgvFavoriteNodes.TabIndex = 54
         '
         'tabRecent
@@ -325,7 +325,7 @@ Partial Class MainWindow
         DataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvRecentNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle9
         Me.dgvRecentNodes.RowHeadersVisible = False
-        Me.dgvRecentNodes.Size = New System.Drawing.Size(370, 450)
+        Me.dgvRecentNodes.Size = New System.Drawing.Size(370, 293)
         Me.dgvRecentNodes.TabIndex = 55
         '
         'tabDSCMNet
@@ -367,7 +367,7 @@ Partial Class MainWindow
         Me.helpView.Location = New System.Drawing.Point(3, 3)
         Me.helpView.MinimumSize = New System.Drawing.Size(20, 20)
         Me.helpView.Name = "helpView"
-        Me.helpView.Size = New System.Drawing.Size(751, 458)
+        Me.helpView.Size = New System.Drawing.Size(751, 293)
         Me.helpView.TabIndex = 0
         '
         'btnAddFavorite
@@ -512,7 +512,7 @@ Partial Class MainWindow
         DataGridViewCellStyle12.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvDSCMNet.RowHeadersDefaultCellStyle = DataGridViewCellStyle12
         Me.dgvDSCMNet.RowHeadersVisible = False
-        Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 425)
+        Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 293)
         Me.dgvDSCMNet.TabIndex = 54
         '
         'MainWindow
