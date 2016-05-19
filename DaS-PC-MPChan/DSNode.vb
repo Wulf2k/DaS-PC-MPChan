@@ -135,10 +135,10 @@ Public Class DSNode
             End Try
         End Get
     End Property
-    Public ReadOnly property CovenantColumn As String
+    Public ReadOnly Property CovenantColumn As String
         Get
             Try
-                return DSDataMaps.Covenant(Covenant)
+                Return DSDataMaps.Covenant(Covenant)
             Catch ex As KeyNotFoundException
                 Return Covenant.ToString()
             End Try
