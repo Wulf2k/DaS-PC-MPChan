@@ -35,6 +35,35 @@ Public Class MainWindow
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Version = lblVer.Text
 
+        Dim oldFileArg As String = Nothing
+        For Each arg In Environment.GetCommandLineArgs().Skip(1)
+            If arg.StartsWith("--old-file=") Then
+                oldFileArg = arg.Substring("--old-file=".Length)
+            Else
+                MsgBox("Unknown command line arguments")
+                oldFileArg = Nothing
+                Exit For
+            End If
+        Next
+        If oldFileArg IsNot Nothing Then
+            If oldFileArg.EndsWith(".old") Then
+                Dim t = New Thread(
+                    Sub()
+                    Try
+                        'Give the old version time to shut down
+                        Thread.Sleep(1000)
+                        File.Delete(oldFileArg)
+                    Catch ex As Exception
+                        Me.Invoke(Function() MsgBox("Deleting old version failed: " & vbCrLf & ex.Message, MsgBoxStyle.Exclamation))
+                    End Try
+                End Sub)
+                t.Start()
+            Else
+                MsgBox("Deleting old version failed: Invalid filename ", MsgBoxStyle.Exclamation)
+            End If
+        End If
+
+
         txtTargetSteamID.SetPlaceholder(txtTargetSteamID.Text)
         txtTargetSteamID.Text = ""
 
@@ -52,10 +81,6 @@ Public Class MainWindow
 
         attachDSProcess()
 
-        'Set initial form size to non-expanded
-        Me.Width = 450
-        Me.Height = 190
-
         setupGridViews()
 
         'Create regkeys if they don't exist
@@ -67,6 +92,9 @@ Public Class MainWindow
         loadRecentNodes()
         loadOptions()
         loadReadme()
+
+        'Resize window
+        chkExpand_CheckedChanged()
 
         updatecheck()
         updateOnlineState()
@@ -293,22 +321,38 @@ Public Class MainWindow
             Dim uri = "http://wulf2k.ca/pc/das/dscm-ver.txt"
             Dim content As String = Await client.DownloadStringTaskAsync(uri)
 
-            Dim lines() As String = content.Split({Chr(10), Chr(13)})
-            Dim stablever = lines(0)
-            Dim testver = lines(1)
+            Dim lines() As String = content.Split({vbCrLf, vbLf}, StringSplitOptions.None)
+            Dim stableVersion = lines(0)
+            Dim stableUrl = lines(2)
+            Dim testVersion = lines(1)
+            Dim testUrl = lines(3)
 
-            If stablever > Version.Replace(".", "") Then
+            If stableVersion > Version.Replace(".", "") Then
                 lblNewVersion.Visible = True
-                lblUrl.Visible = True
+                btnUpdate.Visible = True
+                btnUpdate.Tag = stableUrl
                 lblNewVersion.Text = "New stable version available"
-            ElseIf testver > Version.Replace(".", "") Then
+            ElseIf testVersion > Version.Replace(".", "") Then
                 lblNewVersion.Visible = True
-                lblUrl.Visible = True
+                btnUpdate.Visible = True
+                btnUpdate.Tag = testUrl
                 lblNewVersion.Text = "New testing version available"
             End If
         Catch ex As Exception
             'Fail silently since nobody wants to be bothered for an update check.
         End Try
+    End Sub
+    Private Sub btnUpdate_Click(sender As Button, e As EventArgs) Handles btnUpdate.Click
+        Dim updateWindow As New UpdateWindow(sender.Tag)
+        updateWindow.ShowDialog()
+        If updateWindow.WasSuccessful Then
+            If dsProcess IsNot Nothing Then
+                dsProcess.Dispose()
+                dsProcess = Nothing
+            End If
+            Process.Start(updateWindow.NewAssembly, """--old-file=" & updateWindow.OldAssembly & """")
+            Me.Close()
+        End If
     End Sub
     Private Sub connectToIRCNode() Handles ircNodeConnectTimer.Tick
         If (_ircClient Is Nothing OrElse
@@ -482,7 +526,7 @@ Public Class MainWindow
             Next
         End If
     End Sub
-    Private Sub chkExpand_CheckedChanged(sender As Object, e As EventArgs) Handles chkExpand.CheckedChanged
+    Private Sub chkExpand_CheckedChanged() Handles chkExpand.CheckedChanged
         Dim key As Microsoft.Win32.RegistryKey
 
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
@@ -495,7 +539,7 @@ Public Class MainWindow
             btnAddFavorite.Visible = True
             btnRemFavorite.Visible = True
         Else
-            Me.Width = 450
+            Me.Width = 500
             Me.Height = 190
             tabs.Visible = False
             btnAddFavorite.Visible = False
