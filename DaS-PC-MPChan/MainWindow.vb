@@ -188,8 +188,7 @@ Public Class MainWindow
             </html>
 
         Dim htmlString = html.ToString()
-        Dim body = CommonMark.CommonMarkConverter.Convert(My.Resources.Readme)
-        helpView.DocumentText = htmlString.Replace("###", body)
+        helpView.DocumentText = htmlString.Replace("###", My.Resources.Readme)
         helpView.IsWebBrowserContextMenuEnabled = False
         helpView.AllowWebBrowserDrop = False
     End Sub

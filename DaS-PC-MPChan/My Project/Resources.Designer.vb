@@ -61,25 +61,20 @@ Namespace My.Resources
         End Property
         
         '''<summary>
-        '''  Looks up a localized string similar to **Disclaimer:** Use this software at your own risk. By using this software, you
-        '''agree that we are not liable for any possible issues your game or computer may
-        '''experience.
-        '''
-        '''Instructions
-        '''============
-        '''
-        '''1. Start DSCM
-        '''2. Start Dark Souls
-        '''3. Enjoy Dark Souls Multiplayer :)
-        '''
-        '''Automatic node finding
-        '''----------------------
-        '''While DSCM-Net is active, it will automatically connect to players in the same
-        '''are and in coop level range. Just have it running and enjoy working Dark Souls
-        '''multiplayer.
-        '''
-        '''Manual Connecting
-        '''------- [rest of string was truncated]&quot;;.
+        '''  Looks up a localized string similar to &lt;h1&gt;Instructions&lt;/h1&gt;
+        '''&lt;ol&gt;
+        '''&lt;li&gt;Start DSCM&lt;/li&gt;
+        '''&lt;li&gt;Start Dark Souls&lt;/li&gt;
+        '''&lt;li&gt;Enjoy Dark Souls Multiplayer :)&lt;/li&gt;
+        '''&lt;/ol&gt;
+        '''&lt;h2&gt;Automatic node finding&lt;/h2&gt;
+        '''&lt;p&gt;While DSCM-Net is active, it will automatically connect to players in the same
+        '''area and in coop level range. Just have it running and enjoy working Dark Souls
+        '''multiplayer.&lt;/p&gt;
+        '''&lt;h2&gt;Manual Connecting&lt;/h2&gt;
+        '''&lt;p&gt;You can also manually connect to a specific player like this:&lt;/p&gt;
+        '''&lt;ol&gt;
+        '''&lt;li&gt;Make sure you are connected to less than 20 nodes. You might wa [rest of string was truncated]&quot;;.
         '''</summary>
         Friend ReadOnly Property Readme() As String
             Get

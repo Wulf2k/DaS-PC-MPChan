@@ -2,7 +2,7 @@
 /packages
 
 # Build copy of readme
-Readme--copy.md
+Readme_compiled.html
 
 # Windows image file caches
 Thumbs.db
