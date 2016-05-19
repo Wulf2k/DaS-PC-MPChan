@@ -50,11 +50,17 @@ Public Class MainWindow
         Next
         If oldFileArg IsNot Nothing Then
             If oldFileArg.EndsWith(".old") Then
-                Try
-                    File.Delete(oldFileArg)
-                Catch ex As Exception
-                    MsgBox("Deleting old version failed: " & vbCrLf & ex.Message, MsgBoxStyle.Exclamation)
-                End Try
+                Dim t = New Thread(
+                    Sub()
+                    Try
+                        'Give the old version time to shut down
+                        Thread.Sleep(1000)
+                        File.Delete(oldFileArg)
+                    Catch ex As Exception
+                        Me.Invoke(Function() MsgBox("Deleting old version failed: " & vbCrLf & ex.Message, MsgBoxStyle.Exclamation))
+                    End Try
+                End Sub)
+                t.Start()
             Else
                 MsgBox("Deleting old version failed: Invalid filename ", MsgBoxStyle.Exclamation)
             End If
