@@ -312,10 +312,6 @@ Public Class MainWindow
             End Try
         Next
     End Sub
-    Private Function versionToUrl(version As String) As String
-        Dim fileVersion = Regex.Replace(version, "^(\d{4})(\d{2})(\d{2})(\d{2})$", "$1-$2-$3-$4")
-        Return "http://wulf2k.ca/PC/DaS/DSCM-" & fileVersion & ".rar"
-    End Function
     Private Async Sub updatecheck()
         Try
             Dim client As New Net.WebClient()
@@ -323,18 +319,20 @@ Public Class MainWindow
             Dim content As String = Await client.DownloadStringTaskAsync(uri)
 
             Dim lines() As String = content.Split({vbCrLf, vbLf}, StringSplitOptions.None)
-            Dim stablever = lines(0)
-            Dim testver = lines(1)
+            Dim stableVersion = lines(0)
+            Dim stableUrl = lines(2)
+            Dim testVersion = lines(1)
+            Dim testUrl = lines(3)
 
-            If stablever > Version.Replace(".", "") Then
+            If stableVersion > Version.Replace(".", "") Then
                 lblNewVersion.Visible = True
                 btnUpdate.Visible = True
-                btnUpdate.Tag = versionToUrl(stablever)
+                btnUpdate.Tag = stableUrl
                 lblNewVersion.Text = "New stable version available"
-            ElseIf testver > Version.Replace(".", "") Then
+            ElseIf testVersion > Version.Replace(".", "") Then
                 lblNewVersion.Visible = True
                 btnUpdate.Visible = True
-                btnUpdate.Tag = versionToUrl(testver)
+                btnUpdate.Tag = testUrl
                 lblNewVersion.Text = "New testing version available"
             End If
         Catch ex As Exception
