@@ -175,14 +175,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Resources\ASM-NamedNodes.txt" />
+    <None Include="ASM\ASM-NamedNodes.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\ASM-NodeDump.txt" />
+    <None Include="ASM\ASM-NodeDump.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ILMergeOrder.txt" />
-    <Content Include="Resources\ASM-ConnectSteamId.txt" />
+    <Content Include="ASM\ASM-ConnectSteamId.txt" />
+    <None Include="Resources\Readme_compiled.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
