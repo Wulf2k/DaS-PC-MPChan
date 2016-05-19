@@ -322,7 +322,7 @@ Public Class MainWindow
             Dim uri = "http://wulf2k.ca/pc/das/dscm-ver.txt"
             Dim content As String = Await client.DownloadStringTaskAsync(uri)
 
-            Dim lines() As String = content.Split({Chr(10), Chr(13)})
+            Dim lines() As String = content.Split({vbCrLf, vbLf}, StringSplitOptions.None)
             Dim stablever = lines(0)
             Dim testver = lines(1)
 
