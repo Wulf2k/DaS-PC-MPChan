@@ -1,5 +1,6 @@
 ﻿Imports System.Net
 Imports System.IO
+Imports System.IO.Compression
 Imports System.Runtime.InteropServices
 Imports System.Runtime.CompilerServices
 Imports System.Threading
@@ -91,23 +92,23 @@ Public Class UpdateWindow
     Private Function extractFile(compressedContents() As Byte) As Byte()
         Dim ignoreExtensions() As String = {".txt", ".doc", ".docx", ".md"}
         Dim extractedContents() As Byte = Nothing
-        Using compressedStream As New MemoryStream(compressedContents)
-            Dim reader = SharpCompress.Reader.ReaderFactory.Open(compressedStream)
-            While reader.MoveToNextEntry()
-                Dim entryExtension = Path.GetExtension(reader.Entry.Key).ToLower()
+        Using compressedStream As New MemoryStream(compressedContents), _
+                archive As New ZipArchive(compressedStream, ZipArchiveMode.Read)
+            For Each entry As ZipArchiveEntry In archive.Entries
+                Dim entryExtension = Path.GetExtension(entry.Name).ToLower()
                 If ignoreExtensions.Contains(entryExtension) Then
-                    Continue While
+                    Continue For
                 End If
-                If (extractedContents IsNot Nothing Or
-                        reader.Entry.IsDirectory Or
-                        Not entryExtension = ".exe") Then
+                'Apart from the ignored file types, the archive should contain
+                'exactly one executable
+                If extractedContents IsNot Nothing Or Not entryExtension = ".exe" Then
                     Throw New ApplicationException("Unkown structure, please update manually")
                 End If
-                extractedContents = New Byte(reader.Entry.Size) {}
-                Using extractedStream = reader.OpenEntryStream()
-                    extractedStream.Read(extractedContents, 0, reader.Entry.Size)
+                extractedContents = New Byte(entry.Length) {}
+                Using extractedStream = entry.Open()
+                    extractedStream.Read(extractedContents, 0, entry.Length)
                 End Using
-            End While
+            Next
         End Using
         If extractedContents Is Nothing Then
             Throw New ApplicationException("Unkown structure, please update manually")
