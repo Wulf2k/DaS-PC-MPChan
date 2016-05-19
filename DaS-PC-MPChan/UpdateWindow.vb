@@ -102,7 +102,7 @@ Public Class UpdateWindow
                 'Apart from the ignored file types, the archive should contain
                 'exactly one executable
                 If extractedContents IsNot Nothing Or Not entryExtension = ".exe" Then
-                    Throw New ApplicationException("Unkown structure, please update manually")
+                    Throw New ApplicationException("Unknown structure, please update manually")
                 End If
                 extractedContents = New Byte(entry.Length) {}
                 Using extractedStream = entry.Open()
@@ -111,7 +111,7 @@ Public Class UpdateWindow
             Next
         End Using
         If extractedContents Is Nothing Then
-            Throw New ApplicationException("Unkown structure, please update manually")
+            Throw New ApplicationException("Unknown structure, please update manually")
         End If
         Return extractedContents
     End Function
