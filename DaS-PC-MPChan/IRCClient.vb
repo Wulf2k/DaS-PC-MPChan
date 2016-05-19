@@ -62,7 +62,8 @@ Public Class IRCClient
         If candidates.Count = 0 Then Return Nothing
 
         Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
-            .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canCoop(n)) _
+            .OrderByDescending(Function(n) (self.isFriendWith(n)) AndAlso self.canCoop(n)) _
+            .ThenByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canCoop(n)) _
             .ThenByDescending(Function(n) (n.World <> "-1--1")) _

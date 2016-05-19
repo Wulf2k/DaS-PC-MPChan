@@ -55,6 +55,7 @@ Public Class DSNode
     Public Covenant As Integer = -1
     Public Indictments As Integer = -1
 
+    Public friends() As String
 
     Public Function Clone() As DSNode
         Return DirectCast(Me.MemberwiseClone(), DSNode)
@@ -67,7 +68,7 @@ Public Class DSNode
             SoulLevel = other.SoulLevel AndAlso
             PhantomType = other.PhantomType AndAlso
             MPZone = other.MPZone AndAlso
-            World = other.World AndAlso
+            World = other.World AndAlso 
             Covenant = other.Covenant AndAlso
             Indictments = other.Indictments)
     End Function
@@ -134,10 +135,10 @@ Public Class DSNode
             End Try
         End Get
     End Property
-    Public ReadOnly Property CovenantColumn As String
+    Public ReadOnly property CovenantColumn As String
         Get
             Try
-                Return DSDataMaps.Covenant(Covenant)
+                return DSDataMaps.Covenant(Covenant)
             Catch ex As KeyNotFoundException
                 Return Covenant.ToString()
             End Try
@@ -160,5 +161,10 @@ Public Class DSNode
 
     Public Function canCoop(other As DSNode) As Boolean
         Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)
+    End Function
+    ' Only words for SelfNode
+    Public Function isFriendWith(other As DSNode) As Boolean
+        Dim intId As Long = CLng("&H" & other.SteamId)
+        Return InStr(1, vbNullChar & Join(friends, vbNullChar) & vbNullChar, vbNullChar & intId & vbNullChar) > 0
     End Function
 End Class

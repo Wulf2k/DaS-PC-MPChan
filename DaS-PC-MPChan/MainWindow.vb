@@ -353,6 +353,30 @@ Public Class MainWindow
             Me.Close()
         End If
     End Sub
+    Private Sub retrieveFriends()
+        Dim document As New Xml.XmlDocument()
+        Try
+            Dim intId As Long = CLng("&H" & dsProcess.SelfSteamId)
+            Dim url As String = "https://steamcommunity.com/profiles/" & intId & "/friends?xml=1"
+            document.Load(url)
+            Dim friendsList As Xml.XmlNodeList = document.SelectNodes("/friendsList/friends/friend")
+            ReDim dsProcess.SelfNode.friends(friendsList.Count)
+            Dim i As Integer = 0
+            For Each node As Xml.XmlNode In friendsList
+                dsProcess.SelfNode.friends(i) = node.InnerText
+                i += 1
+            Next node
+        Catch ex As Exception
+            Try
+                Dim errorMessage As String = document.SelectSingleNode("/response/error/text()").Value
+                MsgBox("Error while retrieving friends !" & vbCrLf & "Reason: " & errorMessage, MsgBoxStyle.Critical)
+                Return
+            Catch ex_ As Exception
+                ' need improvment
+                Console.WriteLine("Error while retrieving friends")
+            End Try
+        End Try
+    End Sub
     Private Sub connectToIRCNode() Handles ircNodeConnectTimer.Tick
         If (_ircClient Is Nothing OrElse
                 dsProcess Is Nothing OrElse
@@ -363,6 +387,7 @@ Public Class MainWindow
             'neccessary information to make a good choice (our character is not loaded)
             Return
         End If
+        retrieveFriends()
         Dim ReservedSteamNodeCount As Integer = 4
         If dsProcess.NodeCount < dsProcess.MaxNodes - ReservedSteamNodeCount Then
             Dim blacklist As New List(Of String)
