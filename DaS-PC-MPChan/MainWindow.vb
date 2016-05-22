@@ -106,7 +106,8 @@ Public Class MainWindow
             .AutoGenerateColumns = False
             .DataSource = activeNodesDisplayList
             .Columns.Add("name", "Name")
-            .Columns("name").Width = 180
+            .Columns("name").MinimumWidth = 80
+            .Columns("name").AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             .Columns("name").DataPropertyName = "CharacterNameColumn"
             .Columns.Add("steamId", "Steam ID")
             .Columns("steamId").Width = 145
@@ -170,7 +171,8 @@ Public Class MainWindow
             .AutoGenerateColumns = False
             .DataSource = ircDisplayList
             .Columns.Add("name", "Name")
-            .Columns("name").Width = 135
+            .Columns("name").MinimumWidth = 80
+            .Columns("name").AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             .Columns("name").DataPropertyName = "CharacterNameColumn"
             .Columns.Add("steamId", "Steam ID")
             .Columns("steamId").Width = 145
