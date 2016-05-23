@@ -26,6 +26,7 @@ Public Class MainWindow
     Public Version As String
 
     Private dsProcess As DarkSoulsProcess = Nothing
+    Private shouldAutoStart As Boolean = True
     Private _ircClient As IRCClient = Nothing
     Private ircDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
@@ -437,6 +438,16 @@ Public Class MainWindow
         MainWindow.oneHeld = oneKey
         MainWindow.twoheld = twoKey
     End Sub
+    Private Sub launchDarkSouls()
+        Dim steamPath As String = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Valve\Steam").GetValue("SteamExe")
+        If steamPath IsNot Nothing Then
+            If (File.Exists(steamPath)) Then
+                Dim prs As Process = Process.Start(steamPath, "-applaunch 211420")
+                Return
+            End If
+        End If
+        Throw New FileNotFoundException("Dark Souls could not be auto started (steam.exe not found)")
+    End Sub
     Private Sub attachDSProcess() Handles dsAttachmentTimer.Tick
         If dsProcess IsNot Nothing Then
             If Not dsProcess.IsAttached Then
@@ -452,6 +463,10 @@ Public Class MainWindow
             Catch ex As DSProcessAttachException
                 dsProcessStatus.Text = " " & ex.Message
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
+                If shouldAutoStart Then
+                    launchDarkSouls()
+                    shouldAutoStart = False
+                End If
             End Try
         End If
     End Sub
