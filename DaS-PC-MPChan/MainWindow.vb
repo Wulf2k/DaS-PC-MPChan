@@ -26,7 +26,6 @@ Public Class MainWindow
     Public Version As String
 
     Private dsProcess As DarkSoulsProcess = Nothing
-    Private shouldAutoStart As Boolean = True
     Private _ircClient As IRCClient = Nothing
     Private ircDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
@@ -463,10 +462,6 @@ Public Class MainWindow
             Catch ex As DSProcessAttachException
                 dsProcessStatus.Text = " " & ex.Message
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
-                If shouldAutoStart Then
-                    launchDarkSouls()
-                    shouldAutoStart = False
-                End If
             End Try
         End If
     End Sub
