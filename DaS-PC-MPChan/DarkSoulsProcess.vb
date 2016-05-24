@@ -161,7 +161,8 @@ Public Class DarkSoulsProcess
                     dsBase = dll.BaseAddress
 
                 Case "d3d9.dll"
-                    If dll.FileVersionInfo.ProductName.Contains("Watchdog") Then
+                    If (dll.FileVersionInfo.ProductName IsNot Nothing AndAlso
+                            dll.FileVersionInfo.ProductName.Contains("Watchdog")) Then
                         watchdogBase = dll.BaseAddress
                     End If
 
