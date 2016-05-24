@@ -437,7 +437,7 @@ Public Class MainWindow
         MainWindow.oneHeld = oneKey
         MainWindow.twoheld = twoKey
     End Sub
-    Private Sub launchDarkSouls()
+    Private Sub launchDarkSouls() ' TODO: use this on starting (after checking if it should be enabled)
         Dim steamPath As String = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Valve\Steam").GetValue("SteamExe")
         If steamPath IsNot Nothing Then
             If (File.Exists(steamPath)) Then
