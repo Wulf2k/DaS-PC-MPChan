@@ -123,7 +123,9 @@ Public Class DarkSoulsProcess
 
     'Addresses of the various inserted functions
     Private namedNodeMemory As AllocatedMemory
+    Private namedNodeHook As JmpHook
     Private nodeDumpMemory As AllocatedMemory
+    Private nodeDumpHook As JmpHook
     Private connectMemory As AllocatedMemory
 
     'Dark Souls
@@ -252,26 +254,15 @@ Public Class DarkSoulsProcess
         End Get
         Set(value As Boolean)
             Dim cmpLoc As Integer = dsBase + &HBA256C
-            Dim TargetBufferSize = 1024
 
-            Dim bytes() As Byte
-            Dim bytes2() As Byte
-
-            'Location in bytearray to insert jump location
-            Dim bytjmp As Integer = &H6B
             Dim hookLoc As IntPtr = dsBase + &H15A550
 
             If value Then
                 'Changes instruction doing the compare rather than changing the value it compares against
                 WriteBytes(cmpLoc, {&H1})
 
-                'If memory has not previously been allocated then allocate, otherwise use previous allocation
-                If namedNodeMemory Is Nothing Then
-                    namedNodeMemory = New AllocatedMemory(_targetProcessHandle, TargetBufferSize)
-                End If
-
                 'ASM in Resources\ASM-NamedNodes.txt
-                bytes = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H0, &HFB, &H0, &H0, &H81,
+                Dim code() As Byte = {&H8B, &H44, &H24, &H10, &H50, &H8B, &HC3, &H8B, &HD9, &H81, &HE3, &H0, &HFB, &H0, &H0, &H81,
                             &HFB, &H0, &HFB, &H0, &H0, &H8B, &HD8, &HF, &H84, &H5, &H0, &H0, &H0, &HE9, &H46, &H0,
                             &H0, &H0, &H8B, &H5B, &HD0, &H83, &HFB, &H0, &HF, &H84, &H14, &H0, &H0, &H0, &H8B, &H5B,
                             &H14, &H83, &HFB, &H0, &HF, &H84, &H8, &H0, &H0, &H0, &H83, &HC3, &H30, &HE9, &H7, &H0,
@@ -279,31 +270,26 @@ Public Class DarkSoulsProcess
                             &HF8, &H20, &HF, &H84, &H9, &H0, &H0, &H0, &H8A, &H13, &H88, &H17, &H40, &H43, &H47, &HEB,
                             &HEE, &H83, &HEB, &H20, &H83, &HEF, &H20, &H58, &H58, &H56, &HE9, &H0, &H0, &H0, &H0}
 
+                namedNodeMemory = New AllocatedMemory(_targetProcessHandle, code.Length)
+
+                'Location of jmp instruction in bytearray
+                Dim jmpOffset As Integer = &H6A
+
                 'Modify final JMP above to return to instruction after original hook
-                bytes2 = BitConverter.GetBytes(CType((hookLoc - &H6A) - namedNodeMemory.address, Int32))
-                Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
-                WriteProcessMemory(_targetProcessHandle, namedNodeMemory, bytes, TargetBufferSize, 0)
+                Dim returnAddress = BitConverter.GetBytes(CType((hookLoc + 5) - (namedNodeMemory.address + jmpOffset) - 5, Int32))
 
-                If ReadUInt8(namedNodeMemory) = &H8B& Then
-                    'Insert hook to jump to allocated memory above
-                    bytes = {&HE9, 0, 0, 0, 0}
-                    bytes2 = BitConverter.GetBytes(CType(namedNodeMemory - hookLoc - 5, Int32))
-                    Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-                    WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-                Else
-                    namedNodeMemory.Dispose()
-                    namedNodeMemory = Nothing
-                    Throw New ApplicationException("DrawNodes code injection appears to have failed.")
-                End If
+                Array.Copy(returnAddress, 0, code, jmpOffset + 1, returnAddress.Length)
+                WriteProcessMemory(_targetProcessHandle, namedNodeMemory, code, code.Length, 0)
+
+                namedNodeHook = New JmpHook(_targetProcessHandle, hookLoc, namedNodeMemory)
             Else
-                'Remove Named Node hook, restore original instruction
-                bytes = {&H8B, &H44, &H24, &H10, &H56}
-                WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-
                 'Disable Node Drawing
                 WriteBytes(cmpLoc, {&H0})
 
-                ' Free memory
+                If namedNodeHook IsNot Nothing Then
+                    namedNodeHook.Dispose()
+                    namedNodeHook = Nothing
+                End If
                 If namedNodeMemory IsNot Nothing Then
                     namedNodeMemory.Dispose()
                     namedNodeMemory = Nothing
@@ -365,18 +351,15 @@ Public Class DarkSoulsProcess
         'Note to self, buffer is overly large.  Trim down some day.
         Dim TargetBufferSize = 4096
 
-        Dim bytes() As Byte
         Dim bytes2() As Byte
 
         Dim bytjmp As Integer = &H78
         Dim hookLoc As IntPtr = dsBase + &H7E637E
 
-        If nodeDumpMemory Is Nothing Then
-            nodeDumpMemory = New AllocatedMemory(_targetProcessHandle, TargetBufferSize)
-        End If
+        nodeDumpMemory = New AllocatedMemory(_targetProcessHandle, TargetBufferSize)
 
         'ASM in Resources\ASM-NodeDump.txt
-        bytes = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H0, &H0, &H0, &H0, &HB8, &H0, &H0, &H0, &H0,
+        Dim code() As Byte = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H0, &H0, &H0, &H0, &HB8, &H0, &H0, &H0, &H0,
                     &HBB, &H0, &H0, &H0, &H0, &HB9, &H0, &H0, &H0, &H0, &HBA, &H0, &H0, &H0, &H0, &H8A,
                     &H1F, &H80, &HFB, &H0, &HF, &H84, &H30, &H0, &H0, &H0, &H8A, &H6, &H8A, &H1F, &H46, &H47,
                     &H41, &H38, &HD8, &HF, &H85, &H13, &H0, &H0, &H0, &H83, &HF9, &H11, &H75, &HEC, &H29, &HCE,
@@ -387,30 +370,20 @@ Public Class DarkSoulsProcess
 
         'Adjust EDI
         bytes2 = BitConverter.GetBytes(CType(nodeDumpMemory.address + &H200, UInt32))
-        Array.Copy(bytes2, 0, bytes, &H7, bytes2.Length)
+        Array.Copy(bytes2, 0, code, &H7, bytes2.Length)
 
         'Adjust the jump home
         bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpMemory.address, Int32))
-        Array.Copy(bytes2, 0, bytes, bytjmp, bytes2.Length)
-        WriteProcessMemory(_targetProcessHandle, nodeDumpMemory, bytes, TargetBufferSize, 0)
+        Array.Copy(bytes2, 0, code, bytjmp, bytes2.Length)
+        WriteProcessMemory(_targetProcessHandle, nodeDumpMemory, code, TargetBufferSize, 0)
 
-        If ReadUInt8(nodeDumpMemory) = &H50& Then
-            'Insert the hook
-            bytes = {&HE9, 0, 0, 0, 0}
-            bytes2 = BitConverter.GetBytes(CType(nodeDumpMemory - hookLoc - 5, Int32))
-            Array.Copy(bytes2, 0, bytes, 1, bytes2.Length)
-            WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
-        Else
-            nodeDumpMemory.Dispose()
-            nodeDumpMemory = Nothing
-            Throw New DSProcessAttachException("NodeDump code injection appears to have failed.")
-        End If
+        nodeDumpHook = New JmpHook(_targetProcessHandle, hookLoc, nodeDumpMemory)
     End Sub
     Private Sub TearDownNodeDumpHook()
-        'Restore original instruction
-        Dim bytes() As Byte = {&H66, &HF, &HD6, &H46, &H14}
-        Dim hookLoc As Integer = dsBase + &H7E637E
-        WriteProcessMemory(_targetProcessHandle, hookLoc, bytes, bytes.Length, 0)
+        If nodeDumpHook IsNot Nothing THen
+            nodeDumpHook.Dispose()
+            nodeDumpHook = Nothing
+        End If
         If nodeDumpMemory IsNot Nothing Then
             nodeDumpMemory.Dispose()
             nodeDumpMemory = Nothing
