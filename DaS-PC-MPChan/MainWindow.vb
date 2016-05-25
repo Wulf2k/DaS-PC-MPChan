@@ -25,6 +25,8 @@ Public Class MainWindow
 
     Public Version As String
 
+    Private alreadyAskedBeta As Boolean = True
+
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _ircClient As IRCClient = Nothing
     Private ircDisplayList As New DSNodeBindingList()
@@ -95,6 +97,7 @@ Public Class MainWindow
 
         'Resize window
         chkExpand_CheckedChanged()
+        alreadyAskedBeta = False
 
         updatecheck()
         updateOnlineState()
@@ -439,6 +442,119 @@ Public Class MainWindow
         MainWindow.oneHeld = oneKey
         MainWindow.twoheld = twoKey
     End Sub
+    Private Function isSteamOn() As Boolean
+        Dim windowCaption As String = "steam"
+        Dim _allProcesses() As Process = Process.GetProcesses
+        For Each pp As Process In _allProcesses
+            If pp.ProcessName.ToLower.Equals(windowCaption.ToLower) AndAlso Not pp.HasExited Then
+                Return True
+            End If
+        Next
+        Return False
+    End Function
+    Private Sub betaPatch()
+        Dim waitw As WaitWindow = New WaitWindow(Me.Location, Me.Width, Me.Height)
+
+        dsAttachmentTimer.Stop()
+
+        ' Asking user to continue
+        Dim result As MsgBoxResult = MsgBox("DarkSouls beta detected ! DSCM won't work with darksouls beta !" + vbCrLf + "Disable dark souls beta ? (will restart steam)",
+                                            MsgBoxStyle.Question + MsgBoxStyle.YesNo, "DSCM")
+        If Not result = MsgBoxResult.Yes Then
+            dsAttachmentTimer.Start()
+            Return
+        End If
+
+        waitw.Show()
+
+        ' Performing the patch in a thread
+        Dim t = New Thread(
+            Sub()
+                Dim steamExePath As String = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Valve\Steam").GetValue("SteamExe")
+                If steamExePath IsNot Nothing Then
+                    If File.Exists(steamExePath) Then
+                        waitw.SetMessage("Closing steam...")
+                        ' Check if steam is on
+                        If isSteamOn() Then
+                            ' Close steam
+                            Process.Start(steamExePath, "-shutdown")
+                            Dim timOut As Integer = 10000
+                            ' Wait for it to be closed...
+                            While (isSteamOn() AndAlso timOut > 0)
+                                Thread.Sleep(200)
+                                timOut -= 200
+                            End While
+                            If timOut <= 0 Then
+                                Throw New UnauthorizedAccessException("Steam could not be closed !")
+                                waitw.Cancel()
+                                dsAttachmentTimer.Start()
+                                Return
+                            End If
+                        End If
+                        waitw.SetMessage("Performing patch...")
+                        ' Now get settings file
+                        Dim steamPath As String = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Valve\Steam").GetValue("SteamPath")
+                        Dim filePath As String = steamPath & "\steamapps\appmanifest_211420.acf"
+
+                        If File.Exists(filePath) Then
+                            ' Read data
+                            Dim sr As New StreamReader(filePath)
+                            Dim data As String = sr.ReadToEnd()
+                            sr.Close()
+
+                            ' Remove beta tag
+                            data = data.Replace("-dsptde-2.0-", "")
+
+                            ' Write data
+                            Dim sw As New StreamWriter(filePath)
+                            sw.Write(data)
+                            sw.Close()
+
+                            ' Restart dark souls
+                            waitw.SetMessage("Restarting...")
+                            launchDarkSouls()
+
+                            Dim timOut As Integer = 10000
+                            ' Wait for it to start...
+                            While ((Not isSteamOn()) AndAlso timOut > 0)
+                                Thread.Sleep(200)
+                                timOut -= 200
+                            End While
+                            If timOut <= 0 Then
+                                Throw New UnauthorizedAccessException("Steam could not be restarted !")
+                                waitw.Cancel()
+                                dsAttachmentTimer.Start()
+                                Return
+                            End If
+
+                            ' Patch succeed
+                            waitw.Cancel()
+                            dsAttachmentTimer.Start()
+                            Return
+                        End If
+                        Throw New FileNotFoundException("Dark Souls configuration file not found !")
+                        waitw.Cancel()
+                        dsAttachmentTimer.Start()
+                        Return
+                    End If
+                End If
+                Throw New FileNotFoundException("Steam Exe not found !")
+                waitw.Cancel()
+                dsAttachmentTimer.Start()
+                Return
+            End Sub)
+        t.Start()
+    End Sub
+    Private Sub launchDarkSouls()
+        Dim steamExePath As String = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Valve\Steam").GetValue("SteamExe")
+        If steamExePath IsNot Nothing Then
+            If (File.Exists(steamExePath)) Then
+                Process.Start(steamExePath, "-applaunch 211420")
+                Return
+            End If
+        End If
+        Throw New FileNotFoundException("Dark Souls could not be auto started (steam.exe not found)")
+    End Sub
     Private Sub attachDSProcess() Handles dsAttachmentTimer.Tick
         If dsProcess IsNot Nothing Then
             If Not dsProcess.IsAttached Then
@@ -452,6 +568,12 @@ Public Class MainWindow
                 dsProcessStatus.Text = " Attached to Dark Souls process"
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(200, 255, 200)
             Catch ex As DSProcessAttachException
+                If ex.getExceptionType = DSProcessAttachException.DSProcessAttachExceptionType.Beta Then
+                    If Not alreadyAskedBeta Then
+                        alreadyAskedBeta = True
+                        betaPatch()
+                    End If
+                End If
                 dsProcessStatus.Text = " " & ex.Message
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
             End Try
