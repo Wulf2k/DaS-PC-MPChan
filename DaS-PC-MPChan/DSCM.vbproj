@@ -161,6 +161,7 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
+    <None Include="Resources\namecrash.bin" />
     <None Include="Wulf2k-DSCM.pfx" />
   </ItemGroup>
   <ItemGroup>

@@ -29,6 +29,7 @@ Public Class AllocatedMemory
 
     Private _process As IntPtr
     Private _address As IntPtr
+    Private _disposed As Boolean = False
     Sub New(targetProcessHandle As IntPtr, size As Integer)
         _process = targetProcessHandle
         _address = VirtualAllocEx(_process, 0, size, MEM_COMMIT, PAGE_READWRITE)
@@ -39,13 +40,19 @@ Public Class AllocatedMemory
         VirtualProtectEx(_process, _address, size, PAGE_EXECUTE_READWRITE, oldProtectionOut)
     End Sub
     Public Overloads Sub Dispose() Implements IDisposable.Dispose
-        If _address <> 0 Then
-            VirtualFreeEx(_process, _address, 0, MEM_RELEASE)
-            _address = 0
+        If Not _disposed Then
+            If _address <> 0 Then
+                VirtualFreeEx(_process, _address, 0, MEM_RELEASE)
+                _address = 0
+            End If
+            _disposed = True
         End If
     End Sub
     Protected Overrides Sub Finalize()
         Dispose()
+    End Sub
+    Public Sub Leak()
+        _disposed = True
     End Sub
     Public Shared Widening Operator CType(ByVal m As AllocatedMemory) As IntPtr
         Return m._address
@@ -56,6 +63,44 @@ Public Class AllocatedMemory
         End Get
     End Property
 End Class
+
+
+Public Class JmpHook
+    Implements IDisposable
+    Private _process As IntPtr
+    Private _hookLocation As IntPtr
+    Private _oldInstructions As Byte()
+
+    Private Declare Function ReadProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesRead As Integer) As Boolean
+    Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesWritten As Integer) As Boolean
+
+    Sub New(targetProcessHandle As IntPtr, hookLocation As IntPtr, jmpTarget As IntPtr)
+        _process = targetProcessHandle
+        _hookLocation = hookLocation
+        _oldInstructions = New Byte(4) {}
+        ReadProcessMemory(_process, _hookLocation, _oldInstructions, 5, vbNull)
+        Dim jmpInstruction() As Byte = {&HE9}
+        Dim jmpOffset As Int32 = jmpTarget - hookLocation - 5
+        Dim instruction() As Byte = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
+        WriteProcessMemory(_process, _hookLocation, instruction, 5, vbNull)
+    End Sub
+    Public Overloads Sub Dispose() Implements IDisposable.Dispose
+        If _hookLocation <> 0 Then
+             WriteProcessMemory(_process, _hookLocation, _oldInstructions, 5, vbNull)
+            _hookLocation = 0
+        End If
+    End Sub
+    Protected Overrides Sub Finalize()
+        Dispose()
+    End Sub
+    Public Shared Sub Permanent(targetProcessHandle As IntPtr, hookLocation As IntPtr, jmpTarget As IntPtr)
+        Dim hook As New JmpHook(targetProcessHandle, hookLocation, jmpTarget)
+        'Disable cleanup
+        hook._hookLocation = 0
+    End Sub
+End Class
+
+
 
 Public Class DarkSoulsProcess
     Implements IDisposable
@@ -107,6 +152,9 @@ Public Class DarkSoulsProcess
             Throw New DSProcessAttachException("Dark Souls beta is not supported")
         End If
         disableLowFPSDisonnect()
+        If Not HasWatchdog Then
+            InstallNamecrashFix()
+        End If
         SetupNodeDumpHook()
     End Sub
 
@@ -263,6 +311,55 @@ Public Class DarkSoulsProcess
             End If
         End Set
     End Property
+    Private Sub InstallNamecrashFix()
+        Dim originalContent() As Byte = {&H66, &H8B, &H10, &H83, &HC0, &H02, &H66, &H85, &HD2}
+        Dim processContent = ReadBytes(dsBase + &H058A46, originalContent.Length)
+        If Not processContent.SequenceEqual(originalContent) Then
+            'The memory is not as expected. We have probably already installed the hooks
+            Return
+        End If
+
+        'The machinecode and all the mechanics behind this are courtesy of eur0pa
+        Dim code() As Byte = My.Resources.namecrash.Clone()
+        'This is (hook offset in DS, target offset in code)
+        Dim hookLocations = New Dictionary(Of Integer, Integer) From {
+            {&H058A46, 0},
+            {&H82AA00, 26},
+            {&H9B2B70, 55},
+            {&H7EFC60, 84},
+            {&H39C4A3, 114},
+            {&H058A62, 145},
+            {&H18CACF, 176}
+        }
+        'This is (return offset in DS, jmp offset in code)
+        Dim returnLocations As New Dictionary(Of Integer, Integer) From {
+            {&H058A51, 20},
+            {&H82AA12, 49},
+            {&H9B2B82, 78},
+            {&H7EFC71, 108},
+            {&H39C4B2, 139},
+            {&H058A71, 170},
+            {&H18BD40, 250},
+            {&H18CB21, 275},
+            {&H18CAD6, 256}
+        }
+
+
+        Dim memory As New AllocatedMemory(_targetProcessHandle, code.Length)
+        Dim jmpInstruction() As Byte = {&HE9}
+        For Each returnLocation In returnLocations
+            Dim jmpOffset As Int32 = (dsBase + returnLocation.Key) - (memory.address + returnLocation.Value) - 5
+            Dim instruction() As Byte = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
+            Array.Copy(instruction, 0, code, returnLocation.Value, instruction.Length)
+        Next
+        WriteProcessMemory(_targetProcessHandle, memory, code, code.Length, 0)
+
+        'Install the fix permanently
+        memory.Leak()
+        For Each hookLocation In hookLocations
+            JmpHook.Permanent(_targetProcessHandle, (dsBase + hookLocation.Key), (memory.address + hookLocation.Value))
+        Next
+    End Sub
 
     Private Sub SetupNodeDumpHook()
         'Note to self, buffer is overly large.  Trim down some day.
