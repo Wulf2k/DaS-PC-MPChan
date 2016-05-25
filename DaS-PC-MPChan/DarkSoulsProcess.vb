@@ -4,9 +4,24 @@ Imports System.Threading
 Public Class DSProcessAttachException
     Inherits System.ApplicationException
 
+    Enum DSProcessAttachExceptionType
+        Beta
+        Other
+    End Enum
+
+    Private type As DSProcessAttachExceptionType = DSProcessAttachExceptionType.Other
+
     Sub New(message As String)
         MyBase.New(message)
     End Sub
+    Sub New(message As String, type As DSProcessAttachExceptionType)
+        MyBase.New(message)
+        Me.type = type
+    End Sub
+
+    Public Function getExceptionType() As DSProcessAttachExceptionType
+        Return type
+    End Function
 End Class
 
 Public Class DSConnectException
@@ -104,7 +119,7 @@ Public Class DarkSoulsProcess
         Dim beta = (ReadUInt32(dsBase + &H80) = &HE91B11E2&)
         If beta Then
             detachFromProcess()
-            Throw New DSProcessAttachException("Dark Souls beta is not supported")
+            Throw New DSProcessAttachException("Dark Souls beta is not supported", DSProcessAttachException.DSProcessAttachExceptionType.Beta)
         End If
         disableLowFPSDisonnect()
         SetupNodeDumpHook()
