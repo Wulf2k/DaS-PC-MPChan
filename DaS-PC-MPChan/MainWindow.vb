@@ -439,6 +439,16 @@ Public Class MainWindow
         MainWindow.oneHeld = oneKey
         MainWindow.twoheld = twoKey
     End Sub
+    Private Sub launchDarkSouls() ' TODO: use this on starting (after checking if it should be enabled)
+        Dim steamPath As String = My.Computer.Registry.CurrentUser.OpenSubKey("Software\Valve\Steam").GetValue("SteamExe")
+        If steamPath IsNot Nothing Then
+            If (File.Exists(steamPath)) Then
+                Dim prs As Process = Process.Start(steamPath, "-applaunch 211420")
+                Return
+            End If
+        End If
+        Throw New FileNotFoundException("Dark Souls could not be auto started (steam.exe not found)")
+    End Sub
     Private Sub attachDSProcess() Handles dsAttachmentTimer.Tick
         If dsProcess IsNot Nothing Then
             If Not dsProcess.IsAttached Then
