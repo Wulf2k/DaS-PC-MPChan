@@ -159,6 +159,17 @@ Public Class DSNode
     End Property
 
     Public Function canCoop(other As DSNode) As Boolean
+        'This is also canGravelord and canBeDragonSummoned
         Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)
+    End Function
+    Public Function canForestInvade(other As DSNode) As Boolean
+        Return SoulLevel - (10 + SoulLevel * 0.1) < other.SoulLevel
+    End Function
+    Public Function canRedEyeInvade(other As DSNode) As Boolean
+        Return SoulLevel - (SoulLevel * 0.1) < other.SoulLevel
+    End Function
+    Public Function canDarkmoonInvade(other As DSNode) As Boolean
+        Return (SoulLevel - (50 + SoulLevel * 0.2) < other.SoulLevel And
+                other.SoulLevel < SoulLevel + (10 + SoulLevel * 0.1))
     End Function
 End Class
