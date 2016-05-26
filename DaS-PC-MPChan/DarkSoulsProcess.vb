@@ -343,11 +343,7 @@ Public Class DarkSoulsProcess
 
     Public ReadOnly Property NodeCount As Integer
         Get
-            Dim tmpptr = ReadInt32(dsBase + &HF7E204)
-            If tmpptr = 0 Then
-                Return 0
-            End If
-            Return ReadInt32(tmpptr + &HAE0)
+            Return ReadInt32(dsBase + &HF62DD0) - 1
         End Get
     End Property
 
