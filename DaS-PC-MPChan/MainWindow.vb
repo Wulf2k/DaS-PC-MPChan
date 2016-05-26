@@ -428,8 +428,11 @@ Public Class MainWindow
                                      .ThenByDescending(Function(other) self.canBeSummoned(other))
                          End Function
 
+        Dim sameMpZone = Function(other) other.MPZone = self.MPZone
+
         If self.Covenant = Covenant.Darkwraith Then
             sorted = sorted.ThenByDescending(Function(other) self.canRedEyeInvade(other)) _
+                .ThenByDescending(sameMpZone) _
                 .ThenByDescending(Function(other) other.canBeRedSignSummoned(self))
         ElseIf self.Covenant = Covenant.DarkmoonBlade Then
             sorted = sorted.ThenByDescending(Function(other) self.canDarkmoonInvade(other)) _
@@ -439,13 +442,15 @@ Public Class MainWindow
                                       Else
                                           Return 0
                                       End If
-                                  End Function)
+                                  End Function) _
+                .ThenByDescending(sameMpZone)
             sorted = pvpSorting(sorted)
         ElseIf self.Covenant = Covenant.ForestHunter Or self.Covenant = Covenant.ChaosServant Then
             'Nothing specific to be done here, assume general interest in PVP
             sorted = pvpSorting(sorted)
         ElseIf self.Covenant = Covenant.GravelordServant Or self.Covenant = Covenant.PathOfTheDragon Then
-            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other))
+            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other)) _
+                .ThenByDescending(sameMpZone)
             sorted = pvpSorting(sorted)
         ElseIf self.Covenant = Covenant.WarriorOfSunlight Then
             sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other)) _
@@ -456,7 +461,7 @@ Public Class MainWindow
                 .ThenByDescending(Function(other) other.canBeSummoned(self))
         End If
 
-        sorted = sorted.ThenByDescending(Function(other) other.MPZone = self.MPZone) _
+        sorted = sorted.ThenByDescending(sameMpZone) _
             .ThenBy(Function(other) Math.Abs(other.SoulLevel - self.SoulLevel))
         Return sorted(0)
     End Function
