@@ -556,6 +556,11 @@ Public Class MainWindow
                     connectedNodes(kv.Key) = New ConnectedNode(kv.Value.Clone())
                 End If
             Next
+            For Each steamId In connectedNodes.Keys.ToList()
+                If Not dsProcess.ConnectedNodes.ContainsKey(steamId) Then
+                    connectedNodes.Remove(steamId)
+                End If
+            Next
             selfNode = dsProcess.SelfNode.Clone()
         Else
             connectedNodes.Clear()
