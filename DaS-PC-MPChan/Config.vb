@@ -1,0 +1,30 @@
+﻿Module Config
+    'How frequently should we connect to node from IRC?
+    Public Const IRCNodeConnectInterval = 20 * 1000
+
+    'How frequenlty should we check the only state of recent nodes and favourites via steam api?
+    Public Const OnlineCheckInterval = 10 * 60 * 1000
+
+    'For how long should a node be ignored for automatic connections after we tried connecting to them?
+    Public Const ConnectionRetryTimeout = 5 * 60
+
+    'Number of nodes we will try to leave free for steam matchmaking
+    Public Const NodesReservedForSteam = 4
+
+
+    Public Const IRCHost = "dscm.wulf2k.ca"
+    Public Const IRCPort = 8123
+    Public Const IRCOwner = "DSCMbot"
+    Public Const IRCChannel = "#DSCM-Main"
+    Public Const IRCNick = "DSCM"
+
+    Public Const IRCPublishInterval = 120
+
+    'TTL of known IRC nodes. Should be at least PublishInterval + ???
+    Public Const IRCNodeTTL = 5 * 60
+
+    'Minimum time to wait before we publish a node published by somebody else IF we have no new information
+    Public Const IRCNodePublishInterval = 3 * 60
+    'Minimum time to wait before we publish a node published by somebody else IF we have new information
+    Public Const IRCNodeUpdateInterval = 20
+End Module

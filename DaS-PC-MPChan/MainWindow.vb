@@ -76,9 +76,9 @@ Public Class MainWindow
         updateActiveNodesTimer.Start()
         dsAttachmentTimer.Interval = 1000
         dsAttachmentTimer.Start()
-        updateOnlineStateTimer.Interval = 10 * 60 * 1000
+        updateOnlineStateTimer.Interval = Config.OnlineCheckInterval
         updateOnlineStateTimer.Start()
-        ircNodeConnectTimer.Interval = 20 * 1000
+        ircNodeConnectTimer.Interval = Config.IRCNodeConnectInterval
 
         attachDSProcess()
 
@@ -366,8 +366,7 @@ Public Class MainWindow
             'neccessary information to make a good choice (our character is not loaded)
             Return
         End If
-        Dim ReservedSteamNodeCount As Integer = 4
-        If dsProcess.NodeCount < dsProcess.MaxNodes - ReservedSteamNodeCount Then
+        If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
             Dim blacklist As New List(Of String)
             For Each c In recentConnections
                 blacklist.Add(c.Item2)
@@ -571,7 +570,7 @@ Public Class MainWindow
 
             Dim now As Date = DateTime.UtcNow
             recentConnections.Enqueue(Tuple.Create(now, steamId))
-            While (now - recentConnections.Peek().Item1).TotalMinutes > 5
+            While (now - recentConnections.Peek().Item1).TotalSeconds > Config.ConnectionRetryTimeout
                 recentConnections.Dequeue()
             End While
         End If
