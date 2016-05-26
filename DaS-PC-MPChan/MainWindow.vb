@@ -425,11 +425,13 @@ Public Class MainWindow
 
         Dim now As Date = Date.UtcNow
         Dim disconnectCandidates As New List(Of Tuple(Of ConnectedNode, Integer))()
+        Dim badNodeCount = 0
         For Each connectedNode In connectedNodes.Values
             Dim ranking = nodeRanking(connectedNode.node)
             If ranking = 0 Then
                 connectedNode.lastGoodTime = now
             Else
+                badNodeCount += 1
                 Dim badSeconds = (now - connectedNode.lastGoodTime).TotalSeconds
                 If (manualConnections.Contains(connectedNode.node.SteamId) And badSeconds < Config.ManualNodeGracePeriod) Then
                     Continue For
@@ -446,6 +448,10 @@ Public Class MainWindow
                 disconnectCandidates.Add(Tuple.Create(connectedNode, ranking))
             End If
         Next
+
+        If badNodeCount <= Config.BadNodesThreshold Then
+            Return
+        End If
 
         Dim disconnectCount = DisconnectTargetFreeNodes - (nmbMaxNodes.Value - dsProcess.NodeCount)
         If disconnectCount < 1 Or disconnectCandidates.Count < disconnectCount  Then
