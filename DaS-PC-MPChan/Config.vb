@@ -1,6 +1,6 @@
 ﻿Module Config
     'How frequently should we connect to node from IRC?
-    Public Const IRCNodeConnectInterval = 20 * 1000
+    Public Const IRCNodeConnectInterval = 10 * 1000
 
     'How frequenlty should we check the only state of recent nodes and favourites via steam api?
     Public Const OnlineCheckInterval = 10 * 60 * 1000
@@ -9,10 +9,10 @@
     Public Const ConnectionRetryTimeout = 5 * 60
 
     'Number of nodes we will try to leave free for steam matchmaking
-    Public Const NodesReservedForSteam = 4
+    Public Const NodesReservedForSteam = 3
 
     'Number of free nodes we want to achieve by disconnecting
-    Public Const DisconnectTargetFreeNodes = 7
+    Public Const DisconnectTargetFreeNodes = 5
 
     'Grace period before a bad node may be disconnected
     Public Const BadNodeGracePeriod = 5 * 60
