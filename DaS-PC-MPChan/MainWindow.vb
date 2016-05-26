@@ -393,13 +393,71 @@ Public Class MainWindow
         If candidates.Count = 0 Then Return Nothing
 
         Dim self = dsProcess.SelfNode
-        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
-            .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canBeSummoned(n)) _
-            .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canBeSummoned(n)) _
-            .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canBeSummoned(n)) _
-            .ThenByDescending(Function(n) (n.World <> "-1--1")) _
-            .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
 
+        'These read out dsProcess memory, so don't calculate them for every node
+        Dim anorLondoInvading = self.Covenant = Covenant.DarkmoonBlade AndAlso dsProcess.HasDarkmoonRingEquiped
+        Dim forestInvading = self.Covenant = Covenant.ForestHunter AndAlso dsProcess.HasCatCovenantRingEquiped
+        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
+            .OrderByDescending(Function(other) (other.World <> "-1--1")) _
+            .ThenByDescending(Function(other) As Boolean
+                                   'Special cross-world invasions
+                                   If anorLondoInvading Then
+                                       'TODO: Use others dark anor londo info once we have it
+                                       If other.World = AnorLondoWorld Then
+                                           Return self.canDarkmoonInvade(other)
+                                       End If
+                                   ElseIf forestInvading Then
+                                       If other.World = DarkrootGardenWorld Then
+                                           If other.HasExtendedInfo And other.Covenant = Covenant.ForestHunter Then
+                                               Return False
+                                           Else
+                                               Return self.canForestInvade(other)
+                                           End If
+                                       End If
+                                   End If
+                                   Return False
+                               End Function) _
+            .ThenByDescending(Function(other) (other.World = self.World))
+
+        Dim pvpSorting = Function(s As IOrderedEnumerable(Of DSNode))
+                             Return s.ThenByDescending(Function(other) self.canBeRedSignSummoned(other)) _
+                                     .ThenByDescending(Function(other) other.canBeRedSignSummoned(self)) _
+                                     .ThenByDescending(Function(other) other.canRedEyeInvade(self)) _
+                                     .ThenByDescending(Function(other) self.canRedEyeInvade(other)) _
+                                     .ThenByDescending(Function(other) other.canBeSummoned(self)) _
+                                     .ThenByDescending(Function(other) self.canBeSummoned(other))
+                         End Function
+
+        If self.Covenant = Covenant.Darkwraith Then
+            sorted = sorted.ThenByDescending(Function(other) self.canRedEyeInvade(other)) _
+                .ThenByDescending(Function(other) other.canBeRedSignSummoned(self))
+        ElseIf self.Covenant = Covenant.DarkmoonBlade Then
+            sorted = sorted.ThenByDescending(Function(other) self.canDarkmoonInvade(other)) _
+                .ThenByDescending(Function(other)
+                                      If other.HasExtendedInfo Then
+                                          Return If(other.Indictments > 0, 1, -1)
+                                      Else
+                                          Return 0
+                                      End If
+                                  End Function)
+            sorted = pvpSorting(sorted)
+        ElseIf self.Covenant = Covenant.ForestHunter Or self.Covenant = Covenant.ChaosServant Then
+            'Nothing specific to be done here, assume general interest in PVP
+            sorted = pvpSorting(sorted)
+        ElseIf self.Covenant = Covenant.GravelordServant Or self.Covenant = Covenant.PathOfTheDragon Then
+            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other))
+            sorted = pvpSorting(sorted)
+        ElseIf self.Covenant = Covenant.WarriorOfSunlight Then
+            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other)) _
+                .ThenByDescending(Function(other) other.canBeSummoned(self))
+        Else
+            'No Covenant, Way of White, Princess Guard
+            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other)) _
+                .ThenByDescending(Function(other) other.canBeSummoned(self))
+        End If
+
+        sorted = sorted.ThenByDescending(Function(other) other.MPZone = self.MPZone) _
+            .ThenBy(Function(other) Math.Abs(other.SoulLevel - self.SoulLevel))
         Return sorted(0)
     End Function
     Private Function nodeRanking(other As DSNode) As Integer
@@ -408,7 +466,7 @@ Public Class MainWindow
         Dim self = dsProcess.SelfNode
         If (self.Covenant = Covenant.DarkmoonBlade AndAlso other.World = AnorLondoWorld AndAlso
             self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquiped) Then Return 0
-        If (self.Covenant = Covenant.ForestHunder AndAlso other.World = DarkrootGardenWorld AndAlso
+        If (self.Covenant = Covenant.ForestHunter AndAlso other.World = DarkrootGardenWorld AndAlso
             self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquiped) Then Return 0
 
         If self.World = other.World Then
@@ -423,7 +481,7 @@ Public Class MainWindow
 
         'TODO: check whether Sif is alive
         'If we knew that the other player is a Forest Hunter, we could mark this as a good node
-        If (self.Covenant <> Covenant.ForestHunder AndAlso self.World = DarkrootGardenWorld AndAlso
+        If (self.Covenant <> Covenant.ForestHunter AndAlso self.World = DarkrootGardenWorld AndAlso
             other.canForestInvade(self)) Then Return 1
         'TODO: Add Dark Anor Londo check once we read out anor londo darkness
         Return 2

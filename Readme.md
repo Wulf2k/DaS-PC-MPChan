@@ -73,8 +73,9 @@ Due to constant problems with the default Steam matchmaking, DCSM contains its
 own matchmaking. All DSCM-Net clients report player info to a central location.
 You can have a look at this information in the DSCM-Net tab.
 
-DSCM uses this information to automatically connect you to nearby players in
-coop level range.
+DSCM uses this information to automatically connect you to appropriate players.
+Note that your covenant (and whether you are wearing its ring) will be taken
+into account in this process.
 
 
 Active Nodes Tab

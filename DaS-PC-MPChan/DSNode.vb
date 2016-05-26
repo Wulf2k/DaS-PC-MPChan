@@ -53,7 +53,7 @@ Enum Covenant
     Darkwraith = 4
     PathOfTheDragon = 5
     GravelordServant = 6
-    ForestHunder = 7
+    ForestHunter = 7
     DarkmoonBlade = 8
     ChaosServant = 9
 End Enum
@@ -185,6 +185,9 @@ Public Class DSNode
     End Function
     Public Function canForestInvade(other As DSNode) As Boolean
         Return SoulLevel - (10 + SoulLevel * 0.1) < other.SoulLevel
+    End Function
+    Public Function canBeRedSignSummoned(other As DSNode) As Boolean
+        Return canForestInvade(other)
     End Function
     Public Function canRedEyeInvade(other As DSNode) As Boolean
         Return SoulLevel - (SoulLevel * 0.1) < other.SoulLevel
