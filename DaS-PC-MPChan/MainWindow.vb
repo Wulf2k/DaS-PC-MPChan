@@ -594,8 +594,13 @@ Public Class MainWindow
                 ElseIf ranking = 1 Then
                     row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 235, 156)
                 Else
-                    row.DefaultCellStyle.BackColor = System.Drawing.SystemColors.Control
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 255, 255)
                 End If
+            End If
+            If steamId = selfNode.SteamId Or manualConnections.Contains(steamId) Then
+                row.DefaultCellStyle.Font = New Font(dgvMPNodes.DefaultCellStyle.Font, FontStyle.Bold)
+            Else
+                row.DefaultCellStyle.Font = Nothing
             End If
         Next
 
