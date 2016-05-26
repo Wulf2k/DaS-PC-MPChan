@@ -43,7 +43,26 @@
     End Sub
 End Module
 
+Enum Covenant
+    None = 0
+    WayOfWhite = 1
+    PrincessGuard = 2
+    WarriorOfSunlight = 3
+    Darkwraith = 4
+    PathOfTheDragon = 5
+    GravelordServant = 6
+    ForestHunder = 7
+    DarkmoonBlade = 8
+    ChaosServant = 9
+End Enum
 
+Enum PhantomType
+    Loading = -1
+    Human = 0
+    Coop = 1
+    Invader = 2
+    Hollow = 8
+End Enum
 
 Public Class DSNode
     Public SteamId As String
@@ -158,7 +177,7 @@ Public Class DSNode
         End Get
     End Property
 
-    Public Function canCoop(other As DSNode) As Boolean
+    Public Function canBeSummoned(other As DSNode) As Boolean
         'This is also canGravelord and canBeDragonSummoned
         Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)
     End Function

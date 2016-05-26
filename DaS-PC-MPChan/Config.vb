@@ -11,6 +11,16 @@
     'Number of nodes we will try to leave free for steam matchmaking
     Public Const NodesReservedForSteam = 4
 
+    'Number of free nodes we want to achieve by disconnecting
+    Public Const DisconnectTargetFreeNodes = 7
+
+    'Grace period before a bad node may be disconnected
+    Public Const BadNodeGracePeriod = 5 * 60
+    'Grace period before a half-bad node may be disconnected
+    Public Const HalfBadNodeGracePeriod = 15 * 60
+    'Grace period for nodes that have been added manually
+    Public Const ManualNodeGracePeriod = 15 * 60
+
 
     Public Const IRCHost = "dscm.wulf2k.ca"
     Public Const IRCPort = 8123

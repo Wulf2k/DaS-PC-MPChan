@@ -101,6 +101,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config.vb" />
     <Compile Include="DarkSoulsProcess.vb" />
     <Compile Include="MainWindow.vb">
       <SubType>Form</SubType>

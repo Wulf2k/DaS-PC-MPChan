@@ -30,6 +30,7 @@ Public Class MainWindow
     Private activeNodesDisplayList As New DSNodeBindingList()
     Private connectedNodes As New Dictionary(Of String, ConnectedNode)
 
+    Private manualConnections As New HashSet(Of String)
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
@@ -367,20 +368,97 @@ Public Class MainWindow
             Return
         End If
         If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
-            Dim blacklist As New List(Of String)
-            For Each c In recentConnections
-                blacklist.Add(c.Item2)
-            Next
-            For Each n In dsProcess.ConnectedNodes.Values
-                blacklist.Add(n.SteamId)
-            Next
-            Dim candidate As DSNode = _ircClient.GetNodeForConnecting(dsProcess.SelfNode, blacklist)
+            Dim candidate As DSNode = selectIrcNodeForConnecting()
             If candidate IsNot Nothing Then
                 connectToSteamId(candidate.SteamId)
             End If
         End If
     End Sub
+    Private Function selectIrcNodeForConnecting() As DSNode
+        Dim blackSet As New HashSet(Of String)()
+        blackSet.Add(dsProcess.SelfNode.SteamId)
+        For Each c In recentConnections
+            blackSet.Add(c.Item2)
+        Next
+        For Each n In dsProcess.ConnectedNodes.Values
+            blackSet.Add(n.SteamId)
+        Next
 
+        Dim candidates As New List(Of DSNode)
+        For Each t In _ircClient.ircNodes.Values
+            Dim node As DSNode = t.Item1
+            If blackSet.Contains(node.SteamId) Then Continue For
+            candidates.Add(node)
+        Next
+
+        If candidates.Count = 0 Then Return Nothing
+
+        Dim self = dsProcess.SelfNode
+        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
+            .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canBeSummoned(n)) _
+            .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canBeSummoned(n)) _
+            .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canBeSummoned(n)) _
+            .ThenByDescending(Function(n) (n.World <> "-1--1")) _
+            .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
+
+        Return sorted(0)
+    End Function
+    Private Function nodeRanking(other As DSNode) As Integer
+        '0 = good, 1 = half-bad, 2 = bad
+        'Half-Bad = I can't interact with them, but they can invade me
+        'TODO: Handle forest and dark anor londo invasions
+        Dim self = dsProcess.SelfNode
+        If self.World <> other.World Then
+            Return 2
+        End If
+        Dim coopPossible = (self.canBeSummoned(other) OrElse other.canBeSummoned(self))
+        If coopPossible Then Return 0
+        If self.Covenant = Covenant.Darkwraith And self.canRedEyeInvade(other) Then Return 0
+        If self.Covenant = Covenant.DarkmoonBlade And self.canDarkmoonInvade(other) And other.Indictments > 0 Then Return 0
+
+        If self.Indictments > 0 And other.canDarkmoonInvade(self) Then Return 1
+        If other.Covenant = Covenant.Darkwraith And other.canRedEyeInvade(self) Then Return 1
+        Return 2
+    End Function
+    Private Sub handleDisconnects()
+        If _ircClient Is Nothing Or dsProcess Is Nothing Then Return
+
+        Dim now As Date = Date.UtcNow
+        Dim disconnectCandidates As New List(Of Tuple(Of ConnectedNode, Integer))()
+        For Each connectedNode In connectedNodes.Values
+            Dim ranking = nodeRanking(connectedNode.node)
+            If ranking = 0 Then
+                connectedNode.lastGoodTime = now
+            Else
+                Dim badSeconds = (now - connectedNode.lastGoodTime).TotalSeconds
+                If (manualConnections.Contains(connectedNode.node.SteamId) And badSeconds < Config.ManualNodeGracePeriod) Then
+                    Continue For
+                ElseIf ranking = 1 And badSeconds < Config.HalfBadNodeGracePeriod Then
+                    Continue For
+                ElseIf ranking = 2 and badSeconds < Config.BadNodeGracePeriod Then
+                    Continue For
+                End If
+                'We might currently have an online interaction
+                If (dsProcess.SelfNode.PhantomType = PhantomType.Coop Or dsProcess.SelfNode.PhantomType = PhantomType.Invader Or
+                    connectedNode.node.PhantomType = PhantomType.Coop Or connectedNode.node.PhantomType = PhantomType.Invader) Then
+                    Continue For
+                End If
+                disconnectCandidates.Add(Tuple.Create(connectedNode, ranking))
+            End If
+        Next
+
+        Dim disconnectCount = DisconnectTargetFreeNodes - (nmbMaxNodes.Value - dsProcess.NodeCount)
+        If disconnectCount < 1 Or disconnectCandidates.Count < disconnectCount  Then
+            Return
+        End If
+        Dim disconnectNodes = disconnectCandidates _
+                .OrderByDescending(Function(x) x.Item2) _
+                .ThenByDescending(Function(x) x.Item1.lastGoodTime) _
+                .Take(disconnectCount)
+        For Each disconnectNode In disconnectNodes
+            dsProcess.DisconnectSteamId(disconnectNode.Item1.node.SteamId)
+        Next
+    End Sub
     Private Sub updateUI() Handles updateUITimer.Tick
         If dsProcess Is Nothing Then
             nmbMaxNodes.Enabled = False
@@ -493,6 +571,8 @@ Public Class MainWindow
         End If
         activeNodesDisplayList.SyncWithDict(activeNodes)
         updateRecentNodes()
+        'Do this now as our node info as recent as possible
+        handleDisconnects()
     End Sub
     Private Sub updateRecentNodes()
         Dim key As Microsoft.Win32.RegistryKey
@@ -626,6 +706,7 @@ Public Class MainWindow
             MsgBox("You can only connect to other players while Dark Souls is running.", MsgBoxStyle.Critical)
             Return
         End If
+        manualConnections.Add(idString)
         connectToSteamId(idString)
     End Sub
     Private Function getSelectedNode() As Tuple(Of String, String)
@@ -648,7 +729,9 @@ Public Class MainWindow
     End Function
     Private Sub dgvNodes_doubleclick(sender As DataGridView, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
         dgvRecentNodes.DoubleClick, dgvDSCMNet.DoubleClick
-        connectToSteamId(sender.CurrentRow.Cells("steamId").Value)
+        Dim steamId = sender.CurrentRow.Cells("steamId").Value
+        manualConnections.Add(steamId)
+        connectToSteamId(steamId)
     End Sub
     Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
@@ -711,12 +794,10 @@ End Class
 
 Class ConnectedNode
     Public node As DSNode
-    Public connectedSince As Date
-    Public badNodeSince As Date
+    Public lastGoodTime As Date
 
     Sub New(node As DSNode)
         Me.node = node
-        Me.connectedSince = DateTime.UtcNow
-        Me.badNodeSince = Nothing
+        Me.lastGoodTime = DateTime.UtcNow
     End Sub
 End Class
