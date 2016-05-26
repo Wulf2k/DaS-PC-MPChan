@@ -417,11 +417,12 @@ Public Class MainWindow
         If self.Covenant = Covenant.DarkmoonBlade And self.canDarkmoonInvade(other) And other.Indictments > 0 Then Return 0
 
         If self.Indictments > 0 And other.canDarkmoonInvade(self) Then Return 1
-        If other.Covenant = Covenant.Darkwraith And other.canRedEyeInvade(self) Then Return 1
+        If other.canRedEyeInvade(self) Then Return 1
         Return 2
     End Function
     Private Sub handleDisconnects()
         If _ircClient Is Nothing Or dsProcess Is Nothing Then Return
+        If dsProcess.SelfNode.PhantomType = -1 Then Return
 
         Dim now As Date = Date.UtcNow
         Dim disconnectCandidates As New List(Of Tuple(Of ConnectedNode, Integer))()
