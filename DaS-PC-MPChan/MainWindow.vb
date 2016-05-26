@@ -128,7 +128,6 @@ Public Class MainWindow
             .Columns("world").Width = 200
             .Columns("world").DataPropertyName = "WorldText"
             .Font = New Font("Consolas", 10)
-            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
             .Sort(.Columns("soulLevel"), ListSortDirection.Ascending)
             .Sort(.Columns("mpArea"), ListSortDirection.Ascending)
@@ -571,6 +570,24 @@ Public Class MainWindow
             activeNodes.Add(selfNode.SteamId, selfNode)
         End If
         activeNodesDisplayList.SyncWithDict(activeNodes)
+
+        'Color Rows according to ranking
+        For Each row As DataGridViewRow In dgvMPNodes.Rows
+            Dim steamId = row.Cells("steamId").Value
+            If steamId = selfNode.SteamId Then
+                row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(198, 239, 206)
+            Else
+                Dim ranking = nodeRanking(activeNodes(steamId))
+                If ranking = 2 Then
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 199, 206)
+                ElseIf ranking = 1 Then
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 235, 156)
+                Else
+                    row.DefaultCellStyle.BackColor = System.Drawing.SystemColors.Control
+                End If
+            End If
+        Next
+
         updateRecentNodes()
         'Do this now as our node info as recent as possible
         handleDisconnects()
