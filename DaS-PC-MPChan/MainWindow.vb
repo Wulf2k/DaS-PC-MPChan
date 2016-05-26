@@ -5,7 +5,6 @@ Imports System.Net.Sockets
 Imports System.ComponentModel
 Imports System.Text
 
-
 Public Class MainWindow
     'Timers
     Private WithEvents updateActiveNodesTimer As New System.Windows.Forms.Timer()
@@ -29,6 +28,8 @@ Public Class MainWindow
     Private _ircClient As IRCClient = Nothing
     Private ircDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
+    Private connectedNodes As New Dictionary(Of String, ConnectedNode)
+
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
@@ -467,25 +468,31 @@ Public Class MainWindow
     End Sub
 
     Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
-        Dim nodes As New Dictionary(Of String, DSNode)
         Dim selfNode As DSNode = Nothing
         If dsProcess IsNot Nothing Then
             dsProcess.UpdateNodes()
             If dsProcess.SelfNode.SteamId Is Nothing Then Return
             For Each kv In dsProcess.ConnectedNodes
-                nodes(kv.Key) = kv.Value.Clone()
+                If connectedNodes.ContainsKey(kv.Key) Then
+                    connectedNodes(kv.Key).node = kv.Value.Clone()
+                Else
+                    connectedNodes(kv.Key) = New ConnectedNode(kv.Value.Clone())
+                End If
             Next
             selfNode = dsProcess.SelfNode.Clone()
+        Else
+            connectedNodes.Clear()
         End If
 
         If _ircClient IsNot Nothing Then
-            _ircClient.setLocalNodes(selfNode, nodes.Values)
+            _ircClient.setLocalNodes(selfNode, connectedNodes.Select(Function(kv, i) kv.Value.node))
         End If
 
+        Dim activeNodes = connectedNodes.ToDictionary(Function(kv) kv.Key, Function(kv) kv.Value.node)
         If selfNode IsNot Nothing Then
-            nodes.Add(selfNode.SteamId, selfNode)
+            activeNodes.Add(selfNode.SteamId, selfNode)
         End If
-        activeNodesDisplayList.SyncWithDict(nodes)
+        activeNodesDisplayList.SyncWithDict(activeNodes)
         updateRecentNodes()
     End Sub
     Private Sub updateRecentNodes()
@@ -699,5 +706,18 @@ Public Class MainWindow
                 ircDisplayList.Clear()
             End If
         End If
+    End Sub
+End Class
+
+
+Class ConnectedNode
+    Public node As DSNode
+    Public connectedSince As Date
+    Public badNodeSince As Date
+
+    Sub New(node As DSNode)
+        Me.node = node
+        Me.connectedSince = DateTime.UtcNow
+        Me.badNodeSince = Nothing
     End Sub
 End Class
