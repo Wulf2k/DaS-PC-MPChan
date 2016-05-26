@@ -493,11 +493,25 @@ Public Class DarkSoulsProcess
         SelfNode.World = ReadInt8(selfPtr + &HA13) & "-" & ReadInt8(selfPtr + &HA12)
         SelfNode.PhantomType = ReadInt32(selfPtr + &HA28)
 
-        Dim tmpCharPtr As Integer = ReadInt32(dsBase + &HF78700)
-        tmpCharPtr = ReadInt32(tmpCharPtr + &H8)
-        SelfNode.Indictments = ReadInt32(tmpCharPtr + &HEC)
-        SelfNode.Covenant = ReadInt8(tmpCharPtr + &H10B)
+        Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
+        heroPtr = ReadInt32(heroPtr + &H8)
+        SelfNode.Indictments = ReadInt32(heroPtr + &HEC)
+        SelfNode.Covenant = ReadInt8(heroPtr + &H10B)
     End Sub
+    Public ReadOnly Property HasDarkmoonRingEquiped As Boolean
+        Get
+            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
+            heroPtr = ReadInt32(heroPtr + &H8)
+            Return ReadInt32(heroPtr + &H280) = 102 Or ReadInt32(heroPtr + &H284) = 102
+        End Get
+    End Property
+    Public ReadOnly Property HasCatCovenantRingEquiped As Boolean
+        Get
+            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
+            heroPtr = ReadInt32(heroPtr + &H8)
+            Return ReadInt32(heroPtr + &H280) = 103 Or ReadInt32(heroPtr + &H284) = 103
+        End Get
+    End Property
 
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
         Dim _rtnBytes(0) As Byte

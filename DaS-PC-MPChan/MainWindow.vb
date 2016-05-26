@@ -405,18 +405,27 @@ Public Class MainWindow
     Private Function nodeRanking(other As DSNode) As Integer
         '0 = good, 1 = half-bad, 2 = bad
         'Half-Bad = I can't interact with them, but they can invade me
-        'TODO: Handle forest and dark anor londo invasions
         Dim self = dsProcess.SelfNode
-        If self.World <> other.World Then
-            Return 2
-        End If
-        Dim coopPossible = (self.canBeSummoned(other) OrElse other.canBeSummoned(self))
-        If coopPossible Then Return 0
-        If self.Covenant = Covenant.Darkwraith And self.canRedEyeInvade(other) Then Return 0
-        If self.Covenant = Covenant.DarkmoonBlade And self.canDarkmoonInvade(other) And other.Indictments > 0 Then Return 0
+        If (self.Covenant = Covenant.DarkmoonBlade AndAlso other.World = AnorLondoWorld AndAlso
+            self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquiped) Then Return 0
+        If (self.Covenant = Covenant.ForestHunder AndAlso other.World = DarkrootGardenWorld AndAlso
+            self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquiped) Then Return 0
 
-        If self.Indictments > 0 And other.canDarkmoonInvade(self) Then Return 1
-        If other.canRedEyeInvade(self) Then Return 1
+        If self.World = other.World Then
+            Dim coopPossible = (self.canBeSummoned(other) OrElse other.canBeSummoned(self))
+            If coopPossible Then Return 0
+            If self.Covenant = Covenant.Darkwraith And self.canRedEyeInvade(other) Then Return 0
+            If self.Covenant = Covenant.DarkmoonBlade And self.canDarkmoonInvade(other) Then Return 0
+
+            If self.Indictments > 0 And other.canDarkmoonInvade(self) Then Return 1
+            If other.canRedEyeInvade(self) Then Return 1
+        End If
+
+        'TODO: check whether Sif is alive
+        'If we knew that the other player is a Forest Hunter, we could mark this as a good node
+        If (self.Covenant <> Covenant.ForestHunder AndAlso self.World = DarkrootGardenWorld AndAlso
+            other.canForestInvade(self)) Then Return 1
+        'TODO: Add Dark Anor Londo check once we read out anor londo darkness
         Return 2
     End Function
     Private Sub handleDisconnects()
