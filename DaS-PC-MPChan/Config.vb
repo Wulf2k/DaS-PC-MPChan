@@ -14,7 +14,7 @@
     'Number of free nodes we want to achieve by disconnecting
     Public Const DisconnectTargetFreeNodes = 5
     'Maximum number of bad nodes we tolerate
-    Public Const BadNodesThreshold = 4
+    Public Const BadNodesThreshold = 3
 
     'Grace period before a bad node may be disconnected
     Public Const BadNodeGracePeriod = 5 * 60
