@@ -163,6 +163,8 @@ Public Class IRCClient
     Private Sub handleIRCLine(line As String)
         Dim prefix As String = Nothing
         If line.StartsWith(":") Then
+            Dim lineparts = line.Split({" "c}, 2)
+            If lineparts.Length <> 2 Then Return
             prefix = line.Split({" "c}, 2)(0).Substring(1)
             line = line.Split({" "c}, 2)(1)
         End If
