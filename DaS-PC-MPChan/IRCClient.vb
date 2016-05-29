@@ -72,7 +72,9 @@ Public Class IRCClient
     End Function
 
     Private Sub main(args As String())
+#If Not DEBUG
         Try
+#End If
             While Not shouldQuit
                 Try
                     setStatus("Initiating connection ...")
@@ -91,9 +93,11 @@ Public Class IRCClient
                 End If
             End While
             setStatus("Disconnected.")
+#If Not DEBUG
         Catch ex As Exception
             setStatus("DSCMNet crashed with: " & ex.Message)
         End Try
+#End If
     End Sub
 
     Private Sub connectToServer()
