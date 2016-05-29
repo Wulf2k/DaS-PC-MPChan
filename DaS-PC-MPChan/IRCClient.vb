@@ -108,10 +108,11 @@ Public Class IRCClient
         Dim chan As String = "#DSCM-Main"
 
         tcpClient = New System.Net.Sockets.TcpClient()
-        tcpClient.Connect(server, port)
-        If Not tcpClient.Connected Then
-            Throw New IRCConnectionError("Failed to connect")
-        End If
+        Try
+            tcpClient.Connect(server, port)
+        Catch ex As SocketException
+            Throw New IRCConnectionError("Failed to connect: " & ex.Message)
+        End Try
         stream = tcpClient.GetStream()
         _streamReader = New StreamReader(stream)
         _streamWriter = New StreamWriter(stream)
