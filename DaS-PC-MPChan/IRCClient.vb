@@ -173,6 +173,7 @@ Public Class IRCClient
         If command = "PING" Then
             _streamWriter.Write("PONG " & rest & vbCr & vbLf)
         ElseIf command = "PRIVMSG" Then
+            If String.IsNullOrWhiteSpace(rest) Then Return
             Dim msg As String = rest.Split({" "c}, 2)(1).Substring(1)
             If msg.StartsWith("REPORT|") Or msg.StartsWith("REPORTSELF|") Then
                 Dim inNode As DSNode
