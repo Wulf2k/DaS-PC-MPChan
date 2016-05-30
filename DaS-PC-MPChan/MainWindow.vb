@@ -32,6 +32,17 @@ Public Class MainWindow
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
+    Private Sub DSCM_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
+        If dsProcess IsNot Nothing Then
+            dsProcess.Dispose()
+            dsProcess = Nothing
+        End If
+        If _ircClient IsNot Nothing Then
+            'Give the IRC Client a chance to quit gracefully
+            _ircClient.Shutdown()
+            _ircClient.Join(100)
+        End If
+    End Sub
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Version = lblVer.Text
 

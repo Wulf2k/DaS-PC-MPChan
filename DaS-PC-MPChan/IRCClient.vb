@@ -46,6 +46,10 @@ Public Class IRCClient
         shouldQuit = True
     End Sub
 
+    Public Function Join(timeout As Integer) As Boolean
+        Return _thread.Join(timeout)
+    End Function
+
     Public Function GetNodeForConnecting(self As DSNode, blacklist As IEnumerable(Of String)) As DSNode
         ' This is called from mainthread, lock acordingly!
 
