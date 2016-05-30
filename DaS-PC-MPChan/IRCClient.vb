@@ -72,7 +72,9 @@ Public Class IRCClient
     End Function
 
     Private Sub main(args As String())
+#If Not DEBUG
         Try
+#End If
             While Not shouldQuit
                 Try
                     setStatus("Initiating connection ...")
@@ -91,9 +93,11 @@ Public Class IRCClient
                 End If
             End While
             setStatus("Disconnected.")
+#If Not DEBUG
         Catch ex As Exception
             setStatus("DSCMNet crashed with: " & ex.Message)
         End Try
+#End If
     End Sub
 
     Private Sub connectToServer()
@@ -104,10 +108,11 @@ Public Class IRCClient
         Dim chan As String = "#DSCM-Main"
 
         tcpClient = New System.Net.Sockets.TcpClient()
-        tcpClient.Connect(server, port)
-        If Not tcpClient.Connected Then
-            Throw New IRCConnectionError("Failed to connect")
-        End If
+        Try
+            tcpClient.Connect(server, port)
+        Catch ex As SocketException
+            Throw New IRCConnectionError("Failed to connect: " & ex.Message)
+        End Try
         stream = tcpClient.GetStream()
         _streamReader = New StreamReader(stream)
         _streamWriter = New StreamWriter(stream)
@@ -158,6 +163,8 @@ Public Class IRCClient
     Private Sub handleIRCLine(line As String)
         Dim prefix As String = Nothing
         If line.StartsWith(":") Then
+            Dim lineparts = line.Split({" "c}, 2)
+            If lineparts.Length <> 2 Then Return
             prefix = line.Split({" "c}, 2)(0).Substring(1)
             line = line.Split({" "c}, 2)(1)
         End If
@@ -168,6 +175,7 @@ Public Class IRCClient
         If command = "PING" Then
             _streamWriter.Write("PONG " & rest & vbCr & vbLf)
         ElseIf command = "PRIVMSG" Then
+            If String.IsNullOrWhiteSpace(rest) Then Return
             Dim msg As String = rest.Split({" "c}, 2)(1).Substring(1)
             If msg.StartsWith("REPORT|") Or msg.StartsWith("REPORTSELF|") Then
                 Dim inNode As DSNode
