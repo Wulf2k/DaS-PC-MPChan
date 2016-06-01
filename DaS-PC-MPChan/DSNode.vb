@@ -1,4 +1,6 @@
-﻿Module DSDataMaps
+﻿Imports System.Web.Script.Serialization
+
+Module DSDataMaps
     Public PhantomType As New Dictionary(Of Integer, String)
     Public World As New Dictionary(Of String, String)
     Public Covenant As New Dictionary(Of Integer, String)
