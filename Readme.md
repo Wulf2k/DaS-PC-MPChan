@@ -73,8 +73,9 @@ Due to constant problems with the default Steam matchmaking, DCSM contains its
 own matchmaking. All DSCM-Net clients report player info to a central location.
 You can have a look at this information in the DSCM-Net tab.
 
-DSCM uses this information to automatically connect you to nearby players in
-coop level range.
+DSCM uses this information to automatically connect you to appropriate players.
+Note that your covenant (and whether you are wearing its ring) will be taken
+into account in this process.
 
 
 Active Nodes Tab
@@ -85,6 +86,19 @@ their location in-game, and if they're human, hollow, or a phantom of some kind.
 This vastly helps with informing you if you have potential viable connections or
 not. Bear in mind it is not possible to know whether or not someone has their
 boss alive, so that aspect is still a guess from your end.
+
+#### Row colors
+
+The color of the row marks the usefulness that DSCM thinks that node has for
+you. That is based on Location, Soul Level, your Covenant and if you have your
+covenant ring equipped.
+
+Nodes that you added manually are highlighted in bold.
+
+#### MP Area column
+
+This column shows the invasion zone the player is in. [The wiki](http://darksouls.wikidot.com/invasion-spawn-locations)
+has further details.
 
 
 Favorites and Recent Tabs

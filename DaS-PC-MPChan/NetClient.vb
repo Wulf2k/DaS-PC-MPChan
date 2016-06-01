@@ -16,28 +16,6 @@ Public Class NetClient
         client = New HttpClient(handler)
         Me.mainWindow = mainWindow
     End Sub
-
-    Public Function GetNodeForConnecting(self As DSNode, blacklist As IEnumerable(Of String)) As DSNode
-        Dim blackSet As New HashSet(Of String)(blacklist)
-        blackSet.Add(self.SteamId)
-
-        Dim candidates As New List(Of DSNode)
-        For Each node In netNodes.Values
-            If blackSet.Contains(node.SteamId) Then Continue For
-            candidates.Add(node)
-        Next
-
-        If candidates.Count = 0 Then Return Nothing
-
-        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
-            .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canCoop(n)) _
-            .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canCoop(n)) _
-            .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canCoop(n)) _
-            .ThenByDescending(Function(n) (n.World <> "-1--1")) _
-            .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
-
-        Return sorted(0)
-    End Function
     Private Function JSONContent(data As Object) As StringContent
         Dim serializer As New JavaScriptSerializer()
         serializer.RegisterConverters({New DSNodeSerializer()})

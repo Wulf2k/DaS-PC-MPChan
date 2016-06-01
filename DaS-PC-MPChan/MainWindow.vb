@@ -5,7 +5,6 @@ Imports System.Net.Sockets
 Imports System.ComponentModel
 Imports System.Text
 
-
 Public Class MainWindow
     'Timers
     Private WithEvents updateActiveNodesTimer As New System.Windows.Forms.Timer()
@@ -31,6 +30,9 @@ Public Class MainWindow
     Private _netClient As NetClient = Nothing
     Private ircDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
+    Private connectedNodes As New Dictionary(Of String, ConnectedNode)
+
+    Private manualConnections As New HashSet(Of String)
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
@@ -77,11 +79,11 @@ Public Class MainWindow
         updateActiveNodesTimer.Start()
         dsAttachmentTimer.Interval = 1000
         dsAttachmentTimer.Start()
-        updateOnlineStateTimer.Interval = 10 * 60 * 1000
+        updateOnlineStateTimer.Interval = Config.OnlineCheckInterval
         updateOnlineStateTimer.Start()
-        updateNetNodesTimer.Interval = 120 * 1000
-        netNodeConnectTimer.Interval = 20 * 1000
-        publishNodesTimer.Interval = 30 * 1000
+        updateNetNodesTimer.Interval = Config.UpdateNetNodesInterval
+        netNodeConnectTimer.Interval = Config.IRCNodeConnectInterval
+        publishNodesTimer.Interval = Config.PublishNodesInterval
 
         attachDSProcess()
 
@@ -130,7 +132,6 @@ Public Class MainWindow
             .Columns("world").Width = 200
             .Columns("world").DataPropertyName = "WorldText"
             .Font = New Font("Consolas", 10)
-            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
             .Sort(.Columns("soulLevel"), ListSortDirection.Ascending)
             .Sort(.Columns("mpArea"), ListSortDirection.Ascending)
@@ -369,22 +370,176 @@ Public Class MainWindow
             'neccessary information to make a good choice (our character is not loaded)
             Return
         End If
-        Dim ReservedSteamNodeCount As Integer = 4
-        If dsProcess.NodeCount < dsProcess.MaxNodes - ReservedSteamNodeCount Then
-            Dim blacklist As New List(Of String)
-            For Each c In recentConnections
-                blacklist.Add(c.Item2)
-            Next
-            For Each n In dsProcess.ConnectedNodes.Values
-                blacklist.Add(n.SteamId)
-            Next
-            Dim candidate As DSNode = _netClient.GetNodeForConnecting(dsProcess.SelfNode, blacklist)
+        If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
+            Dim candidate As DSNode = selectIrcNodeForConnecting()
             If candidate IsNot Nothing Then
                 connectToSteamId(candidate.SteamId)
             End If
         End If
     End Sub
+    Private Function selectIrcNodeForConnecting() As DSNode
+        Dim blackSet As New HashSet(Of String)()
+        blackSet.Add(dsProcess.SelfNode.SteamId)
+        For Each c In recentConnections
+            blackSet.Add(c.Item2)
+        Next
+        For Each n In dsProcess.ConnectedNodes.Values
+            blackSet.Add(n.SteamId)
+        Next
 
+        Dim candidates As New List(Of DSNode)
+        For Each node In _netClient.netNodes.Values
+            If blackSet.Contains(node.SteamId) Then Continue For
+            candidates.Add(node)
+        Next
+
+        If candidates.Count = 0 Then Return Nothing
+
+        Dim self = dsProcess.SelfNode
+
+        'These read out dsProcess memory, so don't calculate them for every node
+        Dim anorLondoInvading = self.Covenant = Covenant.DarkmoonBlade AndAlso dsProcess.HasDarkmoonRingEquiped
+        Dim forestInvading = self.Covenant = Covenant.ForestHunter AndAlso dsProcess.HasCatCovenantRingEquiped
+        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
+            .OrderByDescending(Function(other) (other.World <> "-1--1")) _
+            .ThenByDescending(Function(other) As Boolean
+                                   'Special cross-world invasions
+                                   If anorLondoInvading Then
+                                       'TODO: Use others dark anor londo info once we have it
+                                       If other.World = AnorLondoWorld Then
+                                           Return self.canDarkmoonInvade(other)
+                                       End If
+                                   ElseIf forestInvading Then
+                                       If other.World = DarkrootGardenWorld Then
+                                           If other.HasExtendedInfo And other.Covenant = Covenant.ForestHunter Then
+                                               Return False
+                                           Else
+                                               Return self.canForestInvade(other)
+                                           End If
+                                       End If
+                                   End If
+                                   Return False
+                               End Function) _
+            .ThenByDescending(Function(other) (other.World = self.World))
+
+        Dim pvpSorting = Function(s As IOrderedEnumerable(Of DSNode))
+                             Return s.ThenByDescending(Function(other) self.canBeRedSignSummoned(other)) _
+                                     .ThenByDescending(Function(other) other.canBeRedSignSummoned(self)) _
+                                     .ThenByDescending(Function(other) other.canRedEyeInvade(self)) _
+                                     .ThenByDescending(Function(other) self.canRedEyeInvade(other)) _
+                                     .ThenByDescending(Function(other) other.canBeSummoned(self)) _
+                                     .ThenByDescending(Function(other) self.canBeSummoned(other))
+                         End Function
+
+        Dim sameMpZone = Function(other) other.MPZone = self.MPZone
+
+        If self.Covenant = Covenant.Darkwraith Then
+            sorted = sorted.ThenByDescending(Function(other) self.canRedEyeInvade(other)) _
+                .ThenByDescending(sameMpZone) _
+                .ThenByDescending(Function(other) other.canBeRedSignSummoned(self))
+        ElseIf self.Covenant = Covenant.DarkmoonBlade Then
+            sorted = sorted.ThenByDescending(Function(other) self.canDarkmoonInvade(other)) _
+                .ThenByDescending(Function(other)
+                                      If other.HasExtendedInfo Then
+                                          Return If(other.Indictments > 0, 1, -1)
+                                      Else
+                                          Return 0
+                                      End If
+                                  End Function) _
+                .ThenByDescending(sameMpZone)
+            sorted = pvpSorting(sorted)
+        ElseIf self.Covenant = Covenant.ForestHunter Or self.Covenant = Covenant.ChaosServant Then
+            'Nothing specific to be done here, assume general interest in PVP
+            sorted = pvpSorting(sorted)
+        ElseIf self.Covenant = Covenant.GravelordServant Or self.Covenant = Covenant.PathOfTheDragon Then
+            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other)) _
+                .ThenByDescending(sameMpZone)
+            sorted = pvpSorting(sorted)
+        ElseIf self.Covenant = Covenant.WarriorOfSunlight Then
+            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other)) _
+                .ThenByDescending(Function(other) other.canBeSummoned(self))
+        Else
+            'No Covenant, Way of White, Princess Guard
+            sorted = sorted.ThenByDescending(Function(other) self.canBeSummoned(other)) _
+                .ThenByDescending(Function(other) other.canBeSummoned(self))
+        End If
+
+        sorted = sorted.ThenByDescending(sameMpZone) _
+            .ThenBy(Function(other) Math.Abs(other.SoulLevel - self.SoulLevel))
+        Return sorted(0)
+    End Function
+    Private Function nodeRanking(other As DSNode) As Integer
+        '0 = good, 1 = half-bad, 2 = bad
+        'Half-Bad = I can't interact with them, but they can invade me
+        Dim self = dsProcess.SelfNode
+        If (self.Covenant = Covenant.DarkmoonBlade AndAlso other.World = AnorLondoWorld AndAlso
+            self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquiped) Then Return 0
+        If (self.Covenant = Covenant.ForestHunter AndAlso other.World = DarkrootGardenWorld AndAlso
+            self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquiped) Then Return 0
+
+        If self.World = other.World Then
+            Dim coopPossible = (self.canBeSummoned(other) OrElse other.canBeSummoned(self))
+            If coopPossible Then Return 0
+            If self.Covenant = Covenant.Darkwraith And self.canRedEyeInvade(other) Then Return 0
+            If self.Covenant = Covenant.DarkmoonBlade And self.canDarkmoonInvade(other) Then Return 0
+
+            If self.Indictments > 0 And other.canDarkmoonInvade(self) Then Return 1
+            If other.canRedEyeInvade(self) Then Return 1
+        End If
+
+        'TODO: check whether Sif is alive
+        'If we knew that the other player is a Forest Hunter, we could mark this as a good node
+        If (self.Covenant <> Covenant.ForestHunter AndAlso self.World = DarkrootGardenWorld AndAlso
+            other.canForestInvade(self)) Then Return 1
+        'TODO: Add Dark Anor Londo check once we read out anor londo darkness
+        Return 2
+    End Function
+    Private Sub handleDisconnects()
+        If _netClient Is Nothing Or dsProcess Is Nothing Then Return
+        If dsProcess.SelfNode.PhantomType = -1 Then Return
+
+        Dim now As Date = Date.UtcNow
+        Dim disconnectCandidates As New List(Of Tuple(Of ConnectedNode, Integer))()
+        Dim badNodeCount = 0
+        For Each connectedNode In connectedNodes.Values
+            Dim ranking = nodeRanking(connectedNode.node)
+            If ranking = 0 Then
+                connectedNode.lastGoodTime = now
+            Else
+                badNodeCount += 1
+                Dim badSeconds = (now - connectedNode.lastGoodTime).TotalSeconds
+                If (manualConnections.Contains(connectedNode.node.SteamId) And badSeconds < Config.ManualNodeGracePeriod) Then
+                    Continue For
+                ElseIf ranking = 1 And badSeconds < Config.HalfBadNodeGracePeriod Then
+                    Continue For
+                ElseIf ranking = 2 and badSeconds < Config.BadNodeGracePeriod Then
+                    Continue For
+                End If
+                'We might currently have an online interaction
+                If (dsProcess.SelfNode.PhantomType = PhantomType.Coop Or dsProcess.SelfNode.PhantomType = PhantomType.Invader Or
+                    connectedNode.node.PhantomType = PhantomType.Coop Or connectedNode.node.PhantomType = PhantomType.Invader) Then
+                    Continue For
+                End If
+                disconnectCandidates.Add(Tuple.Create(connectedNode, ranking))
+            End If
+        Next
+
+        If badNodeCount <= Config.BadNodesThreshold Then
+            Return
+        End If
+
+        Dim disconnectCount = DisconnectTargetFreeNodes - (nmbMaxNodes.Value - dsProcess.NodeCount)
+        If disconnectCount < 1 Or disconnectCandidates.Count < disconnectCount  Then
+            Return
+        End If
+        Dim disconnectNodes = disconnectCandidates _
+                .OrderByDescending(Function(x) x.Item2) _
+                .ThenByDescending(Function(x) x.Item1.lastGoodTime) _
+                .Take(disconnectCount)
+        For Each disconnectNode In disconnectNodes
+            dsProcess.DisconnectSteamId(disconnectNode.Item1.node.SteamId)
+        Next
+    End Sub
     Private Sub updateUI() Handles updateUITimer.Tick
         If dsProcess Is Nothing Then
             nmbMaxNodes.Enabled = False
@@ -479,22 +634,59 @@ Public Class MainWindow
     End Sub
 
     Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
-        Dim nodes As New Dictionary(Of String, DSNode)
         Dim selfNode As DSNode = Nothing
         If dsProcess IsNot Nothing Then
             dsProcess.UpdateNodes()
             If dsProcess.SelfNode.SteamId Is Nothing Then Return
             For Each kv In dsProcess.ConnectedNodes
-                nodes(kv.Key) = kv.Value.Clone()
+                If connectedNodes.ContainsKey(kv.Key) Then
+                    connectedNodes(kv.Key).node = kv.Value.Clone()
+                Else
+                    connectedNodes(kv.Key) = New ConnectedNode(kv.Value.Clone())
+                End If
+            Next
+            For Each steamId In connectedNodes.Keys.ToList()
+                If Not dsProcess.ConnectedNodes.ContainsKey(steamId) Then
+                    connectedNodes.Remove(steamId)
+                End If
             Next
             selfNode = dsProcess.SelfNode.Clone()
+        Else
+            connectedNodes.Clear()
+
         End If
 
+        Dim activeNodes = connectedNodes.ToDictionary(Function(kv) kv.Key, Function(kv) kv.Value.node)
         If selfNode IsNot Nothing Then
-            nodes.Add(selfNode.SteamId, selfNode)
+            activeNodes.Add(selfNode.SteamId, selfNode)
         End If
-        activeNodesDisplayList.SyncWithDict(nodes)
+        activeNodesDisplayList.SyncWithDict(activeNodes)
+
+        'Color Rows according to ranking
+        For Each row As DataGridViewRow In dgvMPNodes.Rows
+            Dim steamId = row.Cells("steamId").Value
+            If steamId = selfNode.SteamId Then
+                row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(198, 239, 206)
+            Else
+                Dim ranking = nodeRanking(activeNodes(steamId))
+                If ranking = 2 Then
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 199, 206)
+                ElseIf ranking = 1 Then
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 235, 156)
+                Else
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 255, 255)
+                End If
+            End If
+            If steamId = selfNode.SteamId Or manualConnections.Contains(steamId) Then
+                row.DefaultCellStyle.Font = New Font(dgvMPNodes.DefaultCellStyle.Font, FontStyle.Bold)
+            Else
+                row.DefaultCellStyle.Font = Nothing
+            End If
+        Next
+
         updateRecentNodes()
+        'Do this now as our node info as recent as possible
+        handleDisconnects()
     End Sub
     Private Sub updateRecentNodes()
         Dim key As Microsoft.Win32.RegistryKey
@@ -572,7 +764,7 @@ Public Class MainWindow
 
             Dim now As Date = DateTime.UtcNow
             recentConnections.Enqueue(Tuple.Create(now, steamId))
-            While (now - recentConnections.Peek().Item1).TotalMinutes > 5
+            While (now - recentConnections.Peek().Item1).TotalSeconds > Config.ConnectionRetryTimeout
                 recentConnections.Dequeue()
             End While
         End If
@@ -628,6 +820,7 @@ Public Class MainWindow
             MsgBox("You can only connect to other players while Dark Souls is running.", MsgBoxStyle.Critical)
             Return
         End If
+        manualConnections.Add(idString)
         connectToSteamId(idString)
     End Sub
     Private Function getSelectedNode() As Tuple(Of String, String)
@@ -650,7 +843,9 @@ Public Class MainWindow
     End Function
     Private Sub dgvNodes_doubleclick(sender As DataGridView, e As EventArgs) Handles dgvFavoriteNodes.DoubleClick,
         dgvRecentNodes.DoubleClick, dgvDSCMNet.DoubleClick
-        connectToSteamId(sender.CurrentRow.Cells("steamId").Value)
+        Dim steamId = sender.CurrentRow.Cells("steamId").Value
+        manualConnections.Add(steamId)
+        connectToSteamId(steamId)
     End Sub
     Private Sub btnAddFavorite_Click(sender As Object, e As EventArgs) Handles btnAddFavorite.Click
         Dim key As Microsoft.Win32.RegistryKey
@@ -710,5 +905,16 @@ Public Class MainWindow
                 _netClient = Nothing
             End If
         End If
+    End Sub
+End Class
+
+
+Class ConnectedNode
+    Public node As DSNode
+    Public lastGoodTime As Date
+
+    Sub New(node As DSNode)
+        Me.node = node
+        Me.lastGoodTime = DateTime.UtcNow
     End Sub
 End Class
