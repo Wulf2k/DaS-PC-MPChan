@@ -9,8 +9,10 @@ Public Class MainWindow
     'Timers
     Private WithEvents updateActiveNodesTimer As New System.Windows.Forms.Timer()
     Private WithEvents updateUITimer As New System.Windows.Forms.Timer()
+    Private WithEvents updateNetNodesTimer As New System.Windows.Forms.Timer()
     Private WithEvents updateOnlineStateTimer As New System.Windows.Forms.Timer()
-    Private WithEvents ircNodeConnectTimer As New System.Windows.Forms.Timer()
+    Private WithEvents netNodeConnectTimer As New System.Windows.Forms.Timer()
+    Private WithEvents publishNodesTimer As New System.Windows.Forms.Timer()
     Private WithEvents dsAttachmentTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
@@ -25,7 +27,7 @@ Public Class MainWindow
     Public Version As String
 
     Private dsProcess As DarkSoulsProcess = Nothing
-    Private _ircClient As IRCClient = Nothing
+    Private _netClient As NetClient = Nothing
     Private ircDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
     Private connectedNodes As New Dictionary(Of String, ConnectedNode)
@@ -79,7 +81,9 @@ Public Class MainWindow
         dsAttachmentTimer.Start()
         updateOnlineStateTimer.Interval = Config.OnlineCheckInterval
         updateOnlineStateTimer.Start()
-        ircNodeConnectTimer.Interval = Config.IRCNodeConnectInterval
+        updateNetNodesTimer.Interval = Config.UpdateNetNodesInterval
+        netNodeConnectTimer.Interval = Config.IRCNodeConnectInterval
+        publishNodesTimer.Interval = Config.PublishNodesInterval
 
         attachDSProcess()
 
@@ -356,8 +360,8 @@ Public Class MainWindow
             Me.Close()
         End If
     End Sub
-    Private Sub connectToIRCNode() Handles ircNodeConnectTimer.Tick
-        If (_ircClient Is Nothing OrElse
+    Private Sub connectToIRCNode() Handles netNodeConnectTimer.Tick
+        If (_netClient Is Nothing OrElse
                 dsProcess Is Nothing OrElse
                 dsProcess.SelfSteamId = "" OrElse
                 dsProcess.SelfNode.CharacterName = "" OrElse
@@ -384,8 +388,7 @@ Public Class MainWindow
         Next
 
         Dim candidates As New List(Of DSNode)
-        For Each t In _ircClient.ircNodes.Values
-            Dim node As DSNode = t.Item1
+        For Each node In _netClient.netNodes.Values
             If blackSet.Contains(node.SteamId) Then Continue For
             candidates.Add(node)
         Next
@@ -492,7 +495,7 @@ Public Class MainWindow
         Return 2
     End Function
     Private Sub handleDisconnects()
-        If _ircClient Is Nothing Or dsProcess Is Nothing Then Return
+        If _netClient Is Nothing Or dsProcess Is Nothing Then Return
         If dsProcess.SelfNode.PhantomType = -1 Then Return
 
         Dim now As Date = Date.UtcNow
@@ -565,12 +568,20 @@ Public Class MainWindow
             txtCurrNodes.Text = dsProcess.NodeCount
         End If
 
-        If _ircClient IsNot Nothing Then
-            ircDisplayList.SyncWithDict(_ircClient.ircNodes, Function(x) x.Item1, dgvDSCMNet)
-        End If
 
         If Not tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")" Then
             tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
+        End If
+    End Sub
+    Private Async Sub updateNetNodes() Handles updateNetNodesTimer.Tick
+        If _netClient IsNot Nothing Then
+            Await _netClient.loadNodes()
+            ircDisplayList.SyncWithDict(_netClient.netNodes, dgvDSCMNet)
+        End If
+    End Sub
+        Private Async Sub publishNodes() Handles publishNodesTimer.Tick
+        If _netClient IsNot Nothing AndAlso dsProcess IsNot Nothing AndAlso dsProcess.SelfNode.SteamId IsNot Nothing Then
+            Await _netClient.publishLocalNodes(dsProcess.SelfNode, dsProcess.ConnectedNodes.Values())
         End If
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
@@ -642,10 +653,7 @@ Public Class MainWindow
             selfNode = dsProcess.SelfNode.Clone()
         Else
             connectedNodes.Clear()
-        End If
 
-        If _ircClient IsNot Nothing Then
-            _ircClient.setLocalNodes(selfNode, connectedNodes.Select(Function(kv, i) kv.Value.node))
         End If
 
         Dim activeNodes = connectedNodes.ToDictionary(Function(kv) kv.Key, Function(kv) kv.Value.node)
@@ -884,14 +892,17 @@ Public Class MainWindow
         key.SetValue("JoinDSCM-Net", chkDSCMNet.Checked)
 
         If chkDSCMNet.Checked Then
-            _ircClient = New IRCClient(Me)
-            ircNodeConnectTimer.Start()
+            _netClient = New NetClient(Me)
+            netNodeConnectTimer.Start()
+            updateNetNodesTimer.Start()
+            publishNodesTimer.Start()
+            updateNetNodes()
         Else
-            If _ircClient IsNot Nothing Then
-                ircNodeConnectTimer.Stop()
-                _ircClient.Shutdown()
-                _ircClient = Nothing
-                ircDisplayList.Clear()
+            If _netClient IsNot Nothing Then
+                updateNetNodesTimer.Stop()
+                netNodeConnectTimer.Stop()
+                publishNodesTimer.Stop()
+                _netClient = Nothing
             End If
         End If
     End Sub

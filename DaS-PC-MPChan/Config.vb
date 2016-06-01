@@ -1,4 +1,10 @@
 ﻿Module Config
+    'How frequently should we update the node list from the central server?
+    Public Const UpdateNetNodesInterval = 120 * 1000
+
+    'How frequently should we publish our nodes to the central server?
+    Public Const PublishNodesInterval = 60 * 1000
+
     'How frequently should we connect to node from IRC?
     Public Const IRCNodeConnectInterval = 10 * 1000
 
