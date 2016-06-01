@@ -2,6 +2,8 @@
     Public PhantomType As New Dictionary(Of Integer, String)
     Public World As New Dictionary(Of String, String)
     Public Covenant As New Dictionary(Of Integer, String)
+    Public DarkrootGardenWorld = "12-0"
+    Public AnorLondoWorld = "15-1"
 
     Sub New()
         PhantomType.Add(-1, "Loading")
@@ -43,7 +45,26 @@
     End Sub
 End Module
 
+Enum Covenant
+    None = 0
+    WayOfWhite = 1
+    PrincessGuard = 2
+    WarriorOfSunlight = 3
+    Darkwraith = 4
+    PathOfTheDragon = 5
+    GravelordServant = 6
+    ForestHunter = 7
+    DarkmoonBlade = 8
+    ChaosServant = 9
+End Enum
 
+Enum PhantomType
+    Loading = -1
+    Human = 0
+    Coop = 1
+    Invader = 2
+    Hollow = 8
+End Enum
 
 Public Class DSNode
     Public SteamId As String
@@ -158,7 +179,21 @@ Public Class DSNode
         End Get
     End Property
 
-    Public Function canCoop(other As DSNode) As Boolean
+    Public Function canBeSummoned(other As DSNode) As Boolean
+        'This is also canGravelord and canBeDragonSummoned
         Return Math.Abs(SoulLevel - other.SoulLevel) <= (10 + SoulLevel * 0.1)
+    End Function
+    Public Function canForestInvade(other As DSNode) As Boolean
+        Return SoulLevel - (10 + SoulLevel * 0.1) < other.SoulLevel
+    End Function
+    Public Function canBeRedSignSummoned(other As DSNode) As Boolean
+        Return canForestInvade(other)
+    End Function
+    Public Function canRedEyeInvade(other As DSNode) As Boolean
+        Return SoulLevel - (SoulLevel * 0.1) < other.SoulLevel
+    End Function
+    Public Function canDarkmoonInvade(other As DSNode) As Boolean
+        Return (SoulLevel - (50 + SoulLevel * 0.2) < other.SoulLevel And
+                other.SoulLevel < SoulLevel + (10 + SoulLevel * 0.1))
     End Function
 End Class

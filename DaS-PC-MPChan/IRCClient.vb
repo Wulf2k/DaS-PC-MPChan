@@ -46,31 +46,6 @@ Public Class IRCClient
         shouldQuit = True
     End Sub
 
-    Public Function GetNodeForConnecting(self As DSNode, blacklist As IEnumerable(Of String)) As DSNode
-        ' This is called from mainthread, lock acordingly!
-
-        Dim blackSet As New HashSet(Of String)(blacklist)
-        blackSet.Add(self.SteamId)
-
-        Dim candidates As New List(Of DSNode)
-        For Each t In ircNodes.Values
-            Dim node As DSNode = t.Item1
-            If blackSet.Contains(node.SteamId) Then Continue For
-            candidates.Add(node)
-        Next
-
-        If candidates.Count = 0 Then Return Nothing
-
-        Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
-            .OrderByDescending(Function(n) (n.MPZone = self.MPZone) AndAlso self.canCoop(n)) _
-            .ThenByDescending(Function(n) (n.World = self.World) AndAlso self.canCoop(n)) _
-            .ThenByDescending(Function(n) (n.MPZone = self.MPZone) OrElse self.canCoop(n)) _
-            .ThenByDescending(Function(n) (n.World <> "-1--1")) _
-            .ThenBy(Function(n) Math.Abs(n.SoulLevel - self.SoulLevel))
-
-        Return sorted(0)
-    End Function
-
     Private Sub main(args As String())
         Try
             While Not shouldQuit
@@ -97,14 +72,10 @@ Public Class IRCClient
     End Sub
 
     Private Sub connectToServer()
-        Dim nick As String = "DSCM[" & mainWindow.Version.Replace(".", "-") & "]" & Guid.NewGuid.ToString().Split("-")(0)
-        Dim owner As String = "DSCMbot"
-        Dim server As String = "dscm.wulf2k.ca"
-        Dim port As Integer = 8123
-        Dim chan As String = "#DSCM-Main"
+        Dim nick As String = Config.IRCNick & "[" & mainWindow.Version.Replace(".", "-") & "]" & Guid.NewGuid.ToString().Split("-")(0)
 
         tcpClient = New System.Net.Sockets.TcpClient()
-        tcpClient.Connect(server, port)
+        tcpClient.Connect(Config.IRCHost, Config.IRCPort)
         If Not tcpClient.Connected Then
             Throw New IRCConnectionError("Failed to connect")
         End If
@@ -113,7 +84,7 @@ Public Class IRCClient
         _streamWriter = New StreamWriter(stream)
         _streamWriter.AutoFlush = True
 
-        _streamWriter.Write("USER " & nick & " 0 * :" & owner & vbCr & vbLf)
+        _streamWriter.Write("USER " & nick & " 0 * :" & Config.IRCOwner & vbCr & vbLf)
         _streamWriter.Write("NICK " & nick & vbCr & vbLf)
         _streamWriter.Write("MODE " & nick & " +B" & vbCr & vbLf)
 
@@ -127,7 +98,7 @@ Public Class IRCClient
                 If buf.StartsWith("PING ") Then
                     _streamWriter.Write(buf.Replace("PING", "PONG") & vbCr & vbLf)
                 ElseIf buf.Contains(":MOTD") Then
-                    _streamWriter.Write("JOIN " & chan & vbCr & vbLf)
+                    _streamWriter.Write("JOIN " & Config.IRCChannel & vbCr & vbLf)
                     Exit While
                 End If
             End If
@@ -141,7 +112,7 @@ Public Class IRCClient
                 Exit While
             ElseIf isConnectionDropped() Then
                 Throw New IRCConnectionError("Connection was dropped")
-            ElseIf (DateTime.UtcNow - lastPublish).TotalSeconds >= 120 Then
+            ElseIf (DateTime.UtcNow - lastPublish).TotalSeconds >= Config.IRCPublishInterval Then
                 lastPublish = DateTime.UtcNow
                 publishLocalNodes()
                 expireIrcNodes()
@@ -219,12 +190,12 @@ Public Class IRCClient
                     'Check if node was already reported in the last 3 minutes
                     Dim networkKnowsNode = (
                         ircNodes.ContainsKey(node.SteamId) AndAlso
-                        (DateTime.UtcNow - ircNodes(node.SteamId).Item2).TotalMinutes <= 3)
+                        (DateTime.UtcNow - ircNodes(node.SteamId).Item2).TotalSeconds <= IRCNodePublishInterval)
                     If networkKnowsNode Then
                         'Publish anyways if the information in the network is incorrect
                         Dim networkInfoIsStale = (
                             Not ircNodes(node.SteamId).Item1.BasicEquals(node) AndAlso
-                            (DateTime.UtcNow - ircNodes(node.SteamId).Item2).TotalSeconds >= 20)
+                            (DateTime.UtcNow - ircNodes(node.SteamId).Item2).TotalSeconds >= IRCNodeUpdateInterval)
                         If Not networkInfoIsStale Then Continue For
                     End If
 
@@ -255,7 +226,7 @@ Public Class IRCClient
     Private Sub expireIrcNodes()
         Dim now As Date = DateTime.UtcNow
         For Each t In ircNodes.Values.ToList()
-            If (now - t.Item2).TotalMinutes >= 5 Then
+            If (now - t.Item2).TotalSeconds >= Config.IRCNodeTTL Then
                 ircNodes.TryRemove(t.Item1.SteamId, t)
             End If
         Next

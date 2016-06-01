@@ -343,11 +343,7 @@ Public Class DarkSoulsProcess
 
     Public ReadOnly Property NodeCount As Integer
         Get
-            Dim tmpptr = ReadInt32(dsBase + &HF7E204)
-            If tmpptr = 0 Then
-                Return 0
-            End If
-            Return ReadInt32(tmpptr + &HAE0)
+            Return ReadInt32(dsBase + &HF62DD0) - 1
         End Get
     End Property
 
@@ -360,6 +356,20 @@ Public Class DarkSoulsProcess
     Public Sub ConnectToSteamId(ByVal steamId As String)
         Dim data(70) As Byte
         data(0) = &H1
+        Dim selfSteamName As String = ReadSteamName(ReadInt32(dsBase + &HF62DD4) + &H30)
+        Dim selfSteamNameBytes() As Byte = Encoding.Unicode.GetBytes(selfSteamName)
+        Array.Copy(selfSteamNameBytes, 0, data, 1, selfSteamNameBytes.Length)
+
+        Try
+            sendP2PPacket(steamId, data)
+        Catch ex As Exception
+            Throw New DSConnectException(ex.Message)
+        End Try
+    End Sub
+
+    Public Sub DisconnectSteamId(ByVal steamId As String)
+        Dim data(70) As Byte
+        data(0) = &H2
         Dim selfSteamName As String = ReadSteamName(ReadInt32(dsBase + &HF62DD4) + &H30)
         Dim selfSteamNameBytes() As Byte = Encoding.Unicode.GetBytes(selfSteamName)
         Array.Copy(selfSteamNameBytes, 0, data, 1, selfSteamNameBytes.Length)
@@ -483,11 +493,25 @@ Public Class DarkSoulsProcess
         SelfNode.World = ReadInt8(selfPtr + &HA13) & "-" & ReadInt8(selfPtr + &HA12)
         SelfNode.PhantomType = ReadInt32(selfPtr + &HA28)
 
-        Dim tmpCharPtr As Integer = ReadInt32(dsBase + &HF78700)
-        tmpCharPtr = ReadInt32(tmpCharPtr + &H8)
-        SelfNode.Indictments = ReadInt32(tmpCharPtr + &HEC)
-        SelfNode.Covenant = ReadInt8(tmpCharPtr + &H10B)
+        Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
+        heroPtr = ReadInt32(heroPtr + &H8)
+        SelfNode.Indictments = ReadInt32(heroPtr + &HEC)
+        SelfNode.Covenant = ReadInt8(heroPtr + &H10B)
     End Sub
+    Public ReadOnly Property HasDarkmoonRingEquiped As Boolean
+        Get
+            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
+            heroPtr = ReadInt32(heroPtr + &H8)
+            Return ReadInt32(heroPtr + &H280) = 102 Or ReadInt32(heroPtr + &H284) = 102
+        End Get
+    End Property
+    Public ReadOnly Property HasCatCovenantRingEquiped As Boolean
+        Get
+            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
+            heroPtr = ReadInt32(heroPtr + &H8)
+            Return ReadInt32(heroPtr + &H280) = 103 Or ReadInt32(heroPtr + &H284) = 103
+        End Get
+    End Property
 
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
         Dim _rtnBytes(0) As Byte
