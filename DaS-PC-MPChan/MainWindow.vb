@@ -28,7 +28,7 @@ Public Class MainWindow
 
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _netClient As NetClient = Nothing
-    Private ircDisplayList As New DSNodeBindingList()
+    Private netNodeDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
     Private connectedNodes As New Dictionary(Of String, ConnectedNode)
 
@@ -82,7 +82,7 @@ Public Class MainWindow
         updateOnlineStateTimer.Interval = Config.OnlineCheckInterval
         updateOnlineStateTimer.Start()
         updateNetNodesTimer.Interval = Config.UpdateNetNodesInterval
-        netNodeConnectTimer.Interval = Config.IRCNodeConnectInterval
+        netNodeConnectTimer.Interval = Config.NetNodeConnectInterval
         publishNodesTimer.Interval = Config.PublishNodesInterval
 
         attachDSProcess()
@@ -174,7 +174,7 @@ Public Class MainWindow
 
         With dgvDSCMNet
             .AutoGenerateColumns = False
-            .DataSource = ircDisplayList
+            .DataSource = netNodeDisplayList
             .Columns.Add("name", "Name")
             .Columns("name").MinimumWidth = 80
             .Columns("name").AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
@@ -360,7 +360,7 @@ Public Class MainWindow
             Me.Close()
         End If
     End Sub
-    Private Sub connectToIRCNode() Handles netNodeConnectTimer.Tick
+    Private Sub connectToNetNode() Handles netNodeConnectTimer.Tick
         If (_netClient Is Nothing OrElse
                 dsProcess Is Nothing OrElse
                 dsProcess.SelfSteamId = "" OrElse
@@ -371,13 +371,13 @@ Public Class MainWindow
             Return
         End If
         If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
-            Dim candidate As DSNode = selectIrcNodeForConnecting()
+            Dim candidate As DSNode = selectNetNodeForConnecting()
             If candidate IsNot Nothing Then
                 connectToSteamId(candidate.SteamId)
             End If
         End If
     End Sub
-    Private Function selectIrcNodeForConnecting() As DSNode
+    Private Function selectNetNodeForConnecting() As DSNode
         Dim blackSet As New HashSet(Of String)()
         blackSet.Add(dsProcess.SelfNode.SteamId)
         For Each c In recentConnections
@@ -576,7 +576,7 @@ Public Class MainWindow
     Private Async Sub updateNetNodes() Handles updateNetNodesTimer.Tick
         If _netClient IsNot Nothing Then
             Await _netClient.loadNodes()
-            ircDisplayList.SyncWithDict(_netClient.netNodes, dgvDSCMNet)
+            netNodeDisplayList.SyncWithDict(_netClient.netNodes, dgvDSCMNet)
         End If
     End Sub
         Private Async Sub publishNodes() Handles publishNodesTimer.Tick
