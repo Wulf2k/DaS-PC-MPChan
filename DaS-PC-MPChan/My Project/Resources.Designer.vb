@@ -61,6 +61,16 @@ Namespace My.Resources
         End Property
         
         '''<summary>
+        '''  Looks up a localized resource of type System.Byte[].
+        '''</summary>
+        Friend ReadOnly Property namecrash() As Byte()
+            Get
+                Dim obj As Object = ResourceManager.GetObject("namecrash", resourceCulture)
+                Return CType(obj,Byte())
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to &lt;h1&gt;Instructions&lt;/h1&gt;
         '''&lt;ol&gt;
         '''&lt;li&gt;Start DSCM&lt;/li&gt;
