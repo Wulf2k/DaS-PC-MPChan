@@ -5,8 +5,8 @@
     'How frequently should we publish our nodes to the central server?
     Public Const PublishNodesInterval = 60 * 1000
 
-    'How frequently should we connect to node from IRC?
-    Public Const IRCNodeConnectInterval = 10 * 1000
+    'How frequently should we connect to node from the central server?
+    Public Const NetNodeConnectInterval = 10 * 1000
 
     'How frequenlty should we check the only state of recent nodes and favourites via steam api?
     Public Const OnlineCheckInterval = 10 * 60 * 1000
@@ -28,21 +28,4 @@
     Public Const HalfBadNodeGracePeriod = 15 * 60
     'Grace period for nodes that have been added manually
     Public Const ManualNodeGracePeriod = 15 * 60
-
-
-    Public Const IRCHost = "dscm.wulf2k.ca"
-    Public Const IRCPort = 8123
-    Public Const IRCOwner = "DSCMbot"
-    Public Const IRCChannel = "#DSCM-Main"
-    Public Const IRCNick = "DSCM"
-
-    Public Const IRCPublishInterval = 120
-
-    'TTL of known IRC nodes. Should be at least PublishInterval + ???
-    Public Const IRCNodeTTL = 5 * 60
-
-    'Minimum time to wait before we publish a node published by somebody else IF we have no new information
-    Public Const IRCNodePublishInterval = 3 * 60
-    'Minimum time to wait before we publish a node published by somebody else IF we have new information
-    Public Const IRCNodeUpdateInterval = 20
 End Module
