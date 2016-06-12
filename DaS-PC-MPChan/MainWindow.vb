@@ -275,51 +275,55 @@ Public Class MainWindow
         updateOnlineState()
     End Sub
     Private Async Sub updateOnlineState()
-        Dim steamIds = New HashSet(Of String)
-        For Each Row In dgvRecentNodes.Rows
-            steamIds.Add(Row.Cells("steamId").Value)
-        Next
-        For Each Row In dgvFavoriteNodes.Rows
-            If steamIds.Count < 100 Then steamIds.Add(Row.Cells("steamId").Value)
-        Next
-        Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
-        Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
-        Dim uri = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
-        Dim client As New Net.WebClient()
-        Dim contents() As Byte = Await client.DownloadDataTaskAsync(uri)
-
-        Dim onlineInfo = New Dictionary(Of Int64, Boolean)
         Try
-            Dim parser As New FileIO.TextFieldParser(New MemoryStream(contents))
-            parser.SetDelimiters({","})
+            Dim steamIds = New HashSet(Of String)
+            For Each Row In dgvRecentNodes.Rows
+                steamIds.Add(Row.Cells("steamId").Value)
+            Next
+            For Each Row In dgvFavoriteNodes.Rows
+                If steamIds.Count < 100 Then steamIds.Add(Row.Cells("steamId").Value)
+            Next
+            Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
+            Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
+            Dim uri = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
+            Dim client As New Net.WebClient()
+            Dim contents() As Byte = Await client.DownloadDataTaskAsync(uri)
 
-            While Not parser.EndOfData
-                Dim strings = parser.ReadFields()
-                onlineInfo(Int64.Parse(strings(0))) = Boolean.Parse(strings(1))
-            End While
-        Catch
-            Return
+            Dim onlineInfo = New Dictionary(Of Int64, Boolean)
+            Try
+                Dim parser As New FileIO.TextFieldParser(New MemoryStream(contents))
+                parser.SetDelimiters({","})
+
+                While Not parser.EndOfData
+                    Dim strings = parser.ReadFields()
+                    onlineInfo(Int64.Parse(strings(0))) = Boolean.Parse(strings(1))
+                End While
+            Catch
+                Return
+            End Try
+            For Each Row In dgvRecentNodes.Rows
+                Try
+                    If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                        Row.Cells("isOnline").Value = "Y"
+                    Else
+                        Row.Cells("isOnline").Value = "N"
+                    End If
+                Catch ex As KeyNotFoundException
+                End Try
+            Next
+            For Each Row In dgvFavoriteNodes.Rows
+                Try
+                    If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                        Row.Cells("isOnline").Value = "Y"
+                    Else
+                        Row.Cells("isOnline").Value = "N"
+                    End If
+                Catch ex As KeyNotFoundException
+                End Try
+            Next
+        Catch ex As Exception
+            'Fail silently since nobody wants to be bothered for the online check.
         End Try
-        For Each Row In dgvRecentNodes.Rows
-            Try
-                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
-                    Row.Cells("isOnline").Value = "Y"
-                Else
-                    Row.Cells("isOnline").Value = "N"
-                End If
-            Catch ex As KeyNotFoundException
-            End Try
-        Next
-        For Each Row In dgvFavoriteNodes.Rows
-            Try
-                If onlineInfo(converter(Row.Cells("steamId").Value())) Then
-                    Row.Cells("isOnline").Value = "Y"
-                Else
-                    Row.Cells("isOnline").Value = "N"
-                End If
-            Catch ex As KeyNotFoundException
-            End Try
-        Next
     End Sub
     Private Async Sub updatecheck()
         Try
