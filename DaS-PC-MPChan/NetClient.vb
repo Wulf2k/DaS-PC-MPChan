@@ -31,7 +31,7 @@ Public Class NetClient
         }
         Dim content = JSONContent(data)
         Try
-            Dim response As HttpResponseMessage = Await client.PostAsync("http://dscm-net.chronial.de:8811/store", content)
+            Dim response As HttpResponseMessage = Await client.PostAsync(Config.NetServerUrl & "/store", content)
             response.EnsureSuccessStatusCode()
         Catch ex As Exception
             setStatus("Error publishing local nodes: " & ex.Message)
@@ -39,7 +39,7 @@ Public Class NetClient
     End Function
     Public Async Function loadNodes() As Task(Of IEnumerable(Of DSNode))
         Try
-            Dim response As HttpResponseMessage = Await client.GetAsync("http://dscm-net.chronial.de:8811/list")
+            Dim response As HttpResponseMessage = Await client.GetAsync(Config.NetServerUrl & "/list")
             response.EnsureSuccessStatusCode()
             Dim content = Await response.Content.ReadAsStringAsync()
             Dim serializer As New JavaScriptSerializer()

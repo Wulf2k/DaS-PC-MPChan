@@ -285,7 +285,7 @@ Public Class MainWindow
             Next
             Dim converter As New Converter(Of String, String)(Function(num) Convert.ToInt64(num, 16).ToString())
             Dim idQuery = String.Join(",", Array.ConvertAll(steamIds.ToArray(), converter))
-            Dim uri = "http://chronial.de/scripts/dscm/is_online.php?ids=" & idQuery
+            Dim uri = Config.OnlineCheckUrl & "?ids=" & idQuery
             Dim client As New Net.WebClient()
             Dim contents() As Byte = Await client.DownloadDataTaskAsync(uri)
 
@@ -328,8 +328,7 @@ Public Class MainWindow
     Private Async Sub updatecheck()
         Try
             Dim client As New Net.WebClient()
-            Dim uri = "http://wulf2k.ca/pc/das/dscm-ver.txt"
-            Dim content As String = Await client.DownloadStringTaskAsync(uri)
+            Dim content As String = Await client.DownloadStringTaskAsync(Config.VersionCheckUrl)
 
             Dim lines() As String = content.Split({vbCrLf, vbLf}, StringSplitOptions.None)
             Dim stableVersion = lines(0)

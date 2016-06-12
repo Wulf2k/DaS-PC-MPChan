@@ -1,4 +1,8 @@
 ﻿Module Config
+    Public Const VersionCheckUrl = "http://wulf2k.ca/pc/das/dscm-ver.txt"
+    Public Const OnlineCheckUrl = "http://chronial.de/scripts/dscm/is_online.php"
+    Public Const NetServerUrl = "http://dscm-net.chronial.de:8811"
+
     'How frequently should we update the node list from the central server?
     Public Const UpdateNetNodesInterval = 120 * 1000
 
