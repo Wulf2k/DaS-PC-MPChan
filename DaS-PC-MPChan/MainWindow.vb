@@ -569,6 +569,15 @@ Public Class MainWindow
             End If
 
             txtCurrNodes.Text = dsProcess.NodeCount
+
+            errorCheckSteamName()
+            txtLocalSteamName.Text = dsProcess.SelfSteamName
+
+
+
+
+            txtWatchdogActive.Text = dsProcess.HasWatchdog
+
         End If
 
 
@@ -582,7 +591,7 @@ Public Class MainWindow
             netNodeDisplayList.SyncWithDict(_netClient.netNodes, dgvDSCMNet)
         End If
     End Sub
-        Private Async Sub publishNodes() Handles publishNodesTimer.Tick
+    Private Async Sub publishNodes() Handles publishNodesTimer.Tick
         If _netClient IsNot Nothing AndAlso dsProcess IsNot Nothing AndAlso dsProcess.SelfNode.SteamId IsNot Nothing Then
             Await _netClient.publishLocalNodes(dsProcess.SelfNode, dsProcess.ConnectedNodes.Values())
         End If
@@ -634,6 +643,21 @@ Public Class MainWindow
             Exit Sub
         End If
         dsProcess.DrawNodes = chkDebugDrawing.Checked
+    End Sub
+
+    Private Sub errorCheckSteamName()
+        Dim byt() As Byte
+        byt = Encoding.Unicode.GetBytes(dsProcess.SelfSteamName)
+
+        If byt.Length > &H1D Then ReDim Preserve byt(&H1D)
+
+        Dim tmpStr As String
+        tmpStr = Encoding.Unicode.GetString(byt)
+        tmpStr = tmpStr.Replace("#", "")
+
+        If byt(0) = 0 Then tmpStr = "Invalid Name"
+
+        dsProcess.SelfSteamName = tmpStr
     End Sub
 
     Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
@@ -908,6 +932,10 @@ Public Class MainWindow
                 _netClient = Nothing
             End If
         End If
+    End Sub
+
+    Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvRecentNodes.DoubleClick, dgvFavoriteNodes.DoubleClick, dgvDSCMNet.DoubleClick
+
     End Sub
 End Class
 

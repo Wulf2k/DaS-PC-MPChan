@@ -25,6 +25,7 @@ Partial Class MainWindow
         Dim lblNodes As System.Windows.Forms.Label
         Dim lblNodeDiv As System.Windows.Forms.Label
         Dim lblYourId As System.Windows.Forms.Label
+        Dim Label1 As System.Windows.Forms.Label
         Dim DataGridViewCellStyle1 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
@@ -37,6 +38,7 @@ Partial Class MainWindow
         Dim DataGridViewCellStyle10 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle11 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle12 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
+        Dim Label2 As System.Windows.Forms.Label
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(MainWindow))
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
@@ -58,33 +60,39 @@ Partial Class MainWindow
         Me.dgvDSCMNet = New DSCM.ExtendedDataGridView()
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
+        Me.tabLocal = New System.Windows.Forms.TabPage()
+        Me.txtLocalSteamName = New System.Windows.Forms.TextBox()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
         Me.btnRemFavorite = New System.Windows.Forms.Button()
         Me.lblNewVersion = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
         Me.btnUpdate = New System.Windows.Forms.Button()
+        Me.txtWatchdogActive = New System.Windows.Forms.TextBox()
         lblNodes = New System.Windows.Forms.Label()
         lblNodeDiv = New System.Windows.Forms.Label()
         lblYourId = New System.Windows.Forms.Label()
-        CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).BeginInit
-        Me.tabs.SuspendLayout
-        Me.tabActive.SuspendLayout
-        CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).BeginInit
-        Me.tabFavorites.SuspendLayout
-        CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).BeginInit
-        Me.tabRecent.SuspendLayout
-        CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).BeginInit
-        Me.tabDSCMNet.SuspendLayout
-        CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).BeginInit
-        Me.tabHelp.SuspendLayout
-        Me.SuspendLayout
+        Label1 = New System.Windows.Forms.Label()
+        Label2 = New System.Windows.Forms.Label()
+        CType(Me.nmbMaxNodes, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.tabs.SuspendLayout()
+        Me.tabActive.SuspendLayout()
+        CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.tabFavorites.SuspendLayout()
+        CType(Me.dgvFavoriteNodes, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.tabRecent.SuspendLayout()
+        CType(Me.dgvRecentNodes, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.tabDSCMNet.SuspendLayout()
+        CType(Me.dgvDSCMNet, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.tabHelp.SuspendLayout()
+        Me.tabLocal.SuspendLayout()
+        Me.SuspendLayout()
         '
         'lblNodes
         '
-        lblNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        lblNodes.AutoSize = true
-        lblNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        lblNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        lblNodes.AutoSize = True
+        lblNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         lblNodes.Location = New System.Drawing.Point(633, 6)
         lblNodes.Name = "lblNodes"
         lblNodes.Size = New System.Drawing.Size(49, 16)
@@ -93,9 +101,9 @@ Partial Class MainWindow
         '
         'lblNodeDiv
         '
-        lblNodeDiv.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        lblNodeDiv.AutoSize = true
-        lblNodeDiv.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        lblNodeDiv.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        lblNodeDiv.AutoSize = True
+        lblNodeDiv.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         lblNodeDiv.Location = New System.Drawing.Point(726, 6)
         lblNodeDiv.Name = "lblNodeDiv"
         lblNodeDiv.Size = New System.Drawing.Size(12, 16)
@@ -104,65 +112,76 @@ Partial Class MainWindow
         '
         'lblYourId
         '
-        lblYourId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        lblYourId.AutoSize = true
-        lblYourId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        lblYourId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        lblYourId.AutoSize = True
+        lblYourId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         lblYourId.Location = New System.Drawing.Point(531, 34)
         lblYourId.Name = "lblYourId"
         lblYourId.Size = New System.Drawing.Size(111, 16)
         lblYourId.TabIndex = 61
         lblYourId.Text = "Your Steam64 ID:"
         '
+        'Label1
+        '
+        Label1.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Label1.AutoSize = True
+        Label1.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Label1.Location = New System.Drawing.Point(10, 19)
+        Label1.Name = "Label1"
+        Label1.Size = New System.Drawing.Size(121, 16)
+        Label1.TabIndex = 63
+        Label1.Text = "Your Steam Name:"
+        '
         'chkDebugDrawing
         '
-        Me.chkDebugDrawing.AutoSize = true
+        Me.chkDebugDrawing.AutoSize = True
         Me.chkDebugDrawing.BackColor = System.Drawing.SystemColors.Control
-        Me.chkDebugDrawing.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.chkDebugDrawing.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkDebugDrawing.Location = New System.Drawing.Point(12, 4)
         Me.chkDebugDrawing.Name = "chkDebugDrawing"
         Me.chkDebugDrawing.Size = New System.Drawing.Size(113, 20)
         Me.chkDebugDrawing.TabIndex = 46
         Me.chkDebugDrawing.Text = "Node Drawing"
-        Me.chkDebugDrawing.UseVisualStyleBackColor = false
+        Me.chkDebugDrawing.UseVisualStyleBackColor = False
         '
         'lblVer
         '
-        Me.lblVer.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.lblVer.AutoSize = true
+        Me.lblVer.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.lblVer.AutoSize = True
         Me.lblVer.BackColor = System.Drawing.SystemColors.Control
-        Me.lblVer.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.lblVer.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblVer.Location = New System.Drawing.Point(700, 463)
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.05.24.20"
+        Me.lblVer.Text = "2016.06.18.02"
         '
         'chkExpand
         '
-        Me.chkExpand.AutoSize = true
+        Me.chkExpand.AutoSize = True
         Me.chkExpand.BackColor = System.Drawing.SystemColors.Control
-        Me.chkExpand.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.chkExpand.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkExpand.Location = New System.Drawing.Point(12, 27)
         Me.chkExpand.Name = "chkExpand"
         Me.chkExpand.Size = New System.Drawing.Size(115, 20)
         Me.chkExpand.TabIndex = 52
         Me.chkExpand.Text = "Expand DSCM"
-        Me.chkExpand.UseVisualStyleBackColor = false
+        Me.chkExpand.UseVisualStyleBackColor = False
         '
         'txtCurrNodes
         '
-        Me.txtCurrNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.txtCurrNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtCurrNodes.Location = New System.Drawing.Point(688, 5)
         Me.txtCurrNodes.Name = "txtCurrNodes"
-        Me.txtCurrNodes.ReadOnly = true
+        Me.txtCurrNodes.ReadOnly = True
         Me.txtCurrNodes.Size = New System.Drawing.Size(38, 20)
         Me.txtCurrNodes.TabIndex = 54
         '
         'nmbMaxNodes
         '
-        Me.nmbMaxNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.nmbMaxNodes.Enabled = false
-        Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.nmbMaxNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.nmbMaxNodes.Enabled = False
+        Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.nmbMaxNodes.Location = New System.Drawing.Point(737, 3)
         Me.nmbMaxNodes.Maximum = New Decimal(New Integer() {32, 0, 0, 0})
         Me.nmbMaxNodes.Minimum = New Decimal(New Integer() {10, 0, 0, 0})
@@ -173,7 +192,7 @@ Partial Class MainWindow
         '
         'txtTargetSteamID
         '
-        Me.txtTargetSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.txtTargetSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtTargetSteamID.Location = New System.Drawing.Point(534, 64)
         Me.txtTargetSteamID.Name = "txtTargetSteamID"
         Me.txtTargetSteamID.Size = New System.Drawing.Size(243, 20)
@@ -182,41 +201,42 @@ Partial Class MainWindow
         '
         'txtSelfSteamID
         '
-        Me.txtSelfSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.txtSelfSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.txtSelfSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtSelfSteamID.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.txtSelfSteamID.Location = New System.Drawing.Point(645, 32)
         Me.txtSelfSteamID.Name = "txtSelfSteamID"
-        Me.txtSelfSteamID.ReadOnly = true
+        Me.txtSelfSteamID.ReadOnly = True
         Me.txtSelfSteamID.Size = New System.Drawing.Size(132, 23)
         Me.txtSelfSteamID.TabIndex = 62
         '
         'btnAttemptId
         '
-        Me.btnAttemptId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.btnAttemptId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnAttemptId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnAttemptId.Location = New System.Drawing.Point(534, 85)
         Me.btnAttemptId.Name = "btnAttemptId"
         Me.btnAttemptId.Size = New System.Drawing.Size(243, 23)
         Me.btnAttemptId.TabIndex = 65
         Me.btnAttemptId.Text = "Attempt Connection to Player"
-        Me.btnAttemptId.UseVisualStyleBackColor = true
+        Me.btnAttemptId.UseVisualStyleBackColor = True
         '
         'tabs
         '
-        Me.tabs.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
-            Or System.Windows.Forms.AnchorStyles.Left)  _
-            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.tabs.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.tabs.Controls.Add(Me.tabActive)
         Me.tabs.Controls.Add(Me.tabFavorites)
         Me.tabs.Controls.Add(Me.tabRecent)
         Me.tabs.Controls.Add(Me.tabDSCMNet)
         Me.tabs.Controls.Add(Me.tabHelp)
+        Me.tabs.Controls.Add(Me.tabLocal)
         Me.tabs.Location = New System.Drawing.Point(10, 115)
         Me.tabs.Name = "tabs"
         Me.tabs.SelectedIndex = 0
         Me.tabs.Size = New System.Drawing.Size(765, 328)
         Me.tabs.TabIndex = 67
-        Me.tabs.Visible = false
+        Me.tabs.Visible = False
         '
         'tabActive
         '
@@ -231,15 +251,15 @@ Partial Class MainWindow
         '
         'dgvMPNodes
         '
-        Me.dgvMPNodes.AllowUserToAddRows = false
-        Me.dgvMPNodes.AllowUserToDeleteRows = false
-        Me.dgvMPNodes.AllowUserToResizeRows = false
-        Me.dgvMPNodes.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
-            Or System.Windows.Forms.AnchorStyles.Left)  _
-            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.dgvMPNodes.AllowUserToAddRows = False
+        Me.dgvMPNodes.AllowUserToDeleteRows = False
+        Me.dgvMPNodes.AllowUserToResizeRows = False
+        Me.dgvMPNodes.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle1.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle1.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -248,7 +268,7 @@ Partial Class MainWindow
         Me.dgvMPNodes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         DataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window
-        DataGridViewCellStyle2.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle2.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText
         DataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -256,16 +276,16 @@ Partial Class MainWindow
         Me.dgvMPNodes.DefaultCellStyle = DataGridViewCellStyle2
         Me.dgvMPNodes.Location = New System.Drawing.Point(6, 6)
         Me.dgvMPNodes.Name = "dgvMPNodes"
-        Me.dgvMPNodes.ReadOnly = true
+        Me.dgvMPNodes.ReadOnly = True
         DataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle3.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle3.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText
         DataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvMPNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle3
-        Me.dgvMPNodes.RowHeadersVisible = false
+        Me.dgvMPNodes.RowHeadersVisible = False
         Me.dgvMPNodes.Size = New System.Drawing.Size(740, 288)
         Me.dgvMPNodes.TabIndex = 53
         '
@@ -282,14 +302,14 @@ Partial Class MainWindow
         '
         'dgvFavoriteNodes
         '
-        Me.dgvFavoriteNodes.AllowUserToAddRows = false
-        Me.dgvFavoriteNodes.AllowUserToDeleteRows = false
-        Me.dgvFavoriteNodes.AllowUserToResizeRows = false
-        Me.dgvFavoriteNodes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
-            Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
+        Me.dgvFavoriteNodes.AllowUserToAddRows = False
+        Me.dgvFavoriteNodes.AllowUserToDeleteRows = False
+        Me.dgvFavoriteNodes.AllowUserToResizeRows = False
+        Me.dgvFavoriteNodes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle4.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle4.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -298,7 +318,7 @@ Partial Class MainWindow
         Me.dgvFavoriteNodes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         DataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window
-        DataGridViewCellStyle5.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle5.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.ControlText
         DataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -306,16 +326,16 @@ Partial Class MainWindow
         Me.dgvFavoriteNodes.DefaultCellStyle = DataGridViewCellStyle5
         Me.dgvFavoriteNodes.Location = New System.Drawing.Point(6, 6)
         Me.dgvFavoriteNodes.Name = "dgvFavoriteNodes"
-        Me.dgvFavoriteNodes.ReadOnly = true
+        Me.dgvFavoriteNodes.ReadOnly = True
         DataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle6.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle6.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText
         DataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvFavoriteNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle6
-        Me.dgvFavoriteNodes.RowHeadersVisible = false
+        Me.dgvFavoriteNodes.RowHeadersVisible = False
         Me.dgvFavoriteNodes.Size = New System.Drawing.Size(370, 290)
         Me.dgvFavoriteNodes.TabIndex = 54
         '
@@ -331,14 +351,14 @@ Partial Class MainWindow
         '
         'dgvRecentNodes
         '
-        Me.dgvRecentNodes.AllowUserToAddRows = false
-        Me.dgvRecentNodes.AllowUserToDeleteRows = false
-        Me.dgvRecentNodes.AllowUserToResizeRows = false
-        Me.dgvRecentNodes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
-            Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
+        Me.dgvRecentNodes.AllowUserToAddRows = False
+        Me.dgvRecentNodes.AllowUserToDeleteRows = False
+        Me.dgvRecentNodes.AllowUserToResizeRows = False
+        Me.dgvRecentNodes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle7.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle7.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -347,7 +367,7 @@ Partial Class MainWindow
         Me.dgvRecentNodes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         DataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle8.BackColor = System.Drawing.SystemColors.Window
-        DataGridViewCellStyle8.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle8.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ControlText
         DataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -355,16 +375,16 @@ Partial Class MainWindow
         Me.dgvRecentNodes.DefaultCellStyle = DataGridViewCellStyle8
         Me.dgvRecentNodes.Location = New System.Drawing.Point(6, 6)
         Me.dgvRecentNodes.Name = "dgvRecentNodes"
-        Me.dgvRecentNodes.ReadOnly = true
+        Me.dgvRecentNodes.ReadOnly = True
         DataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle9.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle9.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText
         DataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvRecentNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle9
-        Me.dgvRecentNodes.RowHeadersVisible = false
+        Me.dgvRecentNodes.RowHeadersVisible = False
         Me.dgvRecentNodes.Size = New System.Drawing.Size(370, 293)
         Me.dgvRecentNodes.TabIndex = 55
         '
@@ -381,8 +401,8 @@ Partial Class MainWindow
         '
         'txtIRCDebug
         '
-        Me.txtIRCDebug.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left)  _
-            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.txtIRCDebug.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.txtIRCDebug.Location = New System.Drawing.Point(6, 279)
         Me.txtIRCDebug.Name = "txtIRCDebug"
         Me.txtIRCDebug.Size = New System.Drawing.Size(740, 20)
@@ -390,15 +410,15 @@ Partial Class MainWindow
         '
         'dgvDSCMNet
         '
-        Me.dgvDSCMNet.AllowUserToAddRows = false
-        Me.dgvDSCMNet.AllowUserToDeleteRows = false
-        Me.dgvDSCMNet.AllowUserToResizeRows = false
-        Me.dgvDSCMNet.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
-            Or System.Windows.Forms.AnchorStyles.Left)  _
-            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.dgvDSCMNet.AllowUserToAddRows = False
+        Me.dgvDSCMNet.AllowUserToDeleteRows = False
+        Me.dgvDSCMNet.AllowUserToResizeRows = False
+        Me.dgvDSCMNet.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         DataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle10.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle10.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -407,7 +427,7 @@ Partial Class MainWindow
         Me.dgvDSCMNet.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         DataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle11.BackColor = System.Drawing.SystemColors.Window
-        DataGridViewCellStyle11.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle11.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle11.ForeColor = System.Drawing.SystemColors.ControlText
         DataGridViewCellStyle11.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle11.SelectionForeColor = System.Drawing.SystemColors.HighlightText
@@ -415,16 +435,16 @@ Partial Class MainWindow
         Me.dgvDSCMNet.DefaultCellStyle = DataGridViewCellStyle11
         Me.dgvDSCMNet.Location = New System.Drawing.Point(6, 6)
         Me.dgvDSCMNet.Name = "dgvDSCMNet"
-        Me.dgvDSCMNet.ReadOnly = true
+        Me.dgvDSCMNet.ReadOnly = True
         DataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle12.BackColor = System.Drawing.SystemColors.Control
-        DataGridViewCellStyle12.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        DataGridViewCellStyle12.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         DataGridViewCellStyle12.ForeColor = System.Drawing.SystemColors.WindowText
         DataGridViewCellStyle12.SelectionBackColor = System.Drawing.SystemColors.Highlight
         DataGridViewCellStyle12.SelectionForeColor = System.Drawing.SystemColors.HighlightText
         DataGridViewCellStyle12.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvDSCMNet.RowHeadersDefaultCellStyle = DataGridViewCellStyle12
-        Me.dgvDSCMNet.RowHeadersVisible = false
+        Me.dgvDSCMNet.RowHeadersVisible = False
         Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 267)
         Me.dgvDSCMNet.TabIndex = 54
         '
@@ -437,18 +457,41 @@ Partial Class MainWindow
         Me.tabHelp.Size = New System.Drawing.Size(757, 302)
         Me.tabHelp.TabIndex = 4
         Me.tabHelp.Text = "Help"
-        Me.tabHelp.UseVisualStyleBackColor = true
+        Me.tabHelp.UseVisualStyleBackColor = True
         '
         'helpView
         '
-        Me.helpView.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
-            Or System.Windows.Forms.AnchorStyles.Left)  _
-            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.helpView.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.helpView.Location = New System.Drawing.Point(3, 3)
         Me.helpView.MinimumSize = New System.Drawing.Size(20, 20)
         Me.helpView.Name = "helpView"
         Me.helpView.Size = New System.Drawing.Size(751, 293)
         Me.helpView.TabIndex = 0
+        '
+        'tabLocal
+        '
+        Me.tabLocal.Controls.Add(Me.txtWatchdogActive)
+        Me.tabLocal.Controls.Add(Label2)
+        Me.tabLocal.Controls.Add(Me.txtLocalSteamName)
+        Me.tabLocal.Controls.Add(Label1)
+        Me.tabLocal.Location = New System.Drawing.Point(4, 22)
+        Me.tabLocal.Name = "tabLocal"
+        Me.tabLocal.Size = New System.Drawing.Size(757, 302)
+        Me.tabLocal.TabIndex = 5
+        Me.tabLocal.Text = "Local Info"
+        Me.tabLocal.UseVisualStyleBackColor = True
+        '
+        'txtLocalSteamName
+        '
+        Me.txtLocalSteamName.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtLocalSteamName.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.txtLocalSteamName.Location = New System.Drawing.Point(137, 17)
+        Me.txtLocalSteamName.Name = "txtLocalSteamName"
+        Me.txtLocalSteamName.ReadOnly = True
+        Me.txtLocalSteamName.Size = New System.Drawing.Size(231, 23)
+        Me.txtLocalSteamName.TabIndex = 64
         '
         'btnAddFavorite
         '
@@ -458,8 +501,8 @@ Partial Class MainWindow
         Me.btnAddFavorite.Size = New System.Drawing.Size(113, 23)
         Me.btnAddFavorite.TabIndex = 68
         Me.btnAddFavorite.Text = "Add Favorite"
-        Me.btnAddFavorite.UseVisualStyleBackColor = true
-        Me.btnAddFavorite.Visible = false
+        Me.btnAddFavorite.UseVisualStyleBackColor = True
+        Me.btnAddFavorite.Visible = False
         '
         'btnRemFavorite
         '
@@ -469,39 +512,39 @@ Partial Class MainWindow
         Me.btnRemFavorite.Size = New System.Drawing.Size(113, 23)
         Me.btnRemFavorite.TabIndex = 70
         Me.btnRemFavorite.Text = "Remove Favorite"
-        Me.btnRemFavorite.UseVisualStyleBackColor = true
-        Me.btnRemFavorite.Visible = false
+        Me.btnRemFavorite.UseVisualStyleBackColor = True
+        Me.btnRemFavorite.Visible = False
         '
         'lblNewVersion
         '
-        Me.lblNewVersion.AutoSize = true
-        Me.lblNewVersion.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.lblNewVersion.AutoSize = True
+        Me.lblNewVersion.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblNewVersion.ForeColor = System.Drawing.Color.Red
         Me.lblNewVersion.Location = New System.Drawing.Point(9, 72)
         Me.lblNewVersion.Name = "lblNewVersion"
         Me.lblNewVersion.Size = New System.Drawing.Size(183, 16)
         Me.lblNewVersion.TabIndex = 71
         Me.lblNewVersion.Text = "New testing version available"
-        Me.lblNewVersion.Visible = false
+        Me.lblNewVersion.Visible = False
         '
         'chkDSCMNet
         '
-        Me.chkDSCMNet.AutoSize = true
+        Me.chkDSCMNet.AutoSize = True
         Me.chkDSCMNet.BackColor = System.Drawing.SystemColors.Control
-        Me.chkDSCMNet.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.chkDSCMNet.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkDSCMNet.Location = New System.Drawing.Point(12, 50)
         Me.chkDSCMNet.Name = "chkDSCMNet"
         Me.chkDSCMNet.Size = New System.Drawing.Size(119, 20)
         Me.chkDSCMNet.TabIndex = 73
         Me.chkDSCMNet.Text = "Join DSCM-Net"
-        Me.chkDSCMNet.UseVisualStyleBackColor = false
+        Me.chkDSCMNet.UseVisualStyleBackColor = False
         '
         'dsProcessStatus
         '
-        Me.dsProcessStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
+        Me.dsProcessStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.dsProcessStatus.Location = New System.Drawing.Point(10, 455)
         Me.dsProcessStatus.Name = "dsProcessStatus"
-        Me.dsProcessStatus.ReadOnly = true
+        Me.dsProcessStatus.ReadOnly = True
         Me.dsProcessStatus.Size = New System.Drawing.Size(187, 20)
         Me.dsProcessStatus.TabIndex = 74
         '
@@ -512,12 +555,33 @@ Partial Class MainWindow
         Me.btnUpdate.Size = New System.Drawing.Size(182, 23)
         Me.btnUpdate.TabIndex = 75
         Me.btnUpdate.Text = "Update DSCM"
-        Me.btnUpdate.UseVisualStyleBackColor = true
-        Me.btnUpdate.Visible = false
+        Me.btnUpdate.UseVisualStyleBackColor = True
+        Me.btnUpdate.Visible = False
+        '
+        'txtWatchdogActive
+        '
+        Me.txtWatchdogActive.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtWatchdogActive.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.txtWatchdogActive.Location = New System.Drawing.Point(159, 41)
+        Me.txtWatchdogActive.Name = "txtWatchdogActive"
+        Me.txtWatchdogActive.ReadOnly = True
+        Me.txtWatchdogActive.Size = New System.Drawing.Size(51, 23)
+        Me.txtWatchdogActive.TabIndex = 66
+        '
+        'Label2
+        '
+        Label2.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Label2.AutoSize = True
+        Label2.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Label2.Location = New System.Drawing.Point(10, 43)
+        Label2.Name = "Label2"
+        Label2.Size = New System.Drawing.Size(143, 16)
+        Label2.TabIndex = 65
+        Label2.Text = "PVP Watchdog Active:"
         '
         'MainWindow
         '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
+        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(784, 480)
         Me.Controls.Add(Me.btnUpdate)
@@ -538,21 +602,23 @@ Partial Class MainWindow
         Me.Controls.Add(Me.chkExpand)
         Me.Controls.Add(Me.lblVer)
         Me.Controls.Add(Me.chkDebugDrawing)
-        Me.Icon = CType(resources.GetObject("$this.Icon"),System.Drawing.Icon)
+        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.Name = "MainWindow"
         Me.Text = "Wulf's Dark Souls Connectivity Mod"
-        CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).EndInit
-        Me.tabs.ResumeLayout(false)
-        Me.tabActive.ResumeLayout(false)
-        CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).EndInit
-        Me.tabFavorites.ResumeLayout(false)
-        CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).EndInit
-        Me.tabRecent.ResumeLayout(false)
-        CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).EndInit
-        Me.tabDSCMNet.ResumeLayout(false)
-        Me.tabDSCMNet.PerformLayout
-        CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).EndInit
-        Me.tabHelp.ResumeLayout(false)
+        CType(Me.nmbMaxNodes, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.tabs.ResumeLayout(False)
+        Me.tabActive.ResumeLayout(False)
+        CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.tabFavorites.ResumeLayout(False)
+        CType(Me.dgvFavoriteNodes, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.tabRecent.ResumeLayout(False)
+        CType(Me.dgvRecentNodes, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.tabDSCMNet.ResumeLayout(False)
+        Me.tabDSCMNet.PerformLayout()
+        CType(Me.dgvDSCMNet, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.tabHelp.ResumeLayout(False)
+        Me.tabLocal.ResumeLayout(False)
+        Me.tabLocal.PerformLayout()
         Me.ResumeLayout(false)
         Me.PerformLayout
 
@@ -583,4 +649,7 @@ End Sub
     Friend WithEvents dgvMPNodes As Global.DSCM.ExtendedDataGridView
     Friend WithEvents dgvDSCMNet As Global.DSCM.ExtendedDataGridView
     Friend WithEvents btnUpdate As System.Windows.Forms.Button
+    Friend WithEvents tabLocal As System.Windows.Forms.TabPage
+    Friend WithEvents txtLocalSteamName As System.Windows.Forms.TextBox
+    Friend WithEvents txtWatchdogActive As System.Windows.Forms.TextBox
 End Class

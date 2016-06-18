@@ -422,6 +422,20 @@ Public Class DarkSoulsProcess
             Return ReadSteamIdAscii(ReadInt32(dsBase + &HF7E204) + &HA00)
         End Get
     End Property
+    Public Property SelfSteamName As String
+        Get
+            Dim byt() As Byte
+            byt = ReadBytes(ReadUInt32(dsBase + &HF62DD4) + &H30, &H40)
+            Return Encoding.Unicode.GetString(byt)
+        End Get
+        Set(value As String)
+            Dim byt(&H1F) As Byte
+            WriteBytes(ReadUInt32(dsBase + &HF62DD4) + &H30, byt)
+
+            byt = Encoding.Unicode.GetBytes(value)
+            WriteBytes(ReadUInt32(dsBase + &HF62DD4) + &H30, byt)
+        End Set
+    End Property
 
     Public Sub ConnectToSteamId(ByVal steamId As String)
         Dim data(70) As Byte

@@ -70,7 +70,8 @@
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>Wulf2k-DSCM.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommonMark">
@@ -165,7 +166,6 @@
     </None>
     <None Include="App.config" />
     <None Include="Resources\namecrash.bin" />
-    <None Include="Wulf2k-DSCM.pfx" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
