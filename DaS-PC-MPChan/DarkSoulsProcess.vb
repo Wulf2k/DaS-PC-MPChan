@@ -425,15 +425,15 @@ Public Class DarkSoulsProcess
     Public Property SelfSteamName As String
         Get
             Dim byt() As Byte
-            byt = ReadBytes(ReadUInt32(dsBase + &HF62DD4) + &H30, &H40)
+            byt = ReadBytes(ReadIntPtr(dsBase + &HF62DD4) + &H30, &H40)
             Return Encoding.Unicode.GetString(byt)
         End Get
         Set(value As String)
-            Dim byt(&H1F) As Byte
-            WriteBytes(ReadUInt32(dsBase + &HF62DD4) + &H30, byt)
+            Dim byt(&H20) As Byte
+            WriteBytes(ReadIntPtr(dsBase + &HF62DD4) + &H30, byt)
 
             byt = Encoding.Unicode.GetBytes(value)
-            WriteBytes(ReadUInt32(dsBase + &HF62DD4) + &H30, byt)
+            WriteBytes(ReadIntPtr(dsBase + &HF62DD4) + &H30, byt)
         End Set
     End Property
 

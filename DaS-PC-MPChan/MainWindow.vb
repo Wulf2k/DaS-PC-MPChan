@@ -651,7 +651,7 @@ Public Class MainWindow
         Dim byt() As Byte
         byt = Encoding.Unicode.GetBytes(dsProcess.SelfSteamName)
 
-        If byt.Length > &H1D Then ReDim Preserve byt(&H1D)
+        If byt.Length > &H1F Then ReDim Preserve byt(&H1F)
 
         Dim tmpStr As String
         tmpStr = Encoding.Unicode.GetString(byt)
