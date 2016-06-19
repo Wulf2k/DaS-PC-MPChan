@@ -429,7 +429,7 @@ Public Class DarkSoulsProcess
             Return Encoding.Unicode.GetString(byt)
         End Get
         Set(value As String)
-            Dim byt(&H20) As Byte
+            Dim byt(&H22) As Byte
             WriteBytes(ReadIntPtr(dsBase + &HF62DD4) + &H30, byt)
 
             byt = Encoding.Unicode.GetBytes(value)
@@ -582,14 +582,14 @@ Public Class DarkSoulsProcess
         SelfNode.Indictments = ReadInt32(heroPtr + &HEC)
         SelfNode.Covenant = ReadInt8(heroPtr + &H10B)
     End Sub
-    Public ReadOnly Property HasDarkmoonRingEquiped As Boolean
+    Public ReadOnly Property HasDarkmoonRingEquipped As Boolean
         Get
             Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
             heroPtr = ReadIntPtr(heroPtr + &H8)
             Return ReadInt32(heroPtr + &H280) = 102 Or ReadInt32(heroPtr + &H284) = 102
         End Get
     End Property
-    Public ReadOnly Property HasCatCovenantRingEquiped As Boolean
+    Public ReadOnly Property HasCatCovenantRingEquipped As Boolean
         Get
             Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
             heroPtr = ReadIntPtr(heroPtr + &H8)
@@ -597,6 +597,24 @@ Public Class DarkSoulsProcess
         End Get
     End Property
 
+    Public ReadOnly Property ClearCount As Integer
+    Get
+            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            Return ReadInt32(statsPtr + &H3C)
+    End Get
+    End Property
+    Public ReadOnly Property Deaths As Integer
+    Get
+            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            Return ReadInt32(statsPtr + &H5C)
+    End Get
+    End Property
+    Public ReadOnly Property TimePlayed As Integer
+    Get
+            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            Return ReadInt32(statsPtr + &H68)
+    End Get
+    End Property
     Public ReadOnly Property Sin As Integer
     Get
             Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
@@ -711,7 +729,7 @@ Public Class DarkSoulsProcess
         Dim _rtnBytes(IntPtr.Size - 1) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, IntPtr.Size, Nothing)
         If IntPtr.Size = 4 Then
-            Return New IntPtr(BitConverter.ToUInt32(_rtnBytes, 0))
+            Return New IntPtr(BitConverter.ToInt32(_rtnBytes, 0))
         Else
             Return New IntPtr(BitConverter.ToInt64(_rtnBytes, 0))
         End If

@@ -401,8 +401,8 @@ Public Class MainWindow
         Dim self = dsProcess.SelfNode
 
         'These read out dsProcess memory, so don't calculate them for every node
-        Dim anorLondoInvading = self.Covenant = Covenant.DarkmoonBlade AndAlso dsProcess.HasDarkmoonRingEquiped
-        Dim forestInvading = self.Covenant = Covenant.ForestHunter AndAlso dsProcess.HasCatCovenantRingEquiped
+        Dim anorLondoInvading = self.Covenant = Covenant.DarkmoonBlade AndAlso dsProcess.HasDarkmoonRingEquipped
+        Dim forestInvading = self.Covenant = Covenant.ForestHunter AndAlso dsProcess.HasCatCovenantRingEquipped
         Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
             .OrderByDescending(Function(other) (other.World <> "-1--1")) _
             .ThenByDescending(Function(other) As Boolean
@@ -476,9 +476,9 @@ Public Class MainWindow
         'Half-Bad = I can't interact with them, but they can invade me
         Dim self = dsProcess.SelfNode
         If (self.Covenant = Covenant.DarkmoonBlade AndAlso other.World = AnorLondoWorld AndAlso
-            self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquiped) Then Return 0
+            self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquipped) Then Return 0
         If (self.Covenant = Covenant.ForestHunter AndAlso other.World = DarkrootGardenWorld AndAlso
-            self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquiped) Then Return 0
+            self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquipped) Then Return 0
 
         If self.World = other.World Then
             Dim coopPossible = (self.canBeSummoned(other) OrElse other.canBeSummoned(self))
@@ -578,8 +578,13 @@ Public Class MainWindow
 
             txtWatchdogActive.Text = dsProcess.HasWatchdog
             txtSin.Text = dsProcess.Sin
+            txtDeaths.Text = dsProcess.Deaths
             txtPhantomType.Text = dsProcess.PhantomType
             txtTeamType.Text = dsProcess.TeamType
+            txtClearCount.Text = dsProcess.ClearCount
+            txtTimePlayed.Text = TimeSpan.FromMilliseconds(dsProcess.TimePlayed).ToString("ddd\.hh\:mm\:ss")
+
+
 
             txtXPos.Text = Math.Round(dsProcess.xPos, 1)
             txtYPos.Text = Math.Round(dsProcess.yPos, 1)
@@ -658,7 +663,7 @@ Public Class MainWindow
         Dim byt() As Byte
         byt = Encoding.Unicode.GetBytes(dsProcess.SelfSteamName)
 
-        If byt.Length > &H1F Then ReDim Preserve byt(&H1F)
+        If byt.Length > &H1d Then ReDim Preserve byt(&H1d)
 
         Dim tmpStr As String
         tmpStr = Encoding.Unicode.GetString(byt)
