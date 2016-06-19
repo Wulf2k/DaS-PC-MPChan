@@ -597,6 +597,15 @@ Public Class DarkSoulsProcess
         End Get
     End Property
 
+    Public ReadOnly Property Sin As Integer
+    Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            heroPtr = ReadIntPtr(heroPtr + &H8)
+            Return ReadInt32(heroPtr + &HEC)
+    End Get
+    End Property
+
+
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
         Dim _rtnBytes(0) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, 1, vbNull)

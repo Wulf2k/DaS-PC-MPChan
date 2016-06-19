@@ -577,6 +577,8 @@ Public Class MainWindow
 
 
             txtWatchdogActive.Text = dsProcess.HasWatchdog
+            txtSin.Text = dsProcess.Sin
+
 
         End If
 
