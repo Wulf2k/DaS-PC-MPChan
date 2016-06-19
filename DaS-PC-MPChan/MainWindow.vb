@@ -578,6 +578,13 @@ Public Class MainWindow
 
             txtWatchdogActive.Text = dsProcess.HasWatchdog
             txtSin.Text = dsProcess.Sin
+            txtPhantomType.Text = dsProcess.PhantomType
+            txtTeamType.Text = dsProcess.TeamType
+
+            txtXPos.Text = Math.Round(dsProcess.xPos, 1)
+            txtYPos.Text = Math.Round(dsProcess.yPos, 1)
+            txtZPos.Text = Math.Round(dsProcess.zPos, 1)
+
 
 
         End If

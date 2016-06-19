@@ -253,7 +253,7 @@ Public Class DarkSoulsProcess
             Return (ReadBytes(dsBase + &HBA256C, 1)(0) = 1)
         End Get
         Set(value As Boolean)
-            Dim cmpLoc As Integer = dsBase + &HBA256C
+            Dim cmpLoc As IntPtr = dsBase + &HBA256C
 
             Dim hookLoc As IntPtr = dsBase + &H15A550
 
@@ -392,9 +392,9 @@ Public Class DarkSoulsProcess
 
     Public Property MaxNodes As Integer
         Get
-            Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F838)
-            tmpptr = ReadInt32(tmpptr + &H38)
+            Dim tmpptr As IntPtr
+            tmpptr = ReadIntPtr(dsBase + &HF7F838)
+            tmpptr = ReadIntPtr(tmpptr + &H38)
             If Not tmpptr = 0 Then
                 Dim value = ReadInt32(tmpptr + &H70)
                 If value > 64 Then Return -1
@@ -404,9 +404,9 @@ Public Class DarkSoulsProcess
             End If
         End Get
         Set(value As Integer)
-            Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F838)
-            tmpptr = ReadInt32(tmpptr + &H38)
+            Dim tmpptr As IntPtr
+            tmpptr = ReadIntPtr(dsBase + &HF7F838)
+            tmpptr = ReadIntPtr(tmpptr + &H38)
             WriteInt32(tmpptr + &H70, value)
         End Set
     End Property
@@ -419,7 +419,7 @@ Public Class DarkSoulsProcess
 
     Public ReadOnly Property SelfSteamId As String
         Get
-            Return ReadSteamIdAscii(ReadInt32(dsBase + &HF7E204) + &HA00)
+            Return ReadSteamIdAscii(ReadIntPtr(dsBase + &HF7E204) + &HA00)
         End Get
     End Property
     Public Property SelfSteamName As String
@@ -520,7 +520,7 @@ Public Class DarkSoulsProcess
         Dim nodeCount As Integer = ReadInt32(dsBase + &HF62DD0)
         Dim basicNodeInfo As New Dictionary(Of String, String)
         Dim steamNodeList = ReadInt32(dsBase + &HF62DCC)
-        Dim steamNodesPtr As Integer = ReadInt32(steamNodeList)
+        Dim steamNodesPtr As IntPtr = ReadIntPtr(steamNodeList)
         For i = 0 To nodeCount - 1
             Dim node As New DSNode
             Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC)
@@ -544,7 +544,7 @@ Public Class DarkSoulsProcess
         Next
 
         Dim nodeSteamId As String
-        Dim nodePtr As Integer
+        Dim nodePtr As IntPtr
         nodePtr = nodeDumpMemory.address + &H200
         While True
             nodeSteamId = ReadSteamIdAscii(nodePtr)
@@ -571,28 +571,28 @@ Public Class DarkSoulsProcess
             nodePtr += &H30
         End While
 
-        Dim selfPtr As Integer = ReadInt32(dsBase + &HF7E204)
+        Dim selfPtr As IntPtr = ReadIntPtr(dsBase + &HF7E204)
         SelfNode.SoulLevel = ReadInt32(selfPtr + &HA30)
         SelfNode.MPZone = ReadInt32(selfPtr + &HA14)
         SelfNode.World = ReadInt8(selfPtr + &HA13) & "-" & ReadInt8(selfPtr + &HA12)
         SelfNode.PhantomType = ReadInt32(selfPtr + &HA28)
 
-        Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
-        heroPtr = ReadInt32(heroPtr + &H8)
+        Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+        heroPtr = ReadIntPtr(heroPtr + &H8)
         SelfNode.Indictments = ReadInt32(heroPtr + &HEC)
         SelfNode.Covenant = ReadInt8(heroPtr + &H10B)
     End Sub
     Public ReadOnly Property HasDarkmoonRingEquiped As Boolean
         Get
-            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
-            heroPtr = ReadInt32(heroPtr + &H8)
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            heroPtr = ReadIntPtr(heroPtr + &H8)
             Return ReadInt32(heroPtr + &H280) = 102 Or ReadInt32(heroPtr + &H284) = 102
         End Get
     End Property
     Public ReadOnly Property HasCatCovenantRingEquiped As Boolean
         Get
-            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
-            heroPtr = ReadInt32(heroPtr + &H8)
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            heroPtr = ReadIntPtr(heroPtr + &H8)
             Return ReadInt32(heroPtr + &H280) = 103 Or ReadInt32(heroPtr + &H284) = 103
         End Get
     End Property
@@ -603,6 +603,55 @@ Public Class DarkSoulsProcess
             heroPtr = ReadIntPtr(heroPtr + &H8)
             Return ReadInt32(heroPtr + &HEC)
     End Get
+    End Property
+    Public ReadOnly Property PhantomType As Integer
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(ReadIntPtr(heroPtr + &H4))
+            Return ReadInt32(heroPtr + &H70)
+        End Get
+    End Property
+    Public ReadOnly Property TeamType As Integer
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            Return ReadInt32(heroPtr + &H74)
+        End Get
+    End Property
+
+    Public ReadOnly Property xPos As Single
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            heroPtr = ReadIntPtr(heroPtr + &H28)
+            heroPtr = ReadIntPtr(heroPtr + &H1C)
+
+            Return ReadFloat(heroPtr + &H10)
+        End Get
+    End Property
+    Public ReadOnly Property yPos As Single
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            heroPtr = ReadIntPtr(heroPtr + &H28)
+            heroPtr = ReadIntPtr(heroPtr + &H1C)
+
+            Return ReadFloat(heroPtr + &H14)
+        End Get
+    End Property
+    Public ReadOnly Property zPos As Single
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            heroPtr = ReadIntPtr(heroPtr + &H28)
+            heroPtr = ReadIntPtr(heroPtr + &H1C)
+
+            Return ReadFloat(heroPtr + &H18)
+        End Get
     End Property
 
 
@@ -683,7 +732,7 @@ Public Class DarkSoulsProcess
         ReadProcessMemory(_targetProcessHandle, addr, bytes, 32, vbNull)
         Return Encoding.Unicode.GetChars(bytes)
     End Function
-    Private Function ReadSteamName(ByVal addr As UInteger) As String
+    Private Function ReadSteamName(ByVal addr As IntPtr) As String
         Dim str As New StringBuilder()
         Dim bytes(63) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, bytes, 64, vbNull)
@@ -708,7 +757,7 @@ Public Class DarkSoulsProcess
     Public Sub WriteBytes(ByVal addr As IntPtr, val As Byte())
         WriteProcessMemory(_targetProcessHandle, addr, val, val.Length, Nothing)
     End Sub
-    Public Sub WriteAsciiStr(addr As UInteger, str As String)
+    Public Sub WriteAsciiStr(ByVal addr As IntPtr, str As String)
         WriteProcessMemory(_targetProcessHandle, addr, System.Text.Encoding.ASCII.GetBytes(str), str.Length, Nothing)
     End Sub
 End Class
