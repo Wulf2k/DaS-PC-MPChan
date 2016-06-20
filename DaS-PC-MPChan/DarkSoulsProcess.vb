@@ -224,8 +224,8 @@ Public Class DarkSoulsProcess
         If steamApiBase = 0 Then Throw New DSProcessAttachException("Couldn't find Steam API base address")
     End Sub
     Private Sub disableLowFPSDisonnect()
-        If ReadUInt8(dsBase + &H978425) = &HE8& Then
-            WriteBytes(dsBase + &H978425, {&H90, &H90, &H90, &H90, &H90})
+        If ReadUInt8(dsBase + &HAFC39F) = &H74& Then
+            WriteBytes(dsBase + &HAFC39F, {&HEB})
         End If
     End Sub
     Private Sub detachFromProcess()
