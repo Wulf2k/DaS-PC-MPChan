@@ -36,6 +36,7 @@ Partial Class MainWindow
         Dim Label9 As System.Windows.Forms.Label
         Dim Label10 As System.Windows.Forms.Label
         Dim Label11 As System.Windows.Forms.Label
+        Dim Label12 As System.Windows.Forms.Label
         Dim DataGridViewCellStyle1 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
@@ -70,6 +71,7 @@ Partial Class MainWindow
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.tabLocal = New System.Windows.Forms.TabPage()
+        Me.txtRedCooldown = New System.Windows.Forms.TextBox()
         Me.txtTimePlayed = New System.Windows.Forms.TextBox()
         Me.txtClearCount = New System.Windows.Forms.TextBox()
         Me.txtDeaths = New System.Windows.Forms.TextBox()
@@ -101,6 +103,7 @@ Partial Class MainWindow
         Label9 = New System.Windows.Forms.Label()
         Label10 = New System.Windows.Forms.Label()
         Label11 = New System.Windows.Forms.Label()
+        Label12 = New System.Windows.Forms.Label()
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabs.SuspendLayout
         Me.tabActive.SuspendLayout
@@ -269,6 +272,17 @@ Partial Class MainWindow
         Label11.TabIndex = 83
         Label11.Text = "Time Played"
         '
+        'Label12
+        '
+        Label12.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Label12.AutoSize = true
+        Label12.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Label12.Location = New System.Drawing.Point(10, 139)
+        Label12.Name = "Label12"
+        Label12.Size = New System.Drawing.Size(125, 16)
+        Label12.TabIndex = 85
+        Label12.Text = "Red Invasion Timer"
+        '
         'chkDebugDrawing
         '
         Me.chkDebugDrawing.AutoSize = true
@@ -291,7 +305,7 @@ Partial Class MainWindow
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.06.26.04"
+        Me.lblVer.Text = "2016.06.26.06"
         '
         'chkExpand
         '
@@ -609,6 +623,8 @@ Partial Class MainWindow
         '
         'tabLocal
         '
+        Me.tabLocal.Controls.Add(Me.txtRedCooldown)
+        Me.tabLocal.Controls.Add(Label12)
         Me.tabLocal.Controls.Add(Me.txtTimePlayed)
         Me.tabLocal.Controls.Add(Label11)
         Me.tabLocal.Controls.Add(Me.txtClearCount)
@@ -637,6 +653,16 @@ Partial Class MainWindow
         Me.tabLocal.TabIndex = 5
         Me.tabLocal.Text = "Local Info"
         Me.tabLocal.UseVisualStyleBackColor = true
+        '
+        'txtRedCooldown
+        '
+        Me.txtRedCooldown.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.txtRedCooldown.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.txtRedCooldown.Location = New System.Drawing.Point(159, 137)
+        Me.txtRedCooldown.Name = "txtRedCooldown"
+        Me.txtRedCooldown.ReadOnly = true
+        Me.txtRedCooldown.Size = New System.Drawing.Size(51, 23)
+        Me.txtRedCooldown.TabIndex = 86
         '
         'txtTimePlayed
         '
@@ -895,4 +921,5 @@ End Sub
     Friend WithEvents txtDeaths As TextBox
     Friend WithEvents txtClearCount As TextBox
     Friend WithEvents txtTimePlayed As TextBox
+    Friend WithEvents txtRedCooldown As TextBox
 End Class

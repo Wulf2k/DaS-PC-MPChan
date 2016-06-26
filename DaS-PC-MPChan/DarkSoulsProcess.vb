@@ -111,20 +111,6 @@ Public Class DarkSoulsProcess
     Private Declare Function CloseHandle Lib "kernel32.dll" (ByVal hObject As IntPtr) As Boolean
     Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpThreadAttributes As IntPtr, ByVal dwStackSize As Integer, ByVal lpStartAddress As IntPtr, ByVal lpParameter As IntPtr, ByVal dwCreationFlags As Integer, ByRef lpThreadId As IntPtr) As Integer
 
-
-    Public Const MEM_COMMIT = 4096
-    Public Const PAGE_READWRITE = 4
-
-
-
-    Private Declare Function VirtualAllocEx Lib "kernel32.dll" (hProcess As IntPtr, lpAddress As IntPtr, dwSize As IntPtr, flAllocationType As Integer, flProtect As Integer) As IntPtr
-    Private Declare Function VirtualProtectEx Lib "kernel32.dll" (hProcess As IntPtr, lpAddress As IntPtr, ByVal lpSize As IntPtr, ByVal dwNewProtect As UInt32, ByRef dwOldProtect As UInt32) As Boolean
-    Private Declare Function VirtualFreeEx Lib "kernel32.dll" (hProcess As IntPtr, lpAddress As IntPtr, ByVal dwSize As Integer, ByVal dwFreeType As Integer) As Boolean
-    Public Declare Function GetProcAddress Lib "kernel32" (ByVal hModule As Integer, ByVal lpProcName As String) As Integer
-    Private Declare Function GetModuleHandle Lib "Kernel32" Alias "GetModuleHandleA" (ByVal lpModuleName As String) As Integer
-
-
-
     Public Const PROCESS_VM_READ = &H10
     Public Const TH32CS_SNAPPROCESS = &H2
     Public Const PROCESS_CREATE_THREAD = &H2
@@ -141,10 +127,6 @@ Public Class DarkSoulsProcess
     Private nodeDumpMemory As AllocatedMemory
     Private nodeDumpHook As JmpHook
     Private connectMemory As AllocatedMemory
-    Private WatchdogMemory As AllocatedMemory
-
-    Private injected As Boolean = False
-
 
     'Dark Souls
     Private dsBase As IntPtr = 0
@@ -152,9 +134,6 @@ Public Class DarkSoulsProcess
     Private steamApiBase As IntPtr = 0
     'PVP Watchdog
     Private watchdogBase As IntPtr = 0
-    Private DSCMinjectWD As Boolean = False
-
-
 
     Private steamApiDllModule As ProcessModule
 
@@ -175,7 +154,7 @@ Public Class DarkSoulsProcess
         End If
         disableLowFPSDisonnect()
         If Not HasWatchdog Then
-            'InstallNamecrashFix()
+            InstallNamecrashFix()
         End If
         SetupNodeDumpHook()
     End Sub
@@ -220,7 +199,6 @@ Public Class DarkSoulsProcess
             If _targetProcessHandle = 0 Then
                 Throw New DSProcessAttachException("OpenProcess() failed. Check Permissions")
             End If
-           
         Else
             MessageBox.Show("Already attached! (Please Detach first?)")
         End If
@@ -239,17 +217,10 @@ Public Class DarkSoulsProcess
 
                 Case "steam_api.dll" 'Find steam_api.dll for ability to directly add SteamIDs as nodes
                     steamApiBase = dll.BaseAddress
-
-                Case "watchdog.dll"
-                    watchdogBase = dll.BaseAddress 
             End Select
         Next
         If dsBase = 0 Then Throw New DSProcessAttachException("Couldn't find Dark Souls base address")
         If steamApiBase = 0 Then Throw New DSProcessAttachException("Couldn't find Steam API base address")
-        If watchdogBase = 0 Then
-            injWD()
-        End If
-
     End Sub
     Private Sub disableLowFPSDisonnect()
         If ReadUInt8(dsBase + &HAFC39F) = &H74& Then
@@ -273,7 +244,7 @@ Public Class DarkSoulsProcess
     End Property
     Public ReadOnly Property HasWatchdog As Boolean
         Get
-            Return (watchdogBase <> 0 Or DSCMinjectWD)
+            Return watchdogBase <> 0
         End Get
     End Property
     Public Property DrawNodes As Boolean
@@ -326,33 +297,6 @@ Public Class DarkSoulsProcess
      
         End Set
     End Property
-
-
-    Private Sub injWD()
-        Try
-
-
-            Dim wddll As Byte() = My.Resources.watchdogdll.Clone()
-
-            Dim TargetBufferSize As integer
-            Dim fileLoc As String
-            fileLoc = System.IO.Path.GetTempPath & "watchdog.dll"
-
-            System.IO.File.WriteAllBytes(fileLoc, wddll)
-
-            Dim pfnStartAddr = GetProcAddress(GetModuleHandle("Kernel32"), "LoadLibraryA")
-            TargetBufferSize = 1 + Len(fileLoc)
-
-            Dim LoadLibParamAdr As Integer
-            LoadLibParamAdr = VirtualAllocEx(_targetProcessHandle, 0, TargetBufferSize, MEM_COMMIT, PAGE_READWRITE)
-            WriteProcessMemory(_targetProcessHandle, LoadLibParamAdr, Encoding.ASCII.GetBytes(fileLoc), TargetBufferSize, 0)
-            CreateRemoteThread(_targetProcessHandle, 0, 0, pfnStartAddr, LoadLibParamAdr, 0, 0)
-            DSCMinjectWD = True
-
-        Catch ex As Exception
-            
-        End Try
-    End Sub
 
     Private Sub InstallNamecrashFix()
         Dim originalContent() As Byte = {&H66, &H8B, &H10, &H83, &HC0, &H02, &H66, &H85, &HD2}
@@ -693,6 +637,13 @@ Public Class DarkSoulsProcess
             Return ReadInt32(heroPtr + &H74)
         End Get
     End Property
+    Public ReadOnly Property redCooldown As Single
+        Get
+            Return ReadFloat(dsBase + &HF795E0)
+        End Get
+    End Property
+
+
 
     Public ReadOnly Property xPos As Single
         Get
