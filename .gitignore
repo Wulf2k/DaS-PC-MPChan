@@ -55,7 +55,6 @@ Temporary Items
 *.pdb
 *.rar
 *.Cache
-*.dll
 *.suo
 **/bin
 **/obj
