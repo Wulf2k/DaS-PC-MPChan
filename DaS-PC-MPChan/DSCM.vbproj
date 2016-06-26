@@ -193,6 +193,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ASM\ASM-ConnectSteamId.txt" />
+    <None Include="Resources\d3d9.dll" />
     <None Include="Resources\Readme_compiled.html" />
   </ItemGroup>
   <ItemGroup>

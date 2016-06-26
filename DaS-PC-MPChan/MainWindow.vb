@@ -570,7 +570,7 @@ Public Class MainWindow
 
             txtCurrNodes.Text = dsProcess.NodeCount
 
-            errorCheckSteamName()
+            'errorCheckSteamName()
             txtLocalSteamName.Text = dsProcess.SelfSteamName
 
 
@@ -660,15 +660,16 @@ Public Class MainWindow
     End Sub
 
     Private Sub errorCheckSteamName()
+        'Disabled temporarily due to being non-functional
         Dim byt() As Byte
         byt = Encoding.Unicode.GetBytes(dsProcess.SelfSteamName)
-
+        
         If byt.Length > &H1d Then ReDim Preserve byt(&H1d)
-
+        
         Dim tmpStr As String
         tmpStr = Encoding.Unicode.GetString(byt)
         tmpStr = tmpStr.Replace("#", "")
-
+        
         If byt(0) = 0 Then tmpStr = "Invalid Name"
 
         dsProcess.SelfSteamName = tmpStr
