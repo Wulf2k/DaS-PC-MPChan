@@ -1,4 +1,4 @@
-﻿Imports System.Text
+Imports System.Text
 Imports System.Threading
 
 Public Class DSProcessAttachException
@@ -154,7 +154,7 @@ Public Class DarkSoulsProcess
         End If
         disableLowFPSDisonnect()
         If Not HasWatchdog Then
-            'InstallNamecrashFix()
+            InstallNamecrashFix()
         End If
         SetupNodeDumpHook()
     End Sub
@@ -308,6 +308,13 @@ Public Class DarkSoulsProcess
 
         'The machinecode and all the mechanics behind this are courtesy of eur0pa
         Dim code() As Byte = My.Resources.namecrash.Clone()
+        
+        'Offsets which we want to point to our buffer
+        Dim bufferLocations = New Dictionary(Of Integer, Integer) From {
+            {1, 204},
+            {2, 243},
+            {3, 264}
+        }
         'This is (hook offset in DS, target offset in code)
         Dim hookLocations = New Dictionary(Of Integer, Integer) From {
             {&H058A46, 0},
@@ -328,17 +335,30 @@ Public Class DarkSoulsProcess
             {&H058A71, 170},
             {&H18BD40, 250},
             {&H18CB21, 275},
-            {&H18CAD6, 256}
+            {&H18CAD6, 255}
         }
 
 
         Dim memory As New AllocatedMemory(_targetProcessHandle, code.Length)
         Dim jmpInstruction() As Byte = {&HE9}
         For Each returnLocation In returnLocations
+            If returnLocation.Key = &H18BD40 Then
+                jmpInstruction = {&HE8}
+            Else
+                jmpInstruction = {&HE9}
+            End If
             Dim jmpOffset As Int32 = (dsBase + returnLocation.Key) - (memory.address + returnLocation.Value) - 5
             Dim instruction() As Byte = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
             Array.Copy(instruction, 0, code, returnLocation.Value, instruction.Length)
         Next
+        
+        For Each bufferLocation In bufferLocations
+            'Could make another buffer but might as well use the spare space in the existing one
+            Dim bufOffset As Int32 = (memory.address + code.Length) + 20
+            Dim instruction() As Byte = BitConverter.GetBytes(bufOffset).ToArray()
+            Array.Copy(instruction, 0, code, bufferLocation.Value, instruction.Length)
+        Next
+        
         WriteProcessMemory(_targetProcessHandle, memory, code, code.Length, 0)
 
         'Install the fix permanently
