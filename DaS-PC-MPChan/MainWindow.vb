@@ -585,6 +585,7 @@ Public Class MainWindow
             txtTimePlayed.Text = TimeSpan.FromMilliseconds(dsProcess.TimePlayed).ToString("ddd\.hh\:mm\:ss")
 
             txtRedCooldown.Text = math.Round(dsProcess.redCooldown, 0)
+            txtBlueCooldown.Text = math.Round(dsProcess.blueCooldown, 0)
 
 
             txtXPos.Text = Math.Round(dsProcess.xPos, 1)

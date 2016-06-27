@@ -154,7 +154,7 @@ Public Class DarkSoulsProcess
         End If
         disableLowFPSDisonnect()
         If Not HasWatchdog Then
-            InstallNamecrashFix()
+            'InstallNamecrashFix()
         End If
         SetupNodeDumpHook()
     End Sub
@@ -642,7 +642,11 @@ Public Class DarkSoulsProcess
             Return ReadFloat(dsBase + &HF795E0)
         End Get
     End Property
-
+    Public ReadOnly Property blueCooldown As Single
+        Get
+            Return ReadFloat(dsBase + &HF79658)
+        End Get
+    End Property
 
 
     Public ReadOnly Property xPos As Single
