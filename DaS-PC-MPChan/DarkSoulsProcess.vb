@@ -624,28 +624,16 @@ Public Class DarkSoulsProcess
     End Get
     End Property
     Public ReadOnly Property Deaths As Integer
-    Get
+        Get
             Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
             Return ReadInt32(statsPtr + &H5C)
-    End Get
-    End Property
-    Public ReadOnly Property TimePlayed As Integer
-    Get
-            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
-            Return ReadInt32(statsPtr + &H68)
-    End Get
-    End Property
-    Public ReadOnly Property Sin As Integer
-    Get
-            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
-            heroPtr = ReadIntPtr(heroPtr + &H8)
-            Return ReadInt32(heroPtr + &HEC)
-    End Get
+        End Get
     End Property
     Public ReadOnly Property PhantomType As Integer
         Get
             Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
-            heroPtr = ReadIntPtr(ReadIntPtr(heroPtr + &H4))
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
             Return ReadInt32(heroPtr + &H70)
         End Get
     End Property
@@ -657,6 +645,21 @@ Public Class DarkSoulsProcess
             Return ReadInt32(heroPtr + &H74)
         End Get
     End Property
+    Public ReadOnly Property TimePlayed As Integer
+        Get
+            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            Return ReadInt32(statsPtr + &H68)
+        End Get
+    End Property
+    Public ReadOnly Property Sin As Integer
+    Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            heroPtr = ReadIntPtr(heroPtr + &H8)
+            Return ReadInt32(heroPtr + &HEC)
+    End Get
+    End Property
+
+
     Public ReadOnly Property redCooldown As Single
         Get
             Return ReadFloat(dsBase + &HF795E0)
@@ -665,6 +668,216 @@ Public Class DarkSoulsProcess
     Public ReadOnly Property blueCooldown As Single
         Get
             Return ReadFloat(dsBase + &HF79658)
+        End Get
+    End Property
+
+
+    Public ReadOnly Property FlagsArtoriasDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H40000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsBedOfChaosDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H200000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsBellGargoylesDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H10000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsCapraDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &HF70) And &H4000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsCeaselessDischargeDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H3C70) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsCentipedeDemonDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H3C70) And &H4000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsDarkAnorLondo As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H4630) And &H8000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsDemonFiresageDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H3C30) And &H20)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsFourKingsDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H40000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsGapingDragonDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H20000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsGwynDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H10000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsGwyndolinDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H4670) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsIronGolemDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H100000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsKalameetDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsManusDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H20000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsMoonlightButterflyDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H1E70) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsNewLondoDrained As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H4B0C) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsNitoDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H1000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsOnSDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H80000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsPinwheelDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H2000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsPriscillaDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsQuelaagDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H400000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsSanctuaryGuardianDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H80000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsSeathDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H20000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsSifDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H4000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsTaurusDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &HF70) And &H4000000)
         End Get
     End Property
 
