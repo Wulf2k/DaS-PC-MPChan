@@ -130,5 +130,5 @@ with the technical stuff.
 Source code is available at: <https://github.com/Wulf2k/DaS-PC-MPChan>
 
 - - - - - - - - - - - - - - - - - - - - - - - -
-Brought to you by Wulf2k (wulf2k@gmail.com).  
+Brought to you by Lane Hatland (wulf2k@gmail.com).  
 With thanks to Illusorywall, Jellybaby44, Chronial, and many others.
