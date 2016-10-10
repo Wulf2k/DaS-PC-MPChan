@@ -1,4 +1,5 @@
-﻿Imports System.Threading
+﻿Imports System.Collections.Specialized
+Imports System.Threading
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Net.Sockets
@@ -67,6 +68,8 @@ Public Class MainWindow
             End If
         End If
 
+        
+        
 
         txtTargetSteamID.SetPlaceholder(txtTargetSteamID.Text)
         txtTargetSteamID.Text = ""
@@ -547,10 +550,13 @@ Public Class MainWindow
         If dsProcess Is Nothing Then
             nmbMaxNodes.Enabled = False
             nmbMaxNodes.BackColor = New Color()
+            btnLaunchDS.Visible = true
         Else
             'Node display
             'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
             chkDebugDrawing.Checked = dsProcess.DrawNodes
+
+            btnLaunchDS.Visible = False
 
             Dim maxNodes = dsProcess.MaxNodes
             If maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
@@ -592,6 +598,42 @@ Public Class MainWindow
             txtYPos.Text = Math.Round(dsProcess.yPos, 1)
             txtZPos.Text = Math.Round(dsProcess.zPos, 1)
 
+            Dim flaglist As New NameValueCollection
+
+            flaglist.Add("Gaping Dragon", dsProcess.FlagsGapingDragonDead)
+            flaglist.Add("Bell Gargoyles", dsProcess.FlagsBellGargoylesDead)
+            flaglist.Add("Priscilla", dsProcess.FlagsPriscillaDead)
+            flaglist.Add("Sif", dsProcess.FlagsSifDead)
+            flaglist.Add("Pinwheel", dsProcess.FlagsPinwheelDead)
+            flaglist.Add("Nito", dsProcess.FlagsNitoDead)
+            flaglist.Add("Chaos Witch Quelaag", dsProcess.FlagsQuelaagDead)
+            flaglist.Add("Bed of Chaos", dsProcess.FlagsBedOfChaosDead)
+            flaglist.Add("Iron Golem", dsProcess.FlagsIronGolemDead)
+            flaglist.Add("Ornstein & Smough", dsProcess.FlagsOnSDead)
+            flaglist.Add("Four Kings", dsProcess.FlagsFourKingsDead)
+            flaglist.Add("Seath", dsProcess.FlagsSeathDead)
+            flaglist.Add("Gwyn", dsProcess.FlagsGwynDead)
+            flaglist.Add("Taurus Demon", dsProcess.FlagsTaurusDead)
+            flaglist.Add("Capra Demon", dsProcess.FlagsCapraDead)
+            flaglist.Add("Moonlight Butterfly", dsProcess.FlagsMoonlightButterflyDead)
+            flaglist.Add("Sanctuary Guardian", dsProcess.FlagsSanctuaryGuardianDead)
+            flaglist.Add("Artorias", dsProcess.FlagsArtoriasDead)
+            flaglist.Add("Manus", dsProcess.FlagsManusDead)
+            flaglist.Add("Kalameet", dsProcess.FlagsKalameetDead)
+            flaglist.Add("Demon Firesage", dsProcess.FlagsDemonFiresageDead)
+            flaglist.Add("Ceaseless Discharge", dsProcess.FlagsCeaselessDischargeDead)
+            flaglist.Add("Centipede Demon", dsProcess.FlagsCentipedeDemonDead)
+            flaglist.Add("Gwyndolin", dsProcess.FlagsGwyndolinDead)
+            flaglist.Add("Dark Anor Londo", dsProcess.FlagsDarkAnorLondo)
+            flaglist.Add("New Londo Drained", dsProcess.FlagsNewLondoDrained)
+
+            For Each item in flaglist.keys
+                Try
+                    clbEventFlags.SetItemChecked(clbEventFlags.Items.IndexOf(item), flaglist.GetValues(item)(0))
+                Catch ex As Exception
+                    MsgBox("Failed flag lookup - " & ex.Message)
+                End Try
+            Next
 
 
         End If
@@ -953,6 +995,15 @@ Public Class MainWindow
 
     Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvRecentNodes.DoubleClick, dgvFavoriteNodes.DoubleClick, dgvDSCMNet.DoubleClick
 
+    End Sub
+
+    Private Sub btnLaunchDS_Click(sender As Object, e As EventArgs) Handles btnLaunchDS.Click
+        Try
+            Dim proc As New System.Diagnostics.Process()
+            proc = Process.Start("steam://rungameid/211420", "")
+        Catch ex As Exception
+            MsgBox("Error launching." & Environment.NewLine & ex.Message)
+        End Try
     End Sub
 End Class
 

@@ -181,6 +181,7 @@ Public Class DarkSoulsProcess
     End Sub
 
     Private Sub attachToProcess()
+
         Dim windowCaption As String = "darksouls"
         Dim _allProcesses() As Process = Process.GetProcesses
         For Each pp As Process In _allProcesses
@@ -194,11 +195,16 @@ Public Class DarkSoulsProcess
 
     Private Sub attachToProcess(ByVal proc As Process)
         If _targetProcessHandle = IntPtr.Zero Then 'not already attached
-            _targetProcess = proc
-            _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
+
+            Try
+                _targetProcess = proc
+                _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
             If _targetProcessHandle = 0 Then
                 Throw New DSProcessAttachException("OpenProcess() failed. Check Permissions")
             End If
+            Catch ex As Exception
+
+            End Try
         Else
             MessageBox.Show("Already attached! (Please Detach first?)")
         End If

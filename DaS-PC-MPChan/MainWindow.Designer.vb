@@ -72,6 +72,7 @@ Partial Class MainWindow
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.tabLocal = New System.Windows.Forms.TabPage()
+        Me.clbEventFlags = New System.Windows.Forms.CheckedListBox()
         Me.txtBlueCooldown = New System.Windows.Forms.TextBox()
         Me.txtRedCooldown = New System.Windows.Forms.TextBox()
         Me.txtTimePlayed = New System.Windows.Forms.TextBox()
@@ -91,6 +92,7 @@ Partial Class MainWindow
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
         Me.btnUpdate = New System.Windows.Forms.Button()
+        Me.btnLaunchDS = New System.Windows.Forms.Button()
         lblNodes = New System.Windows.Forms.Label()
         lblNodeDiv = New System.Windows.Forms.Label()
         lblYourId = New System.Windows.Forms.Label()
@@ -156,7 +158,6 @@ Partial Class MainWindow
         '
         'Label1
         '
-        Label1.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label1.AutoSize = true
         Label1.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label1.Location = New System.Drawing.Point(10, 19)
@@ -167,7 +168,6 @@ Partial Class MainWindow
         '
         'Label2
         '
-        Label2.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label2.AutoSize = true
         Label2.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label2.Location = New System.Drawing.Point(10, 43)
@@ -178,7 +178,6 @@ Partial Class MainWindow
         '
         'Label3
         '
-        Label3.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label3.AutoSize = true
         Label3.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label3.Location = New System.Drawing.Point(10, 67)
@@ -189,7 +188,6 @@ Partial Class MainWindow
         '
         'Label4
         '
-        Label4.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label4.AutoSize = true
         Label4.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label4.Location = New System.Drawing.Point(10, 91)
@@ -200,7 +198,6 @@ Partial Class MainWindow
         '
         'Label5
         '
-        Label5.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label5.AutoSize = true
         Label5.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label5.Location = New System.Drawing.Point(10, 115)
@@ -211,7 +208,6 @@ Partial Class MainWindow
         '
         'Label6
         '
-        Label6.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label6.AutoSize = true
         Label6.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label6.Location = New System.Drawing.Point(9, 223)
@@ -222,7 +218,6 @@ Partial Class MainWindow
         '
         'Label7
         '
-        Label7.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label7.AutoSize = true
         Label7.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label7.Location = New System.Drawing.Point(9, 247)
@@ -233,7 +228,6 @@ Partial Class MainWindow
         '
         'Label8
         '
-        Label8.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label8.AutoSize = true
         Label8.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label8.Location = New System.Drawing.Point(9, 271)
@@ -244,10 +238,9 @@ Partial Class MainWindow
         '
         'Label9
         '
-        Label9.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label9.AutoSize = true
         Label9.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Label9.Location = New System.Drawing.Point(317, 43)
+        Label9.Location = New System.Drawing.Point(197, 223)
         Label9.Name = "Label9"
         Label9.Size = New System.Drawing.Size(51, 16)
         Label9.TabIndex = 79
@@ -255,10 +248,9 @@ Partial Class MainWindow
         '
         'Label10
         '
-        Label10.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label10.AutoSize = true
         Label10.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Label10.Location = New System.Drawing.Point(317, 67)
+        Label10.Location = New System.Drawing.Point(197, 247)
         Label10.Name = "Label10"
         Label10.Size = New System.Drawing.Size(35, 16)
         Label10.TabIndex = 81
@@ -266,10 +258,9 @@ Partial Class MainWindow
         '
         'Label11
         '
-        Label11.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label11.AutoSize = true
         Label11.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Label11.Location = New System.Drawing.Point(317, 91)
+        Label11.Location = New System.Drawing.Point(10, 187)
         Label11.Name = "Label11"
         Label11.Size = New System.Drawing.Size(85, 16)
         Label11.TabIndex = 83
@@ -277,7 +268,6 @@ Partial Class MainWindow
         '
         'Label12
         '
-        Label12.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label12.AutoSize = true
         Label12.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label12.Location = New System.Drawing.Point(10, 139)
@@ -288,7 +278,6 @@ Partial Class MainWindow
         '
         'Label13
         '
-        Label13.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Label13.AutoSize = true
         Label13.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Label13.Location = New System.Drawing.Point(10, 163)
@@ -319,7 +308,7 @@ Partial Class MainWindow
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2016.06.26.21"
+        Me.lblVer.Text = "2016.10.10.01"
         '
         'chkExpand
         '
@@ -637,6 +626,7 @@ Partial Class MainWindow
         '
         'tabLocal
         '
+        Me.tabLocal.Controls.Add(Me.clbEventFlags)
         Me.tabLocal.Controls.Add(Me.txtBlueCooldown)
         Me.tabLocal.Controls.Add(Label13)
         Me.tabLocal.Controls.Add(Me.txtRedCooldown)
@@ -670,9 +660,19 @@ Partial Class MainWindow
         Me.tabLocal.Text = "Local Info"
         Me.tabLocal.UseVisualStyleBackColor = true
         '
+        'clbEventFlags
+        '
+        Me.clbEventFlags.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
+        Me.clbEventFlags.FormattingEnabled = true
+        Me.clbEventFlags.Items.AddRange(New Object() {"Gaping Dragon", "Bell Gargoyles", "Priscilla", "Sif", "Pinwheel", "Nito", "Chaos Witch Quelaag", "Bed of Chaos", "Iron Golem", "Ornstein & Smough", "Four Kings", "Seath", "Gwyn", "Taurus Demon", "Capra Demon", "Moonlight Butterfly", "Sanctuary Guardian", "Artorias", "Manus", "Kalameet", "Demon Firesage", "Ceaseless Discharge", "Centipede Demon", "Gwyndolin", "Dark Anor Londo", "New Londo Drained"})
+        Me.clbEventFlags.Location = New System.Drawing.Point(367, 19)
+        Me.clbEventFlags.Name = "clbEventFlags"
+        Me.clbEventFlags.Size = New System.Drawing.Size(253, 274)
+        Me.clbEventFlags.TabIndex = 89
+        '
         'txtBlueCooldown
         '
-        Me.txtBlueCooldown.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtBlueCooldown.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtBlueCooldown.Location = New System.Drawing.Point(159, 161)
         Me.txtBlueCooldown.Name = "txtBlueCooldown"
@@ -682,7 +682,6 @@ Partial Class MainWindow
         '
         'txtRedCooldown
         '
-        Me.txtRedCooldown.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtRedCooldown.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtRedCooldown.Location = New System.Drawing.Point(159, 137)
         Me.txtRedCooldown.Name = "txtRedCooldown"
@@ -692,9 +691,8 @@ Partial Class MainWindow
         '
         'txtTimePlayed
         '
-        Me.txtTimePlayed.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtTimePlayed.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.txtTimePlayed.Location = New System.Drawing.Point(408, 89)
+        Me.txtTimePlayed.Location = New System.Drawing.Point(159, 185)
         Me.txtTimePlayed.Name = "txtTimePlayed"
         Me.txtTimePlayed.ReadOnly = true
         Me.txtTimePlayed.Size = New System.Drawing.Size(106, 23)
@@ -702,9 +700,8 @@ Partial Class MainWindow
         '
         'txtClearCount
         '
-        Me.txtClearCount.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtClearCount.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.txtClearCount.Location = New System.Drawing.Point(408, 65)
+        Me.txtClearCount.Location = New System.Drawing.Point(265, 245)
         Me.txtClearCount.Name = "txtClearCount"
         Me.txtClearCount.ReadOnly = true
         Me.txtClearCount.Size = New System.Drawing.Size(51, 23)
@@ -712,9 +709,8 @@ Partial Class MainWindow
         '
         'txtDeaths
         '
-        Me.txtDeaths.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtDeaths.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
-        Me.txtDeaths.Location = New System.Drawing.Point(408, 41)
+        Me.txtDeaths.Location = New System.Drawing.Point(265, 221)
         Me.txtDeaths.Name = "txtDeaths"
         Me.txtDeaths.ReadOnly = true
         Me.txtDeaths.Size = New System.Drawing.Size(51, 23)
@@ -722,7 +718,6 @@ Partial Class MainWindow
         '
         'txtZPos
         '
-        Me.txtZPos.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtZPos.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtZPos.Location = New System.Drawing.Point(58, 269)
         Me.txtZPos.Name = "txtZPos"
@@ -732,7 +727,6 @@ Partial Class MainWindow
         '
         'txtYPos
         '
-        Me.txtYPos.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtYPos.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtYPos.Location = New System.Drawing.Point(58, 245)
         Me.txtYPos.Name = "txtYPos"
@@ -742,7 +736,6 @@ Partial Class MainWindow
         '
         'txtXPos
         '
-        Me.txtXPos.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtXPos.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtXPos.Location = New System.Drawing.Point(58, 221)
         Me.txtXPos.Name = "txtXPos"
@@ -752,7 +745,6 @@ Partial Class MainWindow
         '
         'txtTeamType
         '
-        Me.txtTeamType.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtTeamType.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtTeamType.Location = New System.Drawing.Point(159, 113)
         Me.txtTeamType.Name = "txtTeamType"
@@ -762,7 +754,6 @@ Partial Class MainWindow
         '
         'txtPhantomType
         '
-        Me.txtPhantomType.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtPhantomType.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtPhantomType.Location = New System.Drawing.Point(159, 89)
         Me.txtPhantomType.Name = "txtPhantomType"
@@ -772,7 +763,6 @@ Partial Class MainWindow
         '
         'txtSin
         '
-        Me.txtSin.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtSin.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtSin.Location = New System.Drawing.Point(159, 65)
         Me.txtSin.Name = "txtSin"
@@ -782,7 +772,6 @@ Partial Class MainWindow
         '
         'txtWatchdogActive
         '
-        Me.txtWatchdogActive.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtWatchdogActive.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtWatchdogActive.Location = New System.Drawing.Point(159, 41)
         Me.txtWatchdogActive.Name = "txtWatchdogActive"
@@ -792,7 +781,6 @@ Partial Class MainWindow
         '
         'txtLocalSteamName
         '
-        Me.txtLocalSteamName.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.txtLocalSteamName.Font = New System.Drawing.Font("Consolas", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.txtLocalSteamName.Location = New System.Drawing.Point(137, 17)
         Me.txtLocalSteamName.Name = "txtLocalSteamName"
@@ -865,11 +853,23 @@ Partial Class MainWindow
         Me.btnUpdate.UseVisualStyleBackColor = true
         Me.btnUpdate.Visible = false
         '
+        'btnLaunchDS
+        '
+        Me.btnLaunchDS.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.btnLaunchDS.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.btnLaunchDS.Location = New System.Drawing.Point(534, 453)
+        Me.btnLaunchDS.Name = "btnLaunchDS"
+        Me.btnLaunchDS.Size = New System.Drawing.Size(139, 23)
+        Me.btnLaunchDS.TabIndex = 76
+        Me.btnLaunchDS.Text = "Launch Dark Souls"
+        Me.btnLaunchDS.UseVisualStyleBackColor = true
+        '
         'MainWindow
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(784, 480)
+        Me.Controls.Add(Me.btnLaunchDS)
         Me.Controls.Add(Me.btnUpdate)
         Me.Controls.Add(Me.dsProcessStatus)
         Me.Controls.Add(Me.chkDSCMNet)
@@ -949,4 +949,6 @@ End Sub
     Friend WithEvents txtTimePlayed As TextBox
     Friend WithEvents txtRedCooldown As TextBox
     Friend WithEvents txtBlueCooldown As TextBox
+    Friend WithEvents btnLaunchDS As Button
+    Friend WithEvents clbEventFlags As CheckedListBox
 End Class
