@@ -1,22 +1,22 @@
 NamedNodes:
-mov eax,[esp+10]
+mov eax,[esp+0x10]
 push eax
 mov eax, ebx
 mov ebx, ecx
-and ebx, fc00
-cmp ebx, fc00
+and ebx, 0xfc00
+cmp ebx, 0xfc00
 mov ebx, eax
 je stackPassed
 jmp codeSkip
 
 stackPassed:
-mov ebx, [ebx-30]
+mov ebx, [ebx-0x30]
 cmp ebx, 0
 je ptrFail
-mov ebx, [ebx+14]
+mov ebx, [ebx+0x14]
 cmp ebx, 0
 je ptrFail
-add ebx, 30
+add ebx, 0x30
 jmp ptrSuccess
 
 ptrFail:
@@ -28,7 +28,7 @@ push eax
 mov eax,0
 
 loopStart:
-cmp eax,20
+cmp eax,0x20
 je loopExit
 mov dl,[ebx]
 mov [edi],dl
@@ -38,8 +38,8 @@ inc edi
 Jmp loopStart
 
 loopExit:
-sub ebx, 20
-sub edi, 20
+sub ebx, 0x20
+sub edi, 0x20
 pop eax
 
 codeSkip:

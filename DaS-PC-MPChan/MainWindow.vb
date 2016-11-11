@@ -270,9 +270,13 @@ Public Class MainWindow
         regval = key.GetValue("JoinDSCM-Net")
         If regval Is Nothing Then key.SetValue("JoinDSCM-Net", "True")
 
+        regval = key.GetValue("MaxNodes")
+        If regval Is Nothing Then key.SetValue("MaxNodes", "20")
+
 
         chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
+        nmbMaxNodes.Value = key.GetValue("MaxNodes")
     End Sub
     Private Sub updateOnlineState_Tick() Handles updateOnlineStateTimer.Tick
         updateOnlineState()
@@ -578,7 +582,11 @@ Public Class MainWindow
 
             'errorCheckSteamName()
             txtLocalSteamName.Text = dsProcess.SelfSteamName
-
+            If txtLocalSteamName.Text.length > 15 Then 
+                txtLocalSteamName.BackColor = Color.OrangeRed
+            Else
+                txtLocalSteamName.BackColor = DefaultBackColor
+            End If
 
 
 
@@ -836,6 +844,10 @@ Public Class MainWindow
     Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
         If Not IsNothing(dsProcess) Then
             dsProcess.MaxNodes = nmbMaxNodes.Value
+            Dim key As Microsoft.Win32.RegistryKey
+
+            key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+            key.SetValue("MaxNodes", nmbMaxNodes.Value)
         End If
     End Sub
     Private Sub connectToSteamId(steamId As String)

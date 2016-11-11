@@ -516,28 +516,59 @@ Public Class DarkSoulsProcess
 
         'Set up code
         'Note to self, as usual, comment in the actual ASM before it gets lost.
-        Dim code() As Byte = {
-            &HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H0, &H0,
-            &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
-            &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
+        'Dim code() As Byte = {
+        '    &HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H0, &H0,
+        '    &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
+        '    &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
         'Set steam_api.SteamNetworking call
-        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - connectMemory.address - 5, Int32))
-        Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
+        'Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - connectMemory.address - 5, Int32))
+        'Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
 
-        Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
-        Array.Copy(dataPacketLen, 0, code, &HE, dataPacketLen.Length)
+        'Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
+        'Array.Copy(dataPacketLen, 0, code, &HE, dataPacketLen.Length)
 
-        Dim dataPacketPtrBytes() As Byte = BitConverter.GetBytes(CType(dataPacketPtr, UInt32))
-        Array.Copy(dataPacketPtrBytes, 0, code, &H14, dataPacketPtrBytes.Length)
+        'Dim dataPacketPtrBytes() As Byte = BitConverter.GetBytes(CType(dataPacketPtr, UInt32))
+        'Array.Copy(dataPacketPtrBytes, 0, code, &H14, dataPacketPtrBytes.Length)
 
-        Dim steamIdLeft() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
-        Array.Copy(steamIdLeft, 0, code, &H1A, steamIdLeft.Length)
+        'Dim steamIdLeft() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
+        'Array.Copy(steamIdLeft, 0, code, &H1A, steamIdLeft.Length)
 
-        Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
-        Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
+        'Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
+        'Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
 
-        WriteProcessMemory(_targetProcessHandle, connectMemory, code, code.Length, 0)
+
+        'Attempt at compiling ASM through new method
+        Dim a As New ASM
+        a.pos = CInt(connectMemory.address)
+        
+        a.AddVar("connectmemory", connectMemory.address)
+        a.AddVar("steamapinetworking", steamApiNetworking)
+        a.AddVar("datapacketlen", data.Length)
+        a.AddVar("datapacketptr", connectMemory.address + &H100)
+        a.AddVar("steamidleft", Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
+        a.AddVar("steamidright", Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
+
+            
+
+        a.Asm("call steamapinetworking")
+        a.Asm("mov edx, [eax]")
+        a.Asm("mov edx, [edx]")
+        a.Asm("push 1")
+        a.Asm("push 2")
+        a.Asm("mov edi, datapacketlen")
+        a.Asm("push edi")
+        a.Asm("mov ecx, datapacketptr")
+        a.Asm("push ecx")
+        a.Asm("push steamidleft")
+        a.Asm("push steamidright")
+        a.Asm("mov ecx, eax")
+        a.Asm("call edx")
+        a.Asm("ret")
+
+
+
+        WriteProcessMemory(_targetProcessHandle, connectMemory, a.bytes, a.bytes.Length, 0)
 
         CreateRemoteThread(_targetProcessHandle, 0, 0, connectMemory, 0, 0, 0)
     End Sub

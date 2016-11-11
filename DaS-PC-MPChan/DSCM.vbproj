@@ -104,6 +104,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ASM.vb" />
     <Compile Include="Config.vb" />
     <Compile Include="DarkSoulsProcess.vb" />
     <Compile Include="MainWindow.vb">
@@ -130,9 +131,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="SortableBindingList.vb">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="SortableBindingList.vb" />
     <Compile Include="UpdateWindow.Designer.vb">
       <DependentUpon>UpdateWindow.vb</DependentUpon>
     </Compile>
