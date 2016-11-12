@@ -564,6 +564,10 @@ Public Class MainWindow
 
             Dim maxNodes = dsProcess.MaxNodes
             If maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
+                If maxNodes <> nmbMaxNodes.Value Then
+                    dsProcess.MaxNodes = nmbMaxNodes.Value
+                    maxNodes = dsProcess.MaxNodes
+                End If
                 nmbMaxNodes.Value = maxNodes
                 nmbMaxNodes.Enabled = True
                 nmbMaxNodes.BackColor = New Color()
