@@ -143,14 +143,14 @@ Public Class MainWindow
 
         With dgvFavoriteNodes
             .Columns.Add("name", "Name")
-            .Columns(0).Width = 180
-            .Columns(0).ValueType = GetType(String)
+            .Columns("name").Width = 180
+            .Columns("name").ValueType = GetType(String)
             .Columns.Add("steamId", "Steam ID")
-            .Columns(1).Width = 145
-            .Columns(1).ValueType = GetType(String)
+            .Columns("steamId").Width = 145
+            .Columns("steamId").ValueType = GetType(String)
             .Columns.Add("isOnline", "O")
-            .Columns(2).Width = 20
-            .Columns(2).ValueType = GetType(String)
+            .Columns("isOnline").Width = 20
+            .Columns("isOnline").ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
@@ -159,17 +159,17 @@ Public Class MainWindow
         With dgvRecentNodes
             .AutoGenerateColumns = False
             .Columns.Add("name", "Name")
-            .Columns(0).Width = 180
-            .Columns(0).ValueType = GetType(String)
+            .Columns("name").Width = 180
+            .Columns("name").ValueType = GetType(String)
             .Columns.Add("steamId", "Steam ID")
-            .Columns(1).Width = 145
-            .Columns(1).ValueType = GetType(String)
+            .Columns("steamId").Width = 145
+            .Columns("steamId").ValueType = GetType(String)
             .Columns.Add("orderId", "Order ID")
-            .Columns(2).Visible = False
-            .Columns(2).ValueType = GetType(Long)
+            .Columns("orderId").Visible = False
+            .Columns("orderId").ValueType = GetType(Long)
             .Columns.Add("isOnline", "O")
-            .Columns(3).Width = 20
-            .Columns(3).ValueType = GetType(String)
+            .Columns("isOnline").Width = 20
+            .Columns("isOnline").ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
