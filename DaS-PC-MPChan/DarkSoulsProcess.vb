@@ -738,7 +738,7 @@ Public Class DarkSoulsProcess
             Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
             flagsPtr = ReadIntPtr(flagsPtr)
 
-            Return (ReadInt32(flagsPtr + &HF70) And &H4000000)
+            Return (ReadInt32(flagsPtr + &HF70) And &H2000000)
         End Get
     End Property
     Public ReadOnly Property FlagsCeaselessDischargeDead As Boolean
