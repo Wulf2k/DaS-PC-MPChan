@@ -894,6 +894,23 @@ Public Class MainWindow
                 Catch ex As Exception
                     'We display an error message later on
                 End Try
+            Else
+                'Get the steamid from username via api request
+                Dim document As New Xml.XmlDocument()
+                Try
+                    Dim url As String = "https://steamcommunity.com/id/" & idString & "?xml=1"
+                    document.Load(url)
+                    Dim idNode = document.SelectSingleNode("/profile/steamID64")
+                    idString = idNode.InnerText
+                Catch ex As Exception
+                    Try
+                        Dim errorMessage As String = document.SelectSingleNode("/response/error/text()").Value
+                        MsgBox("The given target could not be converted to a Steam64 ID:" & vbCrLf & txtTargetSteamID.Text & vbCrLf & "Reason: " & errorMessage, MsgBoxStyle.Critical)
+                        Return
+                    Catch ex_ As Exception
+                        'We display an error message later on
+                    End Try
+                End Try
             End If
         End If
 
