@@ -127,7 +127,8 @@ As a backup you can try contacting [/u/illusorywall](https://www.reddit.com/u/il
 or [@illusorywall](https://twitter.com/illusorywall), but I can't help as much
 with the technical stuff.
 
-Source code is available at: <https://github.com/Wulf2k/DaS-PC-MPChan>
+Source code is available at: <https://github.com/Wulf2k/DaS-PC-MPChan>  
+Source code for the DSCM-Net server: <https://github.com/Chronial/dscm-server>
 
 - - - - - - - - - - - - - - - - - - - - - - - -
 Brought to you by Lane Hatland (wulf2k@gmail.com).  
