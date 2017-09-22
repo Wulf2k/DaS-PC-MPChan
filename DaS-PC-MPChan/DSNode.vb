@@ -75,6 +75,7 @@ Public Class DSNode
     Public World As String
     Public Covenant As Integer = -1
     Public Indictments As Integer = -1
+    Public Ping As Integer = -1
 
 
     Public Function Clone() As DSNode
@@ -125,6 +126,11 @@ Public Class DSNode
     Public ReadOnly Property SoulLevelColumnSort As Integer
         Get
             Return SoulLevel
+        End Get
+    End Property
+    Public ReadOnly Property PingColumn As String
+        Get
+            Return If(Ping <= 0, "", Ping)
         End Get
     End Property
     Public ReadOnly Property MPZoneColumn As String
