@@ -24,10 +24,11 @@ Public Class NetClient
         content.Headers.ContentType = New Headers.MediaTypeHeaderValue("application/json")
         Return content
     End Function
-    Public Async Function publishLocalNodes(self As DSNode, nodes As IEnumerable(Of DSNode)) As Task
+    Public Async Function publishLocalNodes(self As DSNode, nodes As IEnumerable(Of DSNode), onlineSteamIds As List(Of UInt64)) As Task
         Dim data As New Dictionary(Of String, Object)() From {
             {"self", self},
-            {"nodes", nodes}
+            {"nodes", nodes},
+            {"online_ids", onlineSteamIds}
         }
         Dim content = JSONContent(data)
         Try

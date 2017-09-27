@@ -1,0 +1,74 @@
+Beginning:
+push eax
+push ebx
+push ecx
+push edx
+push esi
+
+// eax starts with the source adress
+// ecx := Beginning + 0x200
+call GetAddress
+GetAddress:
+pop ebx
+sub ebx, OFFSET FLAT: GetAddress
+add ebx, OFFSET FLAT: Beginning
+add ebx, 0x200
+
+mov esi, DWORD PTR [eax+8]
+mov ecx, DWORD PTR [eax+4]
+mov eax, esi
+sub eax, ecx
+cmp eax, 1600
+jne Return
+
+LoopStart:
+cmp esi, ecx
+jbe Return
+mov eax, DWORD PTR [ecx+24]
+mov edx, DWORD PTR [ecx+28]
+add ebx, 8
+add ecx, 32
+mov DWORD PTR [ebx-8], eax
+mov DWORD PTR [ebx-4], edx
+jmp LoopStart
+
+Return:
+pop esi
+pop edx
+pop ecx
+pop ebx
+pop eax
+
+
+
+Based on this C code:
+#include <stddef.h>
+#include <cstdint>
+
+
+struct xvector {
+    int f0;
+    void* startPtr;
+    void* endPtr;
+    void* bufferEndPtr;
+};
+
+struct LobbyMemberInfo {
+    xvector list;
+    int fa;
+    int fb;
+    int64_t ownerId;
+};
+
+
+void func(xvector* lobbyList, int64_t* dumpBuffer) {
+    int length = (LobbyMemberInfo*)lobbyList->endPtr - (LobbyMemberInfo*)lobbyList->startPtr;
+    if (length != 50) return;
+    int64_t* dumpPtr = dumpBuffer;
+    LobbyMemberInfo* lobbyPtr = (LobbyMemberInfo*)lobbyList->startPtr;
+    while(lobbyPtr < (LobbyMemberInfo*)lobbyList->endPtr){
+        *dumpPtr = lobbyPtr->ownerId;
+        dumpPtr++;
+        lobbyPtr++;
+    }
+};
