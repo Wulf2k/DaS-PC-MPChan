@@ -71,6 +71,7 @@ Public Class JmpHook
     Private _hookLocation As IntPtr
     Private _jmpTarget As Intptr
     Private _oldInstructions As Byte()
+    Private _isActive As Boolean
 
     Private Declare Function ReadProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesRead As Integer) As Boolean
     Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesWritten As Integer) As Boolean
@@ -82,17 +83,22 @@ Public Class JmpHook
         _jmpTarget = jmpTarget
         _oldInstructions = New Byte(hookInstructionSize-1) {}
         ReadProcessMemory(_process, _hookLocation, _oldInstructions, hookInstructionSize, vbNull)
+        _isActive = False
+    End Sub
+    Public Sub Activate()
+        If Not _isActive Then
+            Dim jmpOffset As Int32 = _jmpTarget - _hookLocation - 5
+            Dim jmpInstruction() As Byte = {&HE9}
+            jmpInstruction = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
 
-        Dim jmpOffset As Int32 = _jmpTarget - hookLocation - 5
-        Dim jmpInstruction() As Byte = {&HE9}
-        jmpInstruction = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
-
-        Dim nopInstruction As Byte = &H90
-        Dim replaceWith() As Byte = jmpInstruction.Concat(Enumerable.Repeat(nopInstruction, hookInstructionSize - 5)).ToArray()
-        WriteProcessMemory(_process, _hookLocation, replaceWith, replaceWith.Length, vbNull)
+            Dim nopInstruction As Byte = &H90
+            Dim replaceWith() As Byte = jmpInstruction.Concat(Enumerable.Repeat(nopInstruction, _oldInstructions.Length - 5)).ToArray()
+            WriteProcessMemory(_process, _hookLocation, replaceWith, replaceWith.Length, vbNull)
+            _isActive = True
+        End If
     End Sub
     Public Overloads Sub Dispose() Implements IDisposable.Dispose
-        If _hookLocation <> 0 Then
+        If _isActive And _hookLocation <> 0 Then
              WriteProcessMemory(_process, _hookLocation, _oldInstructions, _oldInstructions.Length, vbNull)
             _hookLocation = 0
         End If
@@ -102,6 +108,7 @@ Public Class JmpHook
     End Sub
     Public Shared Sub Permanent(targetProcessHandle As IntPtr, hookLocation As IntPtr, jmpTarget As IntPtr, Optional hookInstructionSize As UInt32 = 5)
         Dim hook As New JmpHook(targetProcessHandle, hookLocation, jmpTarget, hookInstructionSize)
+        hook.Activate()
         'Disable cleanup
         hook._hookLocation = 0
     End Sub
@@ -310,6 +317,7 @@ Public Class DarkSoulsProcess
                 WriteProcessMemory(_targetProcessHandle, namedNodeMemory, code, code.Length, 0)
 
                 namedNodeHook = New JmpHook(_targetProcessHandle, hookLoc, namedNodeMemory)
+                namedNodeHook.Activate()
             Else
                 'Disable Node Drawing
                 WriteBytes(cmpLoc, {&H0})
@@ -413,6 +421,7 @@ Public Class DarkSoulsProcess
         lobbyDumpHook = New JmpHook(_targetProcessHandle, hookLoc, lobbyDumpMemory, 7)
         code = lobbyDumpHook.PatchCode(code)
         WriteProcessMemory(_targetProcessHandle, lobbyDumpMemory, code, bufferSize, 0)
+        lobbyDumpHook.Activate()
     End Sub
     Private Sub TearDownLobbyDumpHook()
         If lobbyDumpHook IsNot Nothing THen
@@ -426,17 +435,7 @@ Public Class DarkSoulsProcess
     End Sub
 
     Private Sub SetupNodeDumpHook()
-        'Note to self, buffer is overly large.  Trim down some day.
-        Dim TargetBufferSize = 4096
-
-        Dim bytes2() As Byte
-
-        Dim bytjmp As Integer = &H78
-        Dim hookLoc As IntPtr = dsBase + &H7E637E
-
-        nodeDumpMemory = New AllocatedMemory(_targetProcessHandle, TargetBufferSize)
-
-        'ASM in Resources\ASM-NodeDump.txt
+        'ASM in ASM\ASM-NodeDump.txt
         Dim code() As Byte = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H0, &H0, &H0, &H0, &HB8, &H0, &H0, &H0, &H0,
                     &HBB, &H0, &H0, &H0, &H0, &HB9, &H0, &H0, &H0, &H0, &HBA, &H0, &H0, &H0, &H0, &H8A,
                     &H1F, &H80, &HFB, &H0, &HF, &H84, &H30, &H0, &H0, &H0, &H8A, &H6, &H8A, &H1F, &H46, &H47,
@@ -444,18 +443,21 @@ Public Class DarkSoulsProcess
                     &H29, &HCF, &HB9, &H0, &H0, &H0, &H0, &HE9, &HE, &H0, &H0, &H0, &H29, &HCE, &H29, &HCF,
                     &HB9, &H0, &H0, &H0, &H0, &H83, &HC7, &H30, &HEB, &HC5, &H8A, &H1E, &H88, &H1F, &H46, &H47,
                     &H41, &H83, &HF9, &H30, &HF, &H84, &H2, &H0, &H0, &H0, &HEB, &HEE, &H5F, &H5E, &H5A, &H59,
-                    &H5B, &H58, &H66, &HF, &HD6, &H46, &H14, &HE9, &H0, &H0, &H0, &H0}
+                    &H5B, &H58}
+
+        'Note to self, buffer is overly large.  Trim down some day.
+        Dim bufferSize = 4096
+        Dim hookLoc As IntPtr = dsBase + &H7E637E
+        nodeDumpMemory = New AllocatedMemory(_targetProcessHandle, bufferSize)
+        nodeDumpHook = New JmpHook(_targetProcessHandle, hookLoc, nodeDumpMemory, 5)
 
         'Adjust EDI
-        bytes2 = BitConverter.GetBytes(CType(nodeDumpMemory.address + &H200, UInt32))
-        Array.Copy(bytes2, 0, code, &H7, bytes2.Length)
+        Dim dumpStorageAddr() As Byte = BitConverter.GetBytes(CType(nodeDumpMemory.address + &H200, UInt32))
+        Array.Copy(dumpStorageAddr, 0, code, &H7, dumpStorageAddr.Length)
 
-        'Adjust the jump home
-        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpMemory.address, Int32))
-        Array.Copy(bytes2, 0, code, bytjmp, bytes2.Length)
-        WriteProcessMemory(_targetProcessHandle, nodeDumpMemory, code, TargetBufferSize, 0)
-
-        nodeDumpHook = New JmpHook(_targetProcessHandle, hookLoc, nodeDumpMemory)
+        code = nodeDumpHook.PatchCode(code)
+        WriteProcessMemory(_targetProcessHandle, nodeDumpMemory, code, bufferSize, 0)
+        nodeDumpHook.Activate()
     End Sub
     Private Sub TearDownNodeDumpHook()
         If nodeDumpHook IsNot Nothing THen
