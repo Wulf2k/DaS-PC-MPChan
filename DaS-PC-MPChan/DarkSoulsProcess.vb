@@ -580,7 +580,9 @@ Public Class DarkSoulsProcess
         Dim steamNodesPtr As IntPtr = ReadIntPtr(steamNodeList)
         For i = 0 To nodeCount - 1
             Dim node As New DSNode
-            Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC)
+            ' SteamPlayerData
+            Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC) 
+            ' SteamOnlineIDData
             Dim steamData2 As Integer = ReadInt32(steamData1 + &HC)
             node.SteamId = ReadSteamIdUnicode(steamData2 + &H30)
             node.CharacterName = ReadSteamName(steamData1 + &H30)
@@ -627,6 +629,26 @@ Public Class DarkSoulsProcess
             End If
             nodePtr += &H30
         End While
+
+        Dim sessionManagerAddress = dsBase + &HF62CC0
+        Dim p2pSystem = ReadIntPtr(sessionManagerAddress + &H64)
+        Dim connectionList = ReadIntPtr(p2pSystem + &H54)
+        Dim connectionListEntry = ReadIntPtr(connectionList)
+        Dim connection As IntPtr
+        While connectionListEntry <> connectionList
+            connection = ReadIntPtr(connectionListEntry + &H08)
+            Dim connectionStatus = ReadInt32(connection + &H08)
+            If connectionStatus > 2 Then
+                nodeSteamId = LCase(Hex(ReadUInt64(connection + &H170))).PadLeft(16, "0")
+                If ConnectedNodes.ContainsKey(nodeSteamId) Then
+                    Dim node = ConnectedNodes(nodeSteamId)
+                    node.Ping = ReadInt32(connection + &H178)
+                End If
+            End If
+            connectionListEntry = ReadIntPtr(connectionListEntry)
+        End While
+
+
 
         Dim selfPtr As IntPtr = ReadIntPtr(dsBase + &HF7E204)
         SelfNode.SoulLevel = ReadInt32(selfPtr + &HA30)

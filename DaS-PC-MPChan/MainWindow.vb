@@ -132,8 +132,12 @@ Public Class MainWindow
             .Columns("mpArea").Width = 60
             .Columns("mpArea").DataPropertyName = "MPZoneColumn"
             .Columns.Add("world", "World")
-            .Columns("world").Width = 200
+            .Columns("world").Width = 180
             .Columns("world").DataPropertyName = "WorldText"
+            .Columns.Add("ping", "Ping")
+            .Columns("ping").Width = 50
+            .Columns("ping").DataPropertyName = "PingColumn"
+            .Columns("ping").DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Font = New Font("Consolas", 10)
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
             .Sort(.Columns("soulLevel"), ListSortDirection.Ascending)
