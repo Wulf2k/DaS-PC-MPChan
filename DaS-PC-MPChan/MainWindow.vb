@@ -667,7 +667,7 @@ Public Class MainWindow
     End Sub
     Private Async Sub publishNodes() Handles publishNodesTimer.Tick
         If _netClient IsNot Nothing AndAlso dsProcess IsNot Nothing AndAlso dsProcess.SelfNode.SteamId IsNot Nothing Then
-            Await _netClient.publishLocalNodes(dsProcess.SelfNode, dsProcess.ConnectedNodes.Values())
+            Await _netClient.publishLocalNodes(dsProcess.SelfNode, dsProcess.ConnectedNodes.Values(), dsProcess.ReadLobbyList())
         End If
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick

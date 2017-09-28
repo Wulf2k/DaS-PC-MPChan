@@ -55,5 +55,3 @@ pop edx
 pop ecx
 pop ebx
 pop eax
-movq [esi+14],xmm0
-jmp darksouls.exe+7E6383
