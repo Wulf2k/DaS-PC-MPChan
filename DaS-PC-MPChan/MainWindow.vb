@@ -547,17 +547,14 @@ Public Class MainWindow
             End If
         Next
 
-        If badNodeCount <= Config.BadNodesThreshold Then
-            Return
-        End If
+        Dim disconnectCount = Math.Min(badNodeCount - Config.BadNodesThreshold, disconnectCandidates.Count)
+        disconnectCount = Math.Min(DisconnectTargetFreeNodes - (nmbMaxNodes.Value - dsProcess.NodeCount), disconnectCount)
 
-        Dim disconnectCount = DisconnectTargetFreeNodes - (nmbMaxNodes.Value - dsProcess.NodeCount)
-        If disconnectCount < 1 Or disconnectCandidates.Count < disconnectCount  Then
+        If disconnectCount < 1 Then
             Return
         End If
         Dim disconnectNodes = disconnectCandidates _
                 .OrderByDescending(Function(x) x.Item2) _
-                .ThenByDescending(Function(x) x.Item1.lastGoodTime) _
                 .Take(disconnectCount)
         For Each disconnectNode In disconnectNodes
             dsProcess.DisconnectSteamId(disconnectNode.Item1.node.SteamId)
