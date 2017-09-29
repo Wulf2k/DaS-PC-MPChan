@@ -27,6 +27,8 @@ Public Class MainWindow
 
     Public Version As String
 
+    Private random As New Random()
+
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _netClient As NetClient = Nothing
     Private netNodeDisplayList As New DSNodeBindingList()
@@ -375,15 +377,16 @@ Public Class MainWindow
         End If
     End Sub
     Private Sub connectToNetNode() Handles netNodeConnectTimer.Tick
-        If (_netClient Is Nothing OrElse
-                dsProcess Is Nothing OrElse
-                dsProcess.SelfSteamId = "" OrElse
+        If _netClient Is Nothing OrElse dsProcess Is Nothing Then Return
+
+        Dim inMenu = (dsProcess.SelfSteamId = "" OrElse
                 dsProcess.SelfNode.CharacterName = "" OrElse
-                dsProcess.SelfNode.PhantomType = -1) Then
-            'We either can't connect to other players yet or are lacking the
-            'neccessary information to make a good choice (our character is not loaded)
+                dsProcess.SelfNode.PhantomType = -1)
+
+        If inMenu AndAlso dsProcess.NodeCount >= Config.BadNodesThreshold
             Return
         End If
+
         If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
             Dim candidate As DSNode = selectNetNodeForConnecting()
             If candidate IsNot Nothing Then
@@ -408,6 +411,12 @@ Public Class MainWindow
         Next
 
         If candidates.Count = 0 Then Return Nothing
+
+        'Pick the first few nodes at random to improve the network structure
+        If dsProcess.NodeCount < Config.BadNodesThreshold Then
+            Dim idx = random.Next(candidates.Count)
+            Return candidates.Item(idx)
+        End If
 
         Dim self = dsProcess.SelfNode
 
