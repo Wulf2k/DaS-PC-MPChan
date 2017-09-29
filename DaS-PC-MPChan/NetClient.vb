@@ -14,6 +14,8 @@ Public Class NetClient
         Dim handler = New HttpClientHandler()
         handler.AutomaticDecompression = Net.DecompressionMethods.GZip Or Net.DecompressionMethods.Deflate
         client = New HttpClient(handler)
+        Dim version = mainWindow.lblVer.Text
+        client.DefaultRequestHeaders.Add("User-Agent", "DSCM/" & version)
         Me.mainWindow = mainWindow
     End Sub
     Private Function JSONContent(data As Object) As StringContent
