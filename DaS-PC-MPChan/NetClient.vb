@@ -59,6 +59,17 @@ Public Class NetClient
         End Try
         Return Nothing
     End Function
+    Public Async Function getWatchId() As Task(Of String)
+        Dim response As HttpResponseMessage = Await client.GetAsync(Config.NetServerUrl & "/get_watch")
+        response.EnsureSuccessStatusCode()
+        Dim content = Await response.Content.ReadAsStringAsync()
+        Dim serializer As New JavaScriptSerializer()
+        Dim dsNodeSer As New DSNodeSerializer()
+
+        Dim data As IDictionary(Of String, Object) = serializer.Deserialize(Of Dictionary(Of String, Object))(content)
+        Dim watch As String = data("watch")
+        Return watch
+    End Function
     Private Sub setStatus(status As String)
         If mainWindow.InvokeRequired Then
             mainWindow.Invoke(New setStatusDelegate(AddressOf setStatus), {status})
