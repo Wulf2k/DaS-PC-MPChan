@@ -424,7 +424,7 @@ Public Class MainWindow
                                            Return self.canDarkmoonInvade(other)
                                        End If
                                    ElseIf forestInvading Then
-                                       If other.World = DarkrootGardenWorld Then
+                                       If DarkrootGardenZones.Contains(other.MPZone) Then
                                            If other.HasExtendedInfo And other.Covenant = Covenant.ForestHunter Then
                                                Return False
                                            Else
@@ -488,7 +488,7 @@ Public Class MainWindow
         Dim self = dsProcess.SelfNode
         If (self.Covenant = Covenant.DarkmoonBlade AndAlso other.World = AnorLondoWorld AndAlso
             self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquipped) Then Return 0
-        If (self.Covenant = Covenant.ForestHunter AndAlso other.World = DarkrootGardenWorld AndAlso
+        If (self.Covenant = Covenant.ForestHunter AndAlso DarkrootGardenZones.Contains(other.MPZone) AndAlso
             self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquipped) Then Return 0
 
         If self.World = other.World Then
@@ -503,7 +503,7 @@ Public Class MainWindow
 
         'TODO: check whether Sif is alive
         'If we knew that the other player is a Forest Hunter, we could mark this as a good node
-        If (self.Covenant <> Covenant.ForestHunter AndAlso self.World = DarkrootGardenWorld AndAlso
+        If (self.Covenant <> Covenant.ForestHunter AndAlso DarkrootGardenZones.Contains(self.MPZone) AndAlso
             other.canForestInvade(self)) Then Return 1
         'TODO: Add Dark Anor Londo check once we read out anor londo darkness
         Return 2

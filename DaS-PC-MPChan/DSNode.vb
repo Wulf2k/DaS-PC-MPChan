@@ -2,7 +2,7 @@
     Public PhantomType As New Dictionary(Of Integer, String)
     Public World As New Dictionary(Of String, String)
     Public Covenant As New Dictionary(Of Integer, String)
-    Public DarkrootGardenWorld = "12-0"
+    Public DarkrootGardenZones As New HashSet(Of Integer)({120100, 120101})
     Public AnorLondoWorld = "15-1"
 
     Sub New()
