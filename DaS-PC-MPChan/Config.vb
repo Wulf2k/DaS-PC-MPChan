@@ -11,6 +11,11 @@
 
     'How frequently should we connect to node from the central server?
     Public Const NetNodeConnectInterval = 10 * 1000
+    
+    'How frequently should we check our watch node?
+    Public Const CheckWatchNodeInterval = 20 * 1000
+    'How frequently should we exchange our watch node?
+    Public Const ExchangeWatchNodeInterval = 5 * 60 * 1000
 
     'How frequenlty should we check the only state of recent nodes and favourites via steam api?
     Public Const OnlineCheckInterval = 10 * 60 * 1000

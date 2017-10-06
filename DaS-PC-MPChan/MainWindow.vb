@@ -14,6 +14,7 @@ Public Class MainWindow
     Private WithEvents updateOnlineStateTimer As New System.Windows.Forms.Timer()
     Private WithEvents netNodeConnectTimer As New System.Windows.Forms.Timer()
     Private WithEvents publishNodesTimer As New System.Windows.Forms.Timer()
+    Private WithEvents checkWatchNodeTimer As New System.Windows.Forms.Timer()
     Private WithEvents dsAttachmentTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
@@ -34,6 +35,8 @@ Public Class MainWindow
     Private netNodeDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
     Private connectedNodes As New Dictionary(Of String, ConnectedNode)
+    Private watchSteamId As String = Nothing
+    Private watchExchangedLastTime As Date = DateTime.UTCNow
 
     Private manualConnections As New HashSet(Of String)
 
@@ -89,6 +92,7 @@ Public Class MainWindow
         updateNetNodesTimer.Interval = Config.UpdateNetNodesInterval
         netNodeConnectTimer.Interval = Config.NetNodeConnectInterval
         publishNodesTimer.Interval = Config.PublishNodesInterval
+        checkWatchNodeTimer.Interval = Config.CheckWatchNodeInterval
 
         attachDSProcess()
 
@@ -387,7 +391,7 @@ Public Class MainWindow
             Return
         End If
 
-        If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
+        If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam - 1 Then
             Dim candidate As DSNode = selectNetNodeForConnecting()
             If candidate IsNot Nothing Then
                 connectToSteamId(candidate.SteamId)
@@ -525,6 +529,9 @@ Public Class MainWindow
         Dim disconnectCandidates As New List(Of Tuple(Of ConnectedNode, Integer))()
         Dim badNodeCount = 0
         For Each connectedNode In connectedNodes.Values
+            If Not IsNothing(watchSteamId) AndAlso connectedNode.node.SteamId = watchSteamId Then
+                Continue For
+            End If
             Dim ranking = nodeRanking(connectedNode.node)
             If ranking = 0 Then
                 connectedNode.lastGoodTime = now
@@ -665,6 +672,30 @@ Public Class MainWindow
             tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
         End If
     End Sub
+    Private Async Sub checkWatchNode() Handles checkWatchNodeTimer.Tick
+        If _netClient Is Nothing Or dsProcess Is Nothing Then Return
+
+        Dim connectedToOldNode = Not IsNothing(watchSteamId) AndAlso connectedNodes.ContainsKey(watchSteamId)
+
+        If connectedToOldNode And (DateTime.UtcNow - watchExchangedLastTime).TotalMilliseconds <= Config.ExchangeWatchNodeInterval
+            Return
+        End If
+
+        If dsProcess.NodeCount - connectedToOldNode < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
+            If Not IsNothing(watchSteamId) Then
+                dsProcess.DisconnectSteamId(watchSteamId)
+            End If
+
+            Try
+                Dim newWatchId = Await _netClient.getWatchId()
+                watchSteamId = newWatchId
+                watchExchangedLastTime = DateTime.UtcNow
+                dsProcess.ConnectToSteamId(newWatchId)
+            Catch ex As Exception
+                txtIRCDebug.Text = "Failed to get new watch: " & ex.Message
+            End Try
+        End If
+    End Sub
     Private Async Sub updateNetNodes() Handles updateNetNodesTimer.Tick
         If _netClient IsNot Nothing Then
             Await _netClient.loadNodes()
@@ -773,8 +804,12 @@ Public Class MainWindow
         'Color Rows according to ranking
         For Each row As DataGridViewRow In dgvMPNodes.Rows
             Dim steamId = row.Cells("steamId").Value
+            row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0)
             If steamId = selfNode.SteamId Then
                 row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(198, 239, 206)
+            ElseIf steamId = watchSteamId Then
+                row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(100, 100, 100)
+                row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(200, 200, 200)
             Else
                 Dim ranking = nodeRanking(activeNodes(steamId))
                 If ranking = 2 Then
@@ -1008,12 +1043,14 @@ Public Class MainWindow
             netNodeConnectTimer.Start()
             updateNetNodesTimer.Start()
             publishNodesTimer.Start()
+            checkWatchNodeTimer.Start()
             updateNetNodes()
         Else
             If _netClient IsNot Nothing Then
                 updateNetNodesTimer.Stop()
                 netNodeConnectTimer.Stop()
                 publishNodesTimer.Stop()
+                checkWatchNodeTimer.Stop()
                 _netClient = Nothing
             End If
         End If
