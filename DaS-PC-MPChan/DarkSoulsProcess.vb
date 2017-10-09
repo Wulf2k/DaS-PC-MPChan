@@ -34,7 +34,7 @@ Public Class AllocatedMemory
         _process = targetProcessHandle
         _address = VirtualAllocEx(_process, 0, size, MEM_COMMIT, PAGE_READWRITE)
         If _address = 0 Then
-            Throw New ApplicationException("Failed to allocate Memory")
+            Throw New ApplicationException("Failed to allocate Memory. Error Code: " & Err.LastDllError.ToString())
         End If
         Dim oldProtectionOut As UInteger
         VirtualProtectEx(_process, _address, size, PAGE_EXECUTE_READWRITE, oldProtectionOut)
