@@ -22,6 +22,7 @@ Partial Class MainWindow
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
+        Me.components = New System.ComponentModel.Container()
         Dim lblNodes As System.Windows.Forms.Label
         Dim lblNodeDiv As System.Windows.Forms.Label
         Dim lblYourId As System.Windows.Forms.Label
@@ -69,8 +70,6 @@ Partial Class MainWindow
         Me.tabDSCMNet = New System.Windows.Forms.TabPage()
         Me.txtIRCDebug = New System.Windows.Forms.TextBox()
         Me.dgvDSCMNet = New DSCM.ExtendedDataGridView()
-        Me.tabHelp = New System.Windows.Forms.TabPage()
-        Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.tabLocal = New System.Windows.Forms.TabPage()
         Me.clbEventFlags = New System.Windows.Forms.CheckedListBox()
         Me.txtBlueCooldown = New System.Windows.Forms.TextBox()
@@ -86,6 +85,15 @@ Partial Class MainWindow
         Me.txtSin = New System.Windows.Forms.TextBox()
         Me.txtWatchdogActive = New System.Windows.Forms.TextBox()
         Me.txtLocalSteamName = New System.Windows.Forms.TextBox()
+        Me.tabDebugLog = New System.Windows.Forms.TabPage()
+        Me.chkLogLobby = New System.Windows.Forms.CheckBox()
+        Me.chkLoggerEnabled = New System.Windows.Forms.CheckBox()
+        Me.chkLogDBG = New System.Windows.Forms.CheckBox()
+        Me.lbxDebugLog = New DSCM.DebugLogForm()
+        Me.debugLogContextMenu = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.itmCopy = New System.Windows.Forms.ToolStripMenuItem()
+        Me.tabHelp = New System.Windows.Forms.TabPage()
+        Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
         Me.btnRemFavorite = New System.Windows.Forms.Button()
         Me.lblNewVersion = New System.Windows.Forms.Label()
@@ -119,8 +127,10 @@ Partial Class MainWindow
         CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabDSCMNet.SuspendLayout
         CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).BeginInit
-        Me.tabHelp.SuspendLayout
         Me.tabLocal.SuspendLayout
+        Me.tabDebugLog.SuspendLayout
+        Me.debugLogContextMenu.SuspendLayout
+        Me.tabHelp.SuspendLayout
         Me.SuspendLayout
         '
         'lblNodes
@@ -382,8 +392,9 @@ Partial Class MainWindow
         Me.tabs.Controls.Add(Me.tabFavorites)
         Me.tabs.Controls.Add(Me.tabRecent)
         Me.tabs.Controls.Add(Me.tabDSCMNet)
-        Me.tabs.Controls.Add(Me.tabHelp)
         Me.tabs.Controls.Add(Me.tabLocal)
+        Me.tabs.Controls.Add(Me.tabDebugLog)
+        Me.tabs.Controls.Add(Me.tabHelp)
         Me.tabs.Location = New System.Drawing.Point(10, 115)
         Me.tabs.Name = "tabs"
         Me.tabs.SelectedIndex = 0
@@ -601,28 +612,6 @@ Partial Class MainWindow
         Me.dgvDSCMNet.Size = New System.Drawing.Size(740, 267)
         Me.dgvDSCMNet.TabIndex = 54
         '
-        'tabHelp
-        '
-        Me.tabHelp.Controls.Add(Me.helpView)
-        Me.tabHelp.Location = New System.Drawing.Point(4, 22)
-        Me.tabHelp.Name = "tabHelp"
-        Me.tabHelp.Padding = New System.Windows.Forms.Padding(3)
-        Me.tabHelp.Size = New System.Drawing.Size(757, 302)
-        Me.tabHelp.TabIndex = 4
-        Me.tabHelp.Text = "Help"
-        Me.tabHelp.UseVisualStyleBackColor = true
-        '
-        'helpView
-        '
-        Me.helpView.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
-            Or System.Windows.Forms.AnchorStyles.Left)  _
-            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.helpView.Location = New System.Drawing.Point(3, 3)
-        Me.helpView.MinimumSize = New System.Drawing.Size(20, 20)
-        Me.helpView.Name = "helpView"
-        Me.helpView.Size = New System.Drawing.Size(751, 293)
-        Me.helpView.TabIndex = 0
-        '
         'tabLocal
         '
         Me.tabLocal.Controls.Add(Me.clbEventFlags)
@@ -787,6 +776,102 @@ Partial Class MainWindow
         Me.txtLocalSteamName.Size = New System.Drawing.Size(179, 23)
         Me.txtLocalSteamName.TabIndex = 64
         '
+        'tabDebugLog
+        '
+        Me.tabDebugLog.Controls.Add(Me.chkLogLobby)
+        Me.tabDebugLog.Controls.Add(Me.chkLoggerEnabled)
+        Me.tabDebugLog.Controls.Add(Me.chkLogDBG)
+        Me.tabDebugLog.Controls.Add(Me.lbxDebugLog)
+        Me.tabDebugLog.Location = New System.Drawing.Point(4, 22)
+        Me.tabDebugLog.Name = "tabDebugLog"
+        Me.tabDebugLog.Padding = New System.Windows.Forms.Padding(3)
+        Me.tabDebugLog.Size = New System.Drawing.Size(757, 302)
+        Me.tabDebugLog.TabIndex = 6
+        Me.tabDebugLog.Text = "DS Debug Log"
+        Me.tabDebugLog.UseVisualStyleBackColor = true
+        '
+        'chkLogLobby
+        '
+        Me.chkLogLobby.AutoSize = true
+        Me.chkLogLobby.Location = New System.Drawing.Point(251, 8)
+        Me.chkLogLobby.Name = "chkLogLobby"
+        Me.chkLogLobby.Size = New System.Drawing.Size(144, 17)
+        Me.chkLogLobby.TabIndex = 4
+        Me.chkLogLobby.Text = "Include Lobby Messages"
+        Me.chkLogLobby.UseVisualStyleBackColor = true
+        '
+        'chkLoggerEnabled
+        '
+        Me.chkLoggerEnabled.AutoSize = true
+        Me.chkLoggerEnabled.Location = New System.Drawing.Point(6, 8)
+        Me.chkLoggerEnabled.Name = "chkLoggerEnabled"
+        Me.chkLoggerEnabled.Size = New System.Drawing.Size(95, 17)
+        Me.chkLoggerEnabled.TabIndex = 3
+        Me.chkLoggerEnabled.Text = "Enable Logger"
+        Me.chkLoggerEnabled.UseVisualStyleBackColor = true
+        '
+        'chkLogDBG
+        '
+        Me.chkLogDBG.AutoSize = true
+        Me.chkLogDBG.Checked = true
+        Me.chkLogDBG.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.chkLogDBG.Location = New System.Drawing.Point(107, 8)
+        Me.chkLogDBG.Name = "chkLogDBG"
+        Me.chkLogDBG.Size = New System.Drawing.Size(137, 17)
+        Me.chkLogDBG.TabIndex = 2
+        Me.chkLogDBG.Text = "Include DBG messages"
+        Me.chkLogDBG.UseVisualStyleBackColor = true
+        '
+        'lbxDebugLog
+        '
+        Me.lbxDebugLog.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left)  _
+            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.lbxDebugLog.CausesValidation = false
+        Me.lbxDebugLog.ContextMenuStrip = Me.debugLogContextMenu
+        Me.lbxDebugLog.Font = New System.Drawing.Font("Consolas", 9!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
+        Me.lbxDebugLog.HorizontalScrollbar = true
+        Me.lbxDebugLog.ItemHeight = 14
+        Me.lbxDebugLog.Location = New System.Drawing.Point(6, 34)
+        Me.lbxDebugLog.Name = "lbxDebugLog"
+        Me.lbxDebugLog.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended
+        Me.lbxDebugLog.Size = New System.Drawing.Size(745, 256)
+        Me.lbxDebugLog.TabIndex = 0
+        '
+        'debugLogContextMenu
+        '
+        Me.debugLogContextMenu.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.itmCopy})
+        Me.debugLogContextMenu.Name = "debugLogContextMenu"
+        Me.debugLogContextMenu.Size = New System.Drawing.Size(101, 26)
+        '
+        'itmCopy
+        '
+        Me.itmCopy.Name = "itmCopy"
+        Me.itmCopy.Size = New System.Drawing.Size(100, 22)
+        Me.itmCopy.Text = "copy"
+        '
+        'tabHelp
+        '
+        Me.tabHelp.Controls.Add(Me.helpView)
+        Me.tabHelp.Location = New System.Drawing.Point(4, 22)
+        Me.tabHelp.Name = "tabHelp"
+        Me.tabHelp.Padding = New System.Windows.Forms.Padding(3)
+        Me.tabHelp.Size = New System.Drawing.Size(757, 302)
+        Me.tabHelp.TabIndex = 4
+        Me.tabHelp.Text = "Help"
+        Me.tabHelp.UseVisualStyleBackColor = true
+        '
+        'helpView
+        '
+        Me.helpView.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
+            Or System.Windows.Forms.AnchorStyles.Left)  _
+            Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
+        Me.helpView.Location = New System.Drawing.Point(3, 3)
+        Me.helpView.MinimumSize = New System.Drawing.Size(20, 20)
+        Me.helpView.Name = "helpView"
+        Me.helpView.Size = New System.Drawing.Size(751, 293)
+        Me.helpView.TabIndex = 0
+        '
         'btnAddFavorite
         '
         Me.btnAddFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
@@ -901,9 +986,12 @@ Partial Class MainWindow
         Me.tabDSCMNet.ResumeLayout(false)
         Me.tabDSCMNet.PerformLayout
         CType(Me.dgvDSCMNet,System.ComponentModel.ISupportInitialize).EndInit
-        Me.tabHelp.ResumeLayout(false)
         Me.tabLocal.ResumeLayout(false)
         Me.tabLocal.PerformLayout
+        Me.tabDebugLog.ResumeLayout(false)
+        Me.tabDebugLog.PerformLayout
+        Me.debugLogContextMenu.ResumeLayout(false)
+        Me.tabHelp.ResumeLayout(false)
         Me.ResumeLayout(false)
         Me.PerformLayout
 
@@ -950,4 +1038,11 @@ End Sub
     Friend WithEvents txtBlueCooldown As TextBox
     Friend WithEvents btnLaunchDS As Button
     Friend WithEvents clbEventFlags As CheckedListBox
+    Friend WithEvents tabDebugLog As System.Windows.Forms.TabPage
+    Friend WithEvents chkLogDBG As System.Windows.Forms.CheckBox
+    Friend WithEvents chkLoggerEnabled As System.Windows.Forms.CheckBox
+    Friend WithEvents lbxDebugLog As DSCM.DebugLogForm
+    Friend WithEvents debugLogContextMenu As System.Windows.Forms.ContextMenuStrip
+    Friend WithEvents itmCopy As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents chkLogLobby As System.Windows.Forms.CheckBox
 End Class

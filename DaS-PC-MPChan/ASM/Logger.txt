@@ -1,0 +1,60 @@
+.intel_syntax noprefix
+
+pipe:
+  .long 0
+mylogger: #;(int, short*, int)
+  mov eax, DWORD PTR [esp+4]
+  mov edx, DWORD PTR [esp+8]
+  push ebp
+
+  call GetAddress
+GetAddress:
+  pop ebp
+  sub ebp, OFFSET FLAT: GetAddress
+
+  push edx
+  push eax
+  mov edx, esp
+  mov eax, 4
+  call WriteFileProxy
+  pop eax
+  pop edx
+
+  mov eax, 1
+LoopStart:
+  cmp WORD PTR [edx-2+eax*2], 0
+  je LoopEnd
+  inc eax
+  jmp LoopStart
+LoopEnd:
+  add eax, eax
+  
+  call WriteFileProxy
+
+  pop ebp
+  ret
+
+WriteFileProxy:
+  #; eax=len, ebp=codeStart, edx=buffer*
+  #; dirty: ecx
+  push eax
+  push edx
+  sub esp, 4
+  mov ecx, esp
+
+  push 0
+  push ecx
+  push eax
+  push edx
+  mov eax, [ebp + pipe]
+  push eax
+  mov eax, [ebp + WriteFile]
+  call [eax]
+
+  add esp, 4
+  pop edx
+  pop eax
+  ret
+   
+WriteFile:
+  .long 0x10CC260

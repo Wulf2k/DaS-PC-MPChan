@@ -3,6 +3,8 @@
     Public Const OnlineCheckUrl = "http://chronial.de/scripts/dscm/is_online.php"
     Public Const NetServerUrl = "http://dscm-net.chronial.de:8811"
 
+    Public Const DebugLogLength = 10000
+
     'How frequently should we update the node list from the central server?
     Public Const UpdateNetNodesInterval = 120 * 1000
 
