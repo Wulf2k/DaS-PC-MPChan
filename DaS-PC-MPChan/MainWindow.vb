@@ -30,6 +30,8 @@ Public Class MainWindow
 
     Private random As New Random()
 
+    Private optionsLoaded As Boolean = False
+
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _netClient As NetClient = Nothing
     Private netNodeDisplayList As New DSNodeBindingList()
@@ -287,6 +289,8 @@ Public Class MainWindow
         chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
         nmbMaxNodes.Value = key.GetValue("MaxNodes")
+
+        optionsLoaded = True
     End Sub
     Private Sub updateOnlineState_Tick() Handles updateOnlineStateTimer.Tick
         updateOnlineState()
@@ -569,8 +573,6 @@ Public Class MainWindow
     End Sub
     Private Sub updateUI() Handles updateUITimer.Tick
         If dsProcess Is Nothing Then
-            nmbMaxNodes.Enabled = False
-            nmbMaxNodes.BackColor = New Color()
             btnLaunchDS.Visible = true
         Else
             'Node display
@@ -580,12 +582,18 @@ Public Class MainWindow
             btnLaunchDS.Visible = False
 
             Dim maxNodes = dsProcess.MaxNodes
-            If maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
-                If maxNodes <> nmbMaxNodes.Value Then
+            ' Reading the value messes with input
+            If Not nmbMaxNodes.Focused Then
+                If maxNodes <> nmbMaxNodes.Value And maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
                     dsProcess.MaxNodes = nmbMaxNodes.Value
+                    'Read again, in case something else is force-setting it
                     maxNodes = dsProcess.MaxNodes
                 End If
-                nmbMaxNodes.Value = maxNodes
+            End If
+            If maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
+                If Not nmbMaxNodes.Focused Then
+                    nmbMaxNodes.Value = maxNodes
+                End If
                 nmbMaxNodes.Enabled = True
                 nmbMaxNodes.BackColor = New Color()
             Else
@@ -893,9 +901,9 @@ Public Class MainWindow
     Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
         If Not IsNothing(dsProcess) Then
             dsProcess.MaxNodes = nmbMaxNodes.Value
-            Dim key As Microsoft.Win32.RegistryKey
-
-            key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+        End If
+        If optionsLoaded Then
+            Dim key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
             key.SetValue("MaxNodes", nmbMaxNodes.Value)
         End If
     End Sub

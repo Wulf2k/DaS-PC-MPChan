@@ -334,7 +334,6 @@ Partial Class MainWindow
         'nmbMaxNodes
         '
         Me.nmbMaxNodes.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
-        Me.nmbMaxNodes.Enabled = false
         Me.nmbMaxNodes.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0,Byte))
         Me.nmbMaxNodes.Location = New System.Drawing.Point(737, 3)
         Me.nmbMaxNodes.Maximum = New Decimal(New Integer() {32, 0, 0, 0})
