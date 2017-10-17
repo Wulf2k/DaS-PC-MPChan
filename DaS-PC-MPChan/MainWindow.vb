@@ -1144,28 +1144,21 @@ Inherits ListBox
             End If
         End SyncLock
     End Sub
-    Protected Overrides Sub OnKeyDown(e As KeyEventArgs)
-        MyBase.OnKeyDown(e)
-        If e.Control And e.KeyCode = Keys.A Then
+    Public Sub InitContextMenu() Handles Me.ContextMenuStripChanged
+        If IsNothing(ContextMenuStrip) Then Return
+        AddHandler ContextMenuStrip.ItemClicked, AddressOf ContextMenuItemClicked
+    End Sub
+    Private Sub ContextMenuItemClicked(sender As Object, e As ToolStripItemClickedEventArgs)
+        If e.ClickedItem.Name = "copy" Then
+            Dim text = String.Join(vbCrLf, SelectedItems.Cast(Of DebugLogEntry).Select(Function(x) x.ToString()).ToArray())
+            Clipboard.SetData(DataFormats.UnicodeText, text)
+        ElseIf e.ClickedItem.Name = "selectAll" Then
             BeginUpdate()
             For i = 0 To Items.Count - 1
                 Me.SetSelected(i, True)
             Next
             EndUpdate()
-        ElseIf e.Control And e.KeyCode = Keys.C Then
-            CopySelection()
         End If
-    End Sub
-    Public Sub InitContextMenu() Handles Me.ContextMenuStripChanged
-        If IsNothing(ContextMenuStrip) Then Return
-        AddHandler ContextMenuStrip.ItemClicked, AddressOf ContextMenuItemClicked
-    End Sub
-    Private Sub ContextMenuItemClicked(sender As Object,  e As ToolStripItemClickedEventArgs)
-        CopySelection()
-    End Sub
-    Private Sub CopySelection()
-        Dim text = String.Join(vbCrLf, SelectedItems.Cast(Of DebugLogEntry).Select(Function(x) x.ToString()).ToArray())
-        Clipboard.SetData(DataFormats.UnicodeText, text)
     End Sub
 End Class
 

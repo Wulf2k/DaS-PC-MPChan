@@ -51,6 +51,8 @@ Partial Class MainWindow
         Dim DataGridViewCellStyle10 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle11 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
         Dim DataGridViewCellStyle12 As System.Windows.Forms.DataGridViewCellStyle = New System.Windows.Forms.DataGridViewCellStyle()
+        Dim selectAll As System.Windows.Forms.ToolStripMenuItem
+        Dim copy As System.Windows.Forms.ToolStripMenuItem
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(MainWindow))
         Me.chkDebugDrawing = New System.Windows.Forms.CheckBox()
         Me.lblVer = New System.Windows.Forms.Label()
@@ -91,7 +93,6 @@ Partial Class MainWindow
         Me.chkLogDBG = New System.Windows.Forms.CheckBox()
         Me.lbxDebugLog = New DSCM.DebugLogForm()
         Me.debugLogContextMenu = New System.Windows.Forms.ContextMenuStrip(Me.components)
-        Me.itmCopy = New System.Windows.Forms.ToolStripMenuItem()
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
@@ -117,6 +118,8 @@ Partial Class MainWindow
         Label11 = New System.Windows.Forms.Label()
         Label12 = New System.Windows.Forms.Label()
         Label13 = New System.Windows.Forms.Label()
+        selectAll = New System.Windows.Forms.ToolStripMenuItem()
+        copy = New System.Windows.Forms.ToolStripMenuItem()
         CType(Me.nmbMaxNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabs.SuspendLayout
         Me.tabActive.SuspendLayout
@@ -840,15 +843,23 @@ Partial Class MainWindow
         '
         'debugLogContextMenu
         '
-        Me.debugLogContextMenu.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.itmCopy})
+        Me.debugLogContextMenu.Items.AddRange(New System.Windows.Forms.ToolStripItem() {selectAll, copy})
         Me.debugLogContextMenu.Name = "debugLogContextMenu"
-        Me.debugLogContextMenu.Size = New System.Drawing.Size(101, 26)
+        Me.debugLogContextMenu.Size = New System.Drawing.Size(165, 70)
         '
-        'itmCopy
+        'selectAll
         '
-        Me.itmCopy.Name = "itmCopy"
-        Me.itmCopy.Size = New System.Drawing.Size(100, 22)
-        Me.itmCopy.Text = "copy"
+        selectAll.Name = "selectAll"
+        selectAll.ShortcutKeys = CType((System.Windows.Forms.Keys.Control Or System.Windows.Forms.Keys.A),System.Windows.Forms.Keys)
+        selectAll.Size = New System.Drawing.Size(164, 22)
+        selectAll.Text = "Select All"
+        '
+        'copy
+        '
+        copy.Name = "copy"
+        copy.ShortcutKeys = CType((System.Windows.Forms.Keys.Control Or System.Windows.Forms.Keys.C),System.Windows.Forms.Keys)
+        copy.Size = New System.Drawing.Size(164, 22)
+        copy.Text = "Copy"
         '
         'tabHelp
         '
@@ -1043,6 +1054,5 @@ End Sub
     Friend WithEvents chkLoggerEnabled As System.Windows.Forms.CheckBox
     Friend WithEvents lbxDebugLog As DSCM.DebugLogForm
     Friend WithEvents debugLogContextMenu As System.Windows.Forms.ContextMenuStrip
-    Friend WithEvents itmCopy As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents chkLogLobby As System.Windows.Forms.CheckBox
 End Class
