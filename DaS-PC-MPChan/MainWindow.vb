@@ -45,6 +45,7 @@ Public Class MainWindow
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        lbxDebugLog.Load(Me)
         Version = lblVer.Text
 
         Dim oldFileArg As String = Nothing
@@ -672,13 +673,21 @@ Public Class MainWindow
                 End Try
             Next
 
-
+            UpdateDebugLog()
         End If
 
 
         If Not tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")" Then
             tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
         End If
+    End Sub
+    Private Sub UpdateDebugLog()
+        If Not IsNothing(dsProcess) Then
+            lbxDebugLog.UpdateFromDS(dsProcess.debugLog)
+        End If
+    End Sub
+    Private Sub chkLoggerEnabled_CheckedChanged( sender As Object,  e As EventArgs) Handles chkLoggerEnabled.CheckedChanged
+        If Not IsNothing(dsProcess) Then dsProcess.enableDebugLog = chkLoggerEnabled.Checked
     End Sub
     Private Async Sub checkWatchNode() Handles checkWatchNodeTimer.Tick
         If _netClient Is Nothing Or dsProcess Is Nothing Then Return
@@ -749,6 +758,7 @@ Public Class MainWindow
                 dsProcess = New DarkSoulsProcess()
                 dsProcessStatus.Text = " Attached to Dark Souls process"
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(200, 255, 200)
+                dsProcess.enableDebugLog = chkLoggerEnabled.Checked
             Catch ex As DSProcessAttachException
                 dsProcessStatus.Text = " " & ex.Message
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
@@ -1078,6 +1088,95 @@ Public Class MainWindow
     End Sub
 End Class
 
+
+Class DebugLogForm
+Inherits ListBox
+    Private mw As MainWindow
+    Private LobbyRegex As New Regex("^SteamMatchmaking|^Property added:|^LobbyData")
+    Public Sub Load(mainWindow As MainWindow)
+        mw = mainWindow
+        AddHandler mw.chkLogDBG.CheckedChanged, AddressOf FilterEntries
+        AddHandler mw.chkLogLobby.CheckedChanged, AddressOf FilterEntries
+    End Sub
+    Private ReadOnly Property ShowDbgEntries As Boolean
+        Get
+            Return mw.chkLogDBG.Checked
+        End Get
+    End Property
+    Private ReadOnly Property ShowLobbyEntries As Boolean
+        Get
+            Return mw.chkLogLobby.Checked
+        End Get
+    End Property
+    Private Function EntryAllowed(entry As DebugLogEntry) As Boolean
+        If Not ShowDbgEntries AndAlso entry.severity = "DBG" Then Return False
+        If Not ShowLobbyEntries AndAlso entry.severity = "DBG" AndAlso LobbyRegex.IsMatch(entry.msg) Then Return False
+        Return True
+    End Function
+    Public Sub FilterEntries()
+        Me.BeginUpdate()
+        For i = Items.Count - 1 To 0 Step -1
+            If Not EntryAllowed(Items(i)) Then
+                Items.RemoveAt(i)
+            End If
+        Next
+        Me.EndUpdate()
+    End Sub
+    Public Sub UpdateFromDS(dsDebugLog As List(Of DebugLogEntry))
+        SyncLock dsDebugLog
+            If dsDebugLog.Count
+                Me.BeginUpdate()
+                Dim itemsVisible As Integer = (Me.Height \ Me.ItemHeight)
+                Dim scrollToBottom = Me.TopIndex > Items.Count - itemsVisible - 1
+
+                For Each entry In dsDebugLog
+                    entry.msg = LogTranslations.TranslateMessage(entry.msg)
+                    If EntryAllowed(entry) Then Items.Add(entry)
+                Next
+                dsDebugLog.Clear()
+
+                While Items.Count > Config.DebugLogLength
+                    Items.RemoveAt(0)
+                End While
+                
+                Me.EndUpdate()
+                If scrollToBottom Then Me.TopIndex = Me.Items.Count - 1
+            End If
+        End SyncLock
+    End Sub
+    Public Sub InitContextMenu() Handles Me.ContextMenuStripChanged
+        If IsNothing(ContextMenuStrip) Then Return
+        AddHandler ContextMenuStrip.ItemClicked, AddressOf ContextMenuItemClicked
+    End Sub
+    Private Sub ContextMenuItemClicked(sender As Object, e As ToolStripItemClickedEventArgs)
+        If e.ClickedItem.Name = "copy" Then
+            Dim text = String.Join(vbCrLf, SelectedItems.Cast(Of DebugLogEntry).Select(Function(x) x.ToString()).ToArray())
+            Clipboard.SetData(DataFormats.UnicodeText, text)
+        ElseIf e.ClickedItem.Name = "selectAll" Then
+            BeginUpdate()
+            For i = 0 To Items.Count - 1
+                Me.SetSelected(i, True)
+            Next
+            EndUpdate()
+        End If
+    End Sub
+End Class
+
+Public Class DebugLogEntry
+    Public severity As String
+    Public msg As String
+    Public ts As Date
+
+    Sub New(ts, severity, msg)
+        Me.ts = ts
+        Me.severity = severity
+        Me.msg = msg
+    End Sub
+
+    Public Overrides Function ToString() As String
+        Return ts.ToString("hh:mm:ss.fff") & " " & severity & ": " & msg
+    End Function
+End Class
 
 Class ConnectedNode
     Public node As DSNode

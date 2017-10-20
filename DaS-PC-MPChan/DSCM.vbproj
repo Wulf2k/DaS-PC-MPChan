@@ -107,6 +107,7 @@
     <Compile Include="ASM.vb" />
     <Compile Include="Config.vb" />
     <Compile Include="DarkSoulsProcess.vb" />
+    <Compile Include="LogTranslations.vb" />
     <Compile Include="MainWindow.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -163,7 +164,9 @@
       <CustomToolNamespace>My</CustomToolNamespace>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Resources\namecrash.bin" />
   </ItemGroup>
   <ItemGroup>

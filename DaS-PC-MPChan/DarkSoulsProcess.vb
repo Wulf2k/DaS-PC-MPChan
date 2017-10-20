@@ -1,5 +1,6 @@
 Imports System.Text
 Imports System.Threading
+Imports System.Runtime.InteropServices
 
 Public Class DSProcessAttachException
     Inherits System.ApplicationException
@@ -136,6 +137,13 @@ Public Class DarkSoulsProcess
     Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByVal lpNumberOfBytesWritten As Integer) As Boolean
     Private Declare Function CloseHandle Lib "kernel32.dll" (ByVal hObject As IntPtr) As Boolean
     Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpThreadAttributes As IntPtr, ByVal dwStackSize As Integer, ByVal lpStartAddress As IntPtr, ByVal lpParameter As IntPtr, ByVal dwCreationFlags As Integer, ByRef lpThreadId As IntPtr) As Integer
+    Private Declare Function CreatePipe Lib "kernel32" (ByRef phReadPipe As IntPtr, ByRef phWritePipe As IntPtr, ByVal lpPipeAttributes As IntPtr, ByVal nSize As Int32) As Boolean
+    Private Declare Function DuplicateHandle Lib "kernel32" (ByVal sourceProcessHandle As IntPtr, ByVal sourceHandle As IntPtr,
+                                                             ByVal targetProcessHandle As IntPtr, ByRef targetHandle As IntPtr,
+                                                             ByVal desiredAccess As Int32, ByVal inheritHandle As Boolean, options As Int32) As Boolean
+    Private Declare Function ReadFile Lib "kernel32" (ByVal fileHandle As IntPtr, ByVal buffer() As Byte, ByVal bytesToRead As Int32,  ByRef lpNumberOfBytesRead As Integer, ByVal overlapped As IntPtr) As Boolean
+    Private Declare Function GetCurrentThread Lib "kernel32" () As IntPtr
+    Private Declare Function CancelSynchronousIo Lib "kernel32" (ByVal hThread As IntPtr) As Boolean
 
     Public Const PROCESS_VM_READ = &H10
     Public Const TH32CS_SNAPPROCESS = &H2
@@ -155,6 +163,12 @@ Public Class DarkSoulsProcess
     Private lobbyDumpMemory As AllocatedMemory
     Private lobbyDumpHook As JmpHook
     Private connectMemory As AllocatedMemory
+
+    Private debugLogMemory As AllocatedMemory
+    Private debugLogThread As Thread
+    Private debugLogThreadHandle As IntPtr
+    Private debugLogPipeHandle As IntPtr
+    Public debugLog As New List(Of DebugLogEntry)
 
     'Dark Souls
     Private dsBase As IntPtr = 0
@@ -199,6 +213,7 @@ Public Class DarkSoulsProcess
                 connectMemory = Nothing
             End If
             DrawNodes = False
+            TearDownDebugLog()
             TearDownLobbyDumpHook()
             TearDownNodeDumpHook()
             detachFromProcess()
@@ -403,6 +418,129 @@ Public Class DarkSoulsProcess
         For Each hookLocation In hookLocations
             JmpHook.Permanent(_targetProcessHandle, (dsBase + hookLocation.Key), (memory.address + hookLocation.Value))
         Next
+    End Sub
+    Private Sub SetupDebugLog()
+        Dim localWritePipe As New IntPtr()
+        If Not CreatePipe(debugLogPipeHandle, localWritePipe, 0, 0) Then
+            Throw New DSProcessAttachException("Failed to create logging Pipe")
+        End If
+        Dim myProcess = Process.GetCurrentProcess()
+        Dim foreignWritePipe As New IntPtr()
+        If Not DuplicateHandle(myProcess.Handle, localWritePipe, _targetProcessHandle, foreignWritePipe, 0, True, 3) Then
+            Throw New DSProcessAttachException("Failed to duplicate logging Handle")
+        End If
+
+        Dim code() As Byte = {
+            &H00, &H00, &H00, &H00, &H8B, &H44, &H24, &H04, &H8B, &H54, &H24, &H08, &H55, &HE8, &H00, &H00,
+            &H00, &H00, &H5D, &H81, &HED, &H12, &H00, &H00, &H00, &H52, &H50, &H89, &HE2, &HB8, &H04, &H00,
+            &H00, &H00, &HE8, &H1B, &H00, &H00, &H00, &H58, &H5A, &HB8, &H01, &H00, &H00, &H00, &H66, &H83,
+            &H7C, &H42, &HFE, &H00, &H74, &H03, &H40, &HEB, &HF5, &H01, &HC0, &HE8, &H02, &H00, &H00, &H00,
+            &H5D, &HC3, &H50, &H52, &H83, &HEC, &H04, &H89, &HE1, &H6A, &H00, &H51, &H50, &H52, &H8B, &H85,
+            &H00, &H00, &H00, &H00, &H50, &H8B, &H85, &H63, &H00, &H00, &H00, &HFF, &H10, &H83, &HC4, &H04,
+            &H5A, &H58, &HC3, &H60, &HC2, &H0C, &H01, &H90
+        }
+        
+        Dim pipeBytes() As Byte = BitConverter.GetBytes(CType(foreignWritePipe, UInt32))
+        Array.Copy(pipeBytes, 0, code, 0, pipeBytes.Length)
+
+        debugLogMemory = New AllocatedMemory(_targetProcessHandle, code.Length)
+        WriteProcessMemory(_targetProcessHandle, debugLogMemory, code, code.Length, 0)
+
+        Dim funcAddressBytes() As Byte = BitConverter.GetBytes(CType(debugLogMemory.address + 4, UInt32))
+        Dim loggingFuncPtrLoc As IntPtr = &H136304C
+        WriteProcessMemory(_targetProcessHandle, loggingFuncPtrLoc, funcAddressBytes, funcAddressBytes.Length, 0)
+
+        
+        debugLogThread = New Thread(AddressOf DebugLogThreadMain)
+        debugLogThread.IsBackground = True
+        debugLogThread.Start()
+    End Sub
+    Private Sub TearDownDebugLog()
+        If IsNothing(debugLogMemory) Then Return
+        Dim loggingFuncPtrLoc As IntPtr = &H136304C
+        Dim zero() As Byte = {0, 0, 0 ,0}
+        WriteProcessMemory(_targetProcessHandle, loggingFuncPtrLoc, zero, zero.Length, 0)
+        debugLogMemory.Dispose()
+        debugLogMemory = Nothing
+
+        If Not IsNothing(debugLogThreadHandle) Then
+            CancelSynchronousIo(debugLogThreadHandle)
+            debugLogThreadHandle = Nothing
+        End If
+        If Not IsNothing(debugLogThread) Then
+            debugLogThread.Join()
+            debugLogThread = Nothing
+        End If
+    End Sub
+    Public Property enableDebugLog As Boolean
+        Get
+            Return Not IsNothing(debugLogMemory)
+        End Get
+        Set(value As Boolean)
+            If value = enableDebugLog Then Return
+            If value Then
+                SetupDebugLog()
+            Else
+                TearDownDebugLog()
+            End If
+            End Set
+        End Property
+    Private Sub DebugLogThreadMain()
+        Dim severityMap As New Dictionary(Of Integer, String)
+        severityMap.Add(200000001,  "DBG")
+        severityMap.Add(1000000001, "INF")
+        severityMap.Add(1300000001, "WRN")
+        severityMap.Add(1400000001, "ERR")
+
+        Dim buffer = New Byte() {}
+        Dim readBuffer = New Byte(8000) {}
+        Dim readBytes As New Int32
+        SyncLock debugLog
+            AddDebugLogLine("INF", "###################################################")
+            AddDebugLogLine("INF", "Logger connected")
+            AddDebugLogLine("INF", "###################################################")
+        End SyncLock
+        While Not IsNothing(debugLogMemory)
+            Dim selfHandle = GetCurrentThread()
+            Dim selfHandleCopy As IntPtr
+            DuplicateHandle(Process.GetCurrentProcess.Handle, selfHandle,
+                            Process.GetCurrentProcess.Handle, selfHandleCopy, 0, True, 3)
+            debugLogThreadHandle = selfHandleCopy
+            If Not ReadFile(debugLogPipeHandle, readBuffer, 8000, readBytes, 0) then
+                Exit While
+            Else
+                Dim bufferPos = 0
+                buffer = buffer.Concat(readBuffer.Take(readBytes)).ToArray()
+                SyncLock debugLog
+                    While True
+                        Dim strEnd = -1
+                        For p = bufferPos + 4 To buffer.Length-2 Step 2
+                            If buffer(p) = 0 AndAlso buffer(p + 1) = 0 Then
+                                strEnd = p
+                                Exit For
+                            End If
+                        Next
+                        If strEnd = -1
+                            buffer = buffer.Skip(bufferPos).ToArray()
+                            Exit While
+                        End If
+                    
+                        Dim severity As UInt32 = BitConverter.ToUInt32(buffer, bufferPos)
+                        Dim decoded As String = Encoding.Unicode.GetChars(buffer, bufferPos + 4, strEnd - bufferPos - 4)
+                        bufferPos = strEnd + 2
+                        AddDebugLogLine(severityMap(severity), decoded)
+                    End While
+                End SyncLock
+            End If
+        End While
+        SyncLock debugLog
+            AddDebugLogLine("INF", "###################################################")
+            AddDebugLogLine("INF", "Logger disconnected")
+            AddDebugLogLine("INF", "###################################################")
+        End SyncLock
+    End Sub
+    Private Sub AddDebugLogLine(severity As String, line As String)
+        debugLog.Add(New DebugLogEntry(DateTime.Now, severity, line))
     End Sub
     Private Sub SetupLobbyDumpHook()
         'ASM in ASM\ASM-LobbyDump.txt
