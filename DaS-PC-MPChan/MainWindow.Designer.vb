@@ -60,13 +60,17 @@ Partial Class MainWindow
         Me.txtCurrNodes = New System.Windows.Forms.TextBox()
         Me.nmbMaxNodes = New System.Windows.Forms.NumericUpDown()
         Me.txtTargetSteamID = New System.Windows.Forms.TextBox()
+        Me.txtBlockSteamID = New System.Windows.Forms.TextBox()
         Me.txtSelfSteamID = New System.Windows.Forms.TextBox()
         Me.btnAttemptId = New System.Windows.Forms.Button()
+        Me.blockUserId = New System.Windows.Forms.Button()
         Me.tabs = New System.Windows.Forms.TabControl()
         Me.tabActive = New System.Windows.Forms.TabPage()
         Me.dgvMPNodes = New DSCM.ExtendedDataGridView()
         Me.tabFavorites = New System.Windows.Forms.TabPage()
+        Me.tabBlock = New System.Windows.Forms.TabPage()
         Me.dgvFavoriteNodes = New System.Windows.Forms.DataGridView()
+        Me.dgvBlockedNodes = New System.Windows.Forms.DataGridView()
         Me.tabRecent = New System.Windows.Forms.TabPage()
         Me.dgvRecentNodes = New System.Windows.Forms.DataGridView()
         Me.tabDSCMNet = New System.Windows.Forms.TabPage()
@@ -97,6 +101,8 @@ Partial Class MainWindow
         Me.helpView = New System.Windows.Forms.WebBrowser()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
         Me.btnRemFavorite = New System.Windows.Forms.Button()
+        Me.btnRemBlock = New System.Windows.Forms.Button()
+        Me.btnAddBlock = New System.Windows.Forms.Button()
         Me.lblNewVersion = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
@@ -126,6 +132,8 @@ Partial Class MainWindow
         CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabFavorites.SuspendLayout
         CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).BeginInit
+        Me.tabBlock.SuspendLayout()
+        CType(Me.dgvBlockedNodes, System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabRecent.SuspendLayout
         CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabDSCMNet.SuspendLayout
@@ -356,6 +364,15 @@ Partial Class MainWindow
         Me.nmbMaxNodes.TabIndex = 57
         Me.nmbMaxNodes.Value = New Decimal(New Integer() {20, 0, 0, 0})
         '
+        'txtBlockSteamID
+        '
+        Me.txtBlockSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.txtBlockSteamID.Location = New System.Drawing.Point(291, 64)
+        Me.txtBlockSteamID.Name = "txtBlockSteamID"
+        Me.txtBlockSteamID.Size = New System.Drawing.Size(243, 20)
+        Me.txtBlockSteamID.TabIndex = 59
+        Me.txtBlockSteamID.Text = "Block (Steam64 ID or Profile URL)"
+        '
         'txtTargetSteamID
         '
         Me.txtTargetSteamID.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
@@ -386,6 +403,17 @@ Partial Class MainWindow
         Me.btnAttemptId.Text = "Attempt Connection to Player"
         Me.btnAttemptId.UseVisualStyleBackColor = true
         '
+        'blockUserId
+        '
+        Me.blockUserId.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.blockUserId.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.blockUserId.Location = New System.Drawing.Point(291, 85)
+        Me.blockUserId.Name = "blockUserId"
+        Me.blockUserId.Size = New System.Drawing.Size(243, 23)
+        Me.blockUserId.TabIndex = 65
+        Me.blockUserId.Text = "Block Connection to Player"
+        Me.blockUserId.UseVisualStyleBackColor = True
+        '
         'tabs
         '
         Me.tabs.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom)  _
@@ -393,6 +421,7 @@ Partial Class MainWindow
             Or System.Windows.Forms.AnchorStyles.Right),System.Windows.Forms.AnchorStyles)
         Me.tabs.Controls.Add(Me.tabActive)
         Me.tabs.Controls.Add(Me.tabFavorites)
+        Me.tabs.Controls.Add(Me.tabBlock)
         Me.tabs.Controls.Add(Me.tabRecent)
         Me.tabs.Controls.Add(Me.tabDSCMNet)
         Me.tabs.Controls.Add(Me.tabLocal)
@@ -506,6 +535,35 @@ Partial Class MainWindow
         Me.dgvFavoriteNodes.Size = New System.Drawing.Size(370, 290)
         Me.dgvFavoriteNodes.TabIndex = 54
         '
+        'tabBlock
+        '
+        Me.tabBlock.BackColor = System.Drawing.SystemColors.Control
+        Me.tabBlock.Controls.Add(Me.dgvBlockedNodes)
+        Me.tabBlock.Location = New System.Drawing.Point(4, 22)
+        Me.tabBlock.Name = "tabBlock"
+        Me.tabBlock.Padding = New System.Windows.Forms.Padding(3)
+        Me.tabBlock.Size = New System.Drawing.Size(757, 302)
+        Me.tabBlock.TabIndex = 2
+        Me.tabBlock.Text = "Block List"
+        '
+        'dgvBlockedNodes
+        '
+        Me.dgvBlockedNodes.AllowUserToAddRows = False
+        Me.dgvBlockedNodes.AllowUserToDeleteRows = False
+        Me.dgvBlockedNodes.AllowUserToResizeRows = False
+        Me.dgvBlockedNodes.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.dgvBlockedNodes.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle4
+        Me.dgvBlockedNodes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.dgvBlockedNodes.DefaultCellStyle = DataGridViewCellStyle5
+        Me.dgvBlockedNodes.Location = New System.Drawing.Point(6, 6)
+        Me.dgvBlockedNodes.Name = "dgvBlockedNodes"
+        Me.dgvBlockedNodes.ReadOnly = True
+        Me.dgvBlockedNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle6
+        Me.dgvBlockedNodes.RowHeadersVisible = False
+        Me.dgvBlockedNodes.Size = New System.Drawing.Size(370, 290)
+        Me.dgvBlockedNodes.TabIndex = 54
+        '
         'tabRecent
         '
         Me.tabRecent.BackColor = System.Drawing.SystemColors.Control
@@ -513,7 +571,7 @@ Partial Class MainWindow
         Me.tabRecent.Location = New System.Drawing.Point(4, 22)
         Me.tabRecent.Name = "tabRecent"
         Me.tabRecent.Size = New System.Drawing.Size(757, 302)
-        Me.tabRecent.TabIndex = 2
+        Me.tabRecent.TabIndex = 3
         Me.tabRecent.Text = "Recent"
         '
         'dgvRecentNodes
@@ -563,7 +621,7 @@ Partial Class MainWindow
         Me.tabDSCMNet.Location = New System.Drawing.Point(4, 22)
         Me.tabDSCMNet.Name = "tabDSCMNet"
         Me.tabDSCMNet.Size = New System.Drawing.Size(757, 302)
-        Me.tabDSCMNet.TabIndex = 3
+        Me.tabDSCMNet.TabIndex = 4
         Me.tabDSCMNet.Text = "DSCM-Net"
         '
         'txtIRCDebug
@@ -886,9 +944,9 @@ Partial Class MainWindow
         'btnAddFavorite
         '
         Me.btnAddFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
-        Me.btnAddFavorite.Location = New System.Drawing.Point(269, 453)
+        Me.btnAddFavorite.Location = New System.Drawing.Point(200, 453)
         Me.btnAddFavorite.Name = "btnAddFavorite"
-        Me.btnAddFavorite.Size = New System.Drawing.Size(113, 23)
+        Me.btnAddFavorite.Size = New System.Drawing.Size(100, 23)
         Me.btnAddFavorite.TabIndex = 68
         Me.btnAddFavorite.Text = "Add Favorite"
         Me.btnAddFavorite.UseVisualStyleBackColor = true
@@ -897,13 +955,35 @@ Partial Class MainWindow
         'btnRemFavorite
         '
         Me.btnRemFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
-        Me.btnRemFavorite.Location = New System.Drawing.Point(388, 453)
+        Me.btnRemFavorite.Location = New System.Drawing.Point(305, 453)
         Me.btnRemFavorite.Name = "btnRemFavorite"
-        Me.btnRemFavorite.Size = New System.Drawing.Size(113, 23)
+        Me.btnRemFavorite.Size = New System.Drawing.Size(100, 23)
         Me.btnRemFavorite.TabIndex = 70
         Me.btnRemFavorite.Text = "Remove Favorite"
         Me.btnRemFavorite.UseVisualStyleBackColor = true
         Me.btnRemFavorite.Visible = false
+        '
+        'btnAddBlock
+        '
+        Me.btnAddBlock.Anchor = System.Windows.Forms.AnchorStyles.Bottom
+        Me.btnAddBlock.Location = New System.Drawing.Point(410, 453)
+        Me.btnAddBlock.Name = "btnAddBlock"
+        Me.btnAddBlock.Size = New System.Drawing.Size(100, 23)
+        Me.btnAddBlock.TabIndex = 71
+        Me.btnAddBlock.Text = "Add Block"
+        Me.btnAddBlock.UseVisualStyleBackColor = True
+        Me.btnAddBlock.Visible = False
+        '
+        'btnRemBlock
+        '
+        Me.btnRemBlock.Anchor = System.Windows.Forms.AnchorStyles.Bottom
+        Me.btnRemBlock.Location = New System.Drawing.Point(515, 453)
+        Me.btnRemBlock.Name = "btnRemBlock"
+        Me.btnRemBlock.Size = New System.Drawing.Size(100, 23)
+        Me.btnRemBlock.TabIndex = 72
+        Me.btnRemBlock.Text = "Remove Block"
+        Me.btnRemBlock.UseVisualStyleBackColor = True
+        Me.btnRemBlock.Visible = False
         '
         'lblNewVersion
         '
@@ -970,12 +1050,16 @@ Partial Class MainWindow
         Me.Controls.Add(Me.chkDSCMNet)
         Me.Controls.Add(Me.lblNewVersion)
         Me.Controls.Add(Me.btnRemFavorite)
+        Me.Controls.Add(Me.btnRemBlock)
+        Me.Controls.Add(Me.btnAddBlock)
         Me.Controls.Add(Me.btnAddFavorite)
         Me.Controls.Add(Me.tabs)
         Me.Controls.Add(Me.btnAttemptId)
+        Me.Controls.Add(Me.blockUserId)
         Me.Controls.Add(Me.txtSelfSteamID)
         Me.Controls.Add(lblYourId)
         Me.Controls.Add(Me.txtTargetSteamID)
+        Me.Controls.Add(Me.txtBlockSteamID)
         Me.Controls.Add(Me.nmbMaxNodes)
         Me.Controls.Add(lblNodeDiv)
         Me.Controls.Add(lblNodes)
@@ -992,6 +1076,8 @@ Partial Class MainWindow
         CType(Me.dgvMPNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabFavorites.ResumeLayout(false)
         CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).EndInit
+        Me.tabBlock.ResumeLayout(False)
+        CType(Me.dgvBlockedNodes, System.ComponentModel.ISupportInitialize).EndInit
         Me.tabRecent.ResumeLayout(false)
         CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabDSCMNet.ResumeLayout(false)
@@ -1013,15 +1099,21 @@ End Sub
     Friend WithEvents txtCurrNodes As TextBox
     Friend WithEvents nmbMaxNodes As NumericUpDown
     Friend WithEvents txtTargetSteamID As TextBox
+    Friend WithEvents txtBlockSteamID As TextBox
     Friend WithEvents txtSelfSteamID As TextBox
     Friend WithEvents btnAttemptId As System.Windows.Forms.Button
+    Friend WithEvents blockUserId As System.Windows.Forms.Button
     Friend WithEvents tabs As TabControl
     Friend WithEvents tabActive As TabPage
     Friend WithEvents tabFavorites As TabPage
+    Friend WithEvents tabBlock As TabPage
     Friend WithEvents tabRecent As TabPage
     Friend WithEvents btnAddFavorite As Button
     Friend WithEvents btnRemFavorite As Button
+    Friend WithEvents btnRemBlock As Button
+    Friend WithEvents btnAddBlock As Button
     Friend WithEvents dgvFavoriteNodes As DataGridView
+    Friend WithEvents dgvBlockedNodes As DataGridView
     Friend WithEvents dgvRecentNodes As DataGridView
     Friend WithEvents lblNewVersion As Label
     Friend WithEvents tabDSCMNet As TabPage
