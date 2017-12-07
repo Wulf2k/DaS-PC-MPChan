@@ -1062,7 +1062,7 @@ Public Class MainWindow
             dgvBlockedNodes.Rows.Add(CType(innerText, Object), CType(idString, Object))
 
             If dsProcess IsNot Nothing Then
-                'dsProcess.DisconnectSteamId(idString) 'be polite and nicely request a disconnection
+                dsProcess.DisconnectSteamId(idString) 'be polite and nicely request a disconnection
                 dsProcess.Sync_MemoryBlockList() 'before completely dropping all communications
             End If
         Else
