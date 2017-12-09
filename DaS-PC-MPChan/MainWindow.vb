@@ -450,6 +450,10 @@ Public Class MainWindow
         For Each n In dsProcess.ConnectedNodes.Values
             blackSet.Add(n.SteamId)
         Next
+        'Don't attempt connections with blocked nodes
+        For Each n In dgvBlockedNodes.Rows
+            blackSet.Add(n.Cells("steamId").Value)
+        Next
 
         Dim candidates As New List(Of DSNode)
         For Each node In _netClient.netNodes.Values
