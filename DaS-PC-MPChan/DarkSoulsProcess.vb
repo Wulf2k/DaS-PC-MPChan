@@ -840,18 +840,15 @@ Public Class DarkSoulsProcess
         WriteProcessMemory(_targetProcessHandle, blocklistRecvDetour, readP2PdetourCode, allocatedCodeSize, 0)
 
         blocklistRecvHook.Activate()
-
-        'Send over the block list to dark souls memory
-        Sync_MemoryBlockList()
     End Sub
 
-    Public Sub Sync_MemoryBlockList()
-        Debug.Assert(blocklistInMemorySize >= MainWindow.dgvBlockedNodes.Rows.Count * 8, "Blocklist larger than allocated memory. Need to increase size.")
+    Public Sub Sync_MemoryBlockList(blockednodes As DataGridViewRowCollection)
+        Debug.Assert(blocklistInMemorySize >= blockednodes.Count * 8, "Blocklist larger than allocated memory. Need to increase size.")
 
         'convert steam64 strings to in-memory (steam64) ints
         Dim steamid_array(blocklistInMemorySize) As Byte
         Dim i = 0
-        For Each blockNode As DataGridViewRow In MainWindow.dgvBlockedNodes.Rows
+        For Each blockNode As DataGridViewRow In blockednodes
             Dim upperSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(blockNode.Cells("steamId").Value, 8), 16))
             Dim lowerSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(blockNode.Cells("steamId").Value, 8), 16))
             'little endian order the ints
