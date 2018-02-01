@@ -271,7 +271,6 @@ Public Class DarkSoulsProcess
             End Select
         Next
         If dsBase = 0 Then Throw New DSProcessAttachException("Couldn't find Dark Souls base address")
-        If steamApiBase = 0 Then Throw New DSProcessAttachException("Couldn't find Steam API base address")
     End Sub
     Private Sub disableLowFPSDisonnect()
         If ReadUInt8(dsBase + &HAFC39F) = &H74& Then
