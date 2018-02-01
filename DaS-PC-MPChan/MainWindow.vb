@@ -292,7 +292,7 @@ Public Class MainWindow
         End If
 
         If dsProcess IsNot Nothing Then
-            dsProcess.Sync_MemoryBlockList()
+            dsProcess.Sync_MemoryBlockList(dgvBlockedNodes.Rows)
         End If
     End Sub
     Private Sub loadRecentNodes()
@@ -945,9 +945,17 @@ Public Class MainWindow
             btnRemBlock.Visible = True
             btnAddBlock.Visible = True
             Me.txtBlockSteamID.Location = New System.Drawing.Point(291, 64)
+            Me.txtBlockSteamID.Size = New System.Drawing.Size(243, 20)
+
             Me.blockUserId.Location = New System.Drawing.Point(291, 85)
+            Me.blockUserId.Size = New System.Drawing.Size(243, 23)
+
             Me.txtTargetSteamID.Location = New System.Drawing.Point(534, 64)
+            Me.txtTargetSteamID.Size = New System.Drawing.Size(243, 20)
+
             Me.btnAttemptId.Location = New System.Drawing.Point(534, 85)
+            Me.btnAttemptId.Size = New System.Drawing.Size(243, 23)
+
         Else
             Me.Width = 500
             Me.Height = 190
@@ -956,10 +964,17 @@ Public Class MainWindow
             btnRemFavorite.Visible = False
             btnRemBlock.Visible = False
             btnAddBlock.Visible = False
-            Me.txtBlockSteamID.Location = New System.Drawing.Point(0, 74)
-            Me.blockUserId.Location = New System.Drawing.Point(0, 95)
+            Me.txtBlockSteamID.Location = New System.Drawing.Point(10, 74)
+            Me.txtBlockSteamID.Size = New System.Drawing.Size(230, 20)
+
+            Me.blockUserId.Location = New System.Drawing.Point(10, 95)
+            Me.blockUserId.Size = New System.Drawing.Size(230, 23)
+
             Me.txtTargetSteamID.Location = New System.Drawing.Point(250, 74)
+            Me.txtTargetSteamID.Size = New System.Drawing.Size(230, 20)
+
             Me.btnAttemptId.Location = New System.Drawing.Point(250, 95)
+            Me.btnAttemptId.Size = New System.Drawing.Size(230, 23)
         End If
     End Sub
     Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
@@ -1067,7 +1082,7 @@ Public Class MainWindow
 
             If dsProcess IsNot Nothing Then
                 dsProcess.DisconnectSteamId(idString) 'be polite and nicely request a disconnection
-                dsProcess.Sync_MemoryBlockList() 'before completely dropping all communications
+                dsProcess.Sync_MemoryBlockList(dgvBlockedNodes.Rows) 'before completely dropping all communications
             End If
         Else
             MsgBox("You can only simulatiously block 5 players. Please remove someone from your block list.", MsgBoxStyle.Critical)
@@ -1184,7 +1199,7 @@ Public Class MainWindow
             If dgvBlockedNodes.Rows(i).Cells("steamId").Value = steamId Then
                 dgvBlockedNodes.Rows.Remove(dgvBlockedNodes.Rows(i))
                 If dsProcess IsNot Nothing Then
-                    dsProcess.Sync_MemoryBlockList()
+                    dsProcess.Sync_MemoryBlockList(dgvBlockedNodes.Rows)
                 End If
             End If
         Next
