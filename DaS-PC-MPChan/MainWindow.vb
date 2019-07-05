@@ -114,7 +114,7 @@ Public Class MainWindow
         'Resize window
         chkExpand_CheckedChanged()
 
-        updatecheck()
+        'updatecheck()    'Neutered due to lack of planned features
         updateOnlineState()
     End Sub
     Private Sub setupGridViews()
