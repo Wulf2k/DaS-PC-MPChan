@@ -3,6 +3,11 @@
 .ionide/
 v16/
 
+# Builds
+bin/
+dist/
+merge.log
+
 # NuGet packages
 /packages
 
