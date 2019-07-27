@@ -1,5 +1,6 @@
-﻿Imports System.Text
+Imports System.Text
 Imports System.Threading
+Imports System.Runtime.InteropServices
 
 Public Class DSProcessAttachException
     Inherits System.ApplicationException
@@ -34,7 +35,7 @@ Public Class AllocatedMemory
         _process = targetProcessHandle
         _address = VirtualAllocEx(_process, 0, size, MEM_COMMIT, PAGE_READWRITE)
         If _address = 0 Then
-            Throw New ApplicationException("Failed to allocate Memory")
+            Throw New ApplicationException("Failed to allocate Memory. Error Code: " & Err.LastDllError.ToString())
         End If
         Dim oldProtectionOut As UInteger
         VirtualProtectEx(_process, _address, size, PAGE_EXECUTE_READWRITE, oldProtectionOut)
@@ -69,35 +70,61 @@ Public Class JmpHook
     Implements IDisposable
     Private _process As IntPtr
     Private _hookLocation As IntPtr
+    Private _jmpTarget As Intptr
     Private _oldInstructions As Byte()
+    Private _isActive As Boolean
 
     Private Declare Function ReadProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesRead As Integer) As Boolean
     Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByRef lpNumberOfBytesWritten As Integer) As Boolean
 
-    Sub New(targetProcessHandle As IntPtr, hookLocation As IntPtr, jmpTarget As IntPtr)
+    Sub New(targetProcessHandle As IntPtr, hookLocation As IntPtr, jmpTarget As IntPtr, Optional hookInstructionSize As UInt32 = 5)
+        Debug.Assert(hookInstructionSize >= 5)
         _process = targetProcessHandle
         _hookLocation = hookLocation
-        _oldInstructions = New Byte(4) {}
-        ReadProcessMemory(_process, _hookLocation, _oldInstructions, 5, vbNull)
-        Dim jmpInstruction() As Byte = {&HE9}
-        Dim jmpOffset As Int32 = jmpTarget - hookLocation - 5
-        Dim instruction() As Byte = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
-        WriteProcessMemory(_process, _hookLocation, instruction, 5, vbNull)
+        _jmpTarget = jmpTarget
+        _oldInstructions = New Byte(hookInstructionSize-1) {}
+        ReadProcessMemory(_process, _hookLocation, _oldInstructions, hookInstructionSize, vbNull)
+        _isActive = False
+    End Sub
+    Public Sub Activate()
+        If Not _isActive Then
+            Dim jmpOffset As Int32 = _jmpTarget - _hookLocation - 5
+            Dim jmpInstruction() As Byte = {&HE9}
+            jmpInstruction = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
+
+            Dim nopInstruction As Byte = &H90
+            Dim replaceWith() As Byte = jmpInstruction.Concat(Enumerable.Repeat(nopInstruction, _oldInstructions.Length - 5)).ToArray()
+            WriteProcessMemory(_process, _hookLocation, replaceWith, replaceWith.Length, vbNull)
+            _isActive = True
+        End If
     End Sub
     Public Overloads Sub Dispose() Implements IDisposable.Dispose
-        If _hookLocation <> 0 Then
-             WriteProcessMemory(_process, _hookLocation, _oldInstructions, 5, vbNull)
+        If _isActive And _hookLocation <> 0 Then
+             WriteProcessMemory(_process, _hookLocation, _oldInstructions, _oldInstructions.Length, vbNull)
             _hookLocation = 0
         End If
     End Sub
     Protected Overrides Sub Finalize()
         Dispose()
     End Sub
-    Public Shared Sub Permanent(targetProcessHandle As IntPtr, hookLocation As IntPtr, jmpTarget As IntPtr)
-        Dim hook As New JmpHook(targetProcessHandle, hookLocation, jmpTarget)
+    Public Shared Sub Permanent(targetProcessHandle As IntPtr, hookLocation As IntPtr, jmpTarget As IntPtr, Optional hookInstructionSize As UInt32 = 5)
+        Dim hook As New JmpHook(targetProcessHandle, hookLocation, jmpTarget, hookInstructionSize)
+        hook.Activate()
         'Disable cleanup
         hook._hookLocation = 0
     End Sub
+    Public Function PatchCode(code() As Byte) As Byte()
+        Dim patchedCode = code.Concat(_oldInstructions)
+
+        ' This is JmpTargetAdress - JmpSourcePositon (address after the jmp)
+        Dim returnAddress = BitConverter.GetBytes(
+            CType((_hookLocation + _oldInstructions.Length) -
+                  (_jmpTarget + code.Length + _oldInstructions.Length + 5),
+                Int32))
+        patchedCode = patchedCode.Concat({&HE9}) 'JMP
+        patchedCode = patchedCode.Concat(returnAddress)
+        Return patchedCode.ToArray()
+    End Function
 End Class
 
 
@@ -110,6 +137,13 @@ Public Class DarkSoulsProcess
     Private Declare Function WriteProcessMemory Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpBaseAddress As IntPtr, ByVal lpBuffer() As Byte, ByVal iSize As Integer, ByVal lpNumberOfBytesWritten As Integer) As Boolean
     Private Declare Function CloseHandle Lib "kernel32.dll" (ByVal hObject As IntPtr) As Boolean
     Private Declare Function CreateRemoteThread Lib "kernel32" (ByVal hProcess As IntPtr, ByVal lpThreadAttributes As IntPtr, ByVal dwStackSize As Integer, ByVal lpStartAddress As IntPtr, ByVal lpParameter As IntPtr, ByVal dwCreationFlags As Integer, ByRef lpThreadId As IntPtr) As Integer
+    Private Declare Function CreatePipe Lib "kernel32" (ByRef phReadPipe As IntPtr, ByRef phWritePipe As IntPtr, ByVal lpPipeAttributes As IntPtr, ByVal nSize As Int32) As Boolean
+    Private Declare Function DuplicateHandle Lib "kernel32" (ByVal sourceProcessHandle As IntPtr, ByVal sourceHandle As IntPtr,
+                                                             ByVal targetProcessHandle As IntPtr, ByRef targetHandle As IntPtr,
+                                                             ByVal desiredAccess As Int32, ByVal inheritHandle As Boolean, options As Int32) As Boolean
+    Private Declare Function ReadFile Lib "kernel32" (ByVal fileHandle As IntPtr, ByVal buffer() As Byte, ByVal bytesToRead As Int32,  ByRef lpNumberOfBytesRead As Integer, ByVal overlapped As IntPtr) As Boolean
+    Private Declare Function GetCurrentThread Lib "kernel32" () As IntPtr
+    Private Declare Function CancelSynchronousIo Lib "kernel32" (ByVal hThread As IntPtr) As Boolean
 
     Public Const PROCESS_VM_READ = &H10
     Public Const TH32CS_SNAPPROCESS = &H2
@@ -126,7 +160,15 @@ Public Class DarkSoulsProcess
     Private namedNodeHook As JmpHook
     Private nodeDumpMemory As AllocatedMemory
     Private nodeDumpHook As JmpHook
+    Private lobbyDumpMemory As AllocatedMemory
+    Private lobbyDumpHook As JmpHook
     Private connectMemory As AllocatedMemory
+
+    Private debugLogMemory As AllocatedMemory
+    Private debugLogThread As Thread
+    Private debugLogThreadHandle As IntPtr
+    Private debugLogPipeHandle As IntPtr
+    Public debugLog As New List(Of DebugLogEntry)
 
     'Dark Souls
     Private dsBase As IntPtr = 0
@@ -134,7 +176,6 @@ Public Class DarkSoulsProcess
     Private steamApiBase As IntPtr = 0
     'PVP Watchdog
     Private watchdogBase As IntPtr = 0
-
 
     Private steamApiDllModule As ProcessModule
 
@@ -158,6 +199,7 @@ Public Class DarkSoulsProcess
             InstallNamecrashFix()
         End If
         SetupNodeDumpHook()
+        SetupLobbyDumpHook()
     End Sub
 
     Public Overloads Sub Dispose() Implements IDisposable.Dispose
@@ -171,6 +213,8 @@ Public Class DarkSoulsProcess
                 connectMemory = Nothing
             End If
             DrawNodes = False
+            TearDownDebugLog()
+            TearDownLobbyDumpHook()
             TearDownNodeDumpHook()
             detachFromProcess()
             disposed = True
@@ -182,6 +226,7 @@ Public Class DarkSoulsProcess
     End Sub
 
     Private Sub attachToProcess()
+
         Dim windowCaption As String = "darksouls"
         Dim _allProcesses() As Process = Process.GetProcesses
         For Each pp As Process In _allProcesses
@@ -195,11 +240,16 @@ Public Class DarkSoulsProcess
 
     Private Sub attachToProcess(ByVal proc As Process)
         If _targetProcessHandle = IntPtr.Zero Then 'not already attached
-            _targetProcess = proc
-            _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
+
+            Try
+                _targetProcess = proc
+                _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
             If _targetProcessHandle = 0 Then
                 Throw New DSProcessAttachException("OpenProcess() failed. Check Permissions")
             End If
+            Catch ex As Exception
+
+            End Try
         Else
             MessageBox.Show("Already attached! (Please Detach first?)")
         End If
@@ -224,8 +274,8 @@ Public Class DarkSoulsProcess
         If steamApiBase = 0 Then Throw New DSProcessAttachException("Couldn't find Steam API base address")
     End Sub
     Private Sub disableLowFPSDisonnect()
-        If ReadUInt8(dsBase + &H978425) = &HE8& Then
-            WriteBytes(dsBase + &H978425, {&H90, &H90, &H90, &H90, &H90})
+        If ReadUInt8(dsBase + &HAFC39F) = &H74& Then
+            WriteBytes(dsBase + &HAFC39F, {&HEB})
         End If
     End Sub
     Private Sub detachFromProcess()
@@ -253,7 +303,7 @@ Public Class DarkSoulsProcess
             Return (ReadBytes(dsBase + &HBA256C, 1)(0) = 1)
         End Get
         Set(value As Boolean)
-            Dim cmpLoc As Integer = dsBase + &HBA256C
+            Dim cmpLoc As IntPtr = dsBase + &HBA256C
 
             Dim hookLoc As IntPtr = dsBase + &H15A550
 
@@ -282,6 +332,7 @@ Public Class DarkSoulsProcess
                 WriteProcessMemory(_targetProcessHandle, namedNodeMemory, code, code.Length, 0)
 
                 namedNodeHook = New JmpHook(_targetProcessHandle, hookLoc, namedNodeMemory)
+                namedNodeHook.Activate()
             Else
                 'Disable Node Drawing
                 WriteBytes(cmpLoc, {&H0})
@@ -295,8 +346,10 @@ Public Class DarkSoulsProcess
                     namedNodeMemory = Nothing
                 End If
             End If
+     
         End Set
     End Property
+
     Private Sub InstallNamecrashFix()
         Dim originalContent() As Byte = {&H66, &H8B, &H10, &H83, &HC0, &H02, &H66, &H85, &HD2}
         Dim processContent = ReadBytes(dsBase + &H058A46, originalContent.Length)
@@ -307,6 +360,13 @@ Public Class DarkSoulsProcess
 
         'The machinecode and all the mechanics behind this are courtesy of eur0pa
         Dim code() As Byte = My.Resources.namecrash.Clone()
+        
+        'Offsets which we want to point to our buffer
+        Dim bufferLocations = New Dictionary(Of Integer, Integer) From {
+            {1, 204},
+            {2, 243},
+            {3, 264}
+        }
         'This is (hook offset in DS, target offset in code)
         Dim hookLocations = New Dictionary(Of Integer, Integer) From {
             {&H058A46, 0},
@@ -327,17 +387,30 @@ Public Class DarkSoulsProcess
             {&H058A71, 170},
             {&H18BD40, 250},
             {&H18CB21, 275},
-            {&H18CAD6, 256}
+            {&H18CAD6, 255}
         }
 
 
         Dim memory As New AllocatedMemory(_targetProcessHandle, code.Length)
         Dim jmpInstruction() As Byte = {&HE9}
         For Each returnLocation In returnLocations
+            If returnLocation.Key = &H18BD40 Then
+                jmpInstruction = {&HE8}
+            Else
+                jmpInstruction = {&HE9}
+            End If
             Dim jmpOffset As Int32 = (dsBase + returnLocation.Key) - (memory.address + returnLocation.Value) - 5
             Dim instruction() As Byte = jmpInstruction.Concat(BitConverter.GetBytes(jmpOffset)).ToArray()
             Array.Copy(instruction, 0, code, returnLocation.Value, instruction.Length)
         Next
+        
+        For Each bufferLocation In bufferLocations
+            'Could make another buffer but might as well use the spare space in the existing one
+            Dim bufOffset As Int32 = (memory.address + code.Length) + 20
+            Dim instruction() As Byte = BitConverter.GetBytes(bufOffset).ToArray()
+            Array.Copy(instruction, 0, code, bufferLocation.Value, instruction.Length)
+        Next
+        
         WriteProcessMemory(_targetProcessHandle, memory, code, code.Length, 0)
 
         'Install the fix permanently
@@ -346,19 +419,161 @@ Public Class DarkSoulsProcess
             JmpHook.Permanent(_targetProcessHandle, (dsBase + hookLocation.Key), (memory.address + hookLocation.Value))
         Next
     End Sub
+    Private Sub SetupDebugLog()
+        Dim localWritePipe As New IntPtr()
+        If Not CreatePipe(debugLogPipeHandle, localWritePipe, 0, 0) Then
+            Throw New DSProcessAttachException("Failed to create logging Pipe")
+        End If
+        Dim myProcess = Process.GetCurrentProcess()
+        Dim foreignWritePipe As New IntPtr()
+        If Not DuplicateHandle(myProcess.Handle, localWritePipe, _targetProcessHandle, foreignWritePipe, 0, True, 3) Then
+            Throw New DSProcessAttachException("Failed to duplicate logging Handle")
+        End If
+
+        Dim code() As Byte = {
+            &H00, &H00, &H00, &H00, &H8B, &H44, &H24, &H04, &H8B, &H54, &H24, &H08, &H55, &HE8, &H00, &H00,
+            &H00, &H00, &H5D, &H81, &HED, &H12, &H00, &H00, &H00, &H52, &H50, &H89, &HE2, &HB8, &H04, &H00,
+            &H00, &H00, &HE8, &H1B, &H00, &H00, &H00, &H58, &H5A, &HB8, &H01, &H00, &H00, &H00, &H66, &H83,
+            &H7C, &H42, &HFE, &H00, &H74, &H03, &H40, &HEB, &HF5, &H01, &HC0, &HE8, &H02, &H00, &H00, &H00,
+            &H5D, &HC3, &H50, &H52, &H83, &HEC, &H04, &H89, &HE1, &H6A, &H00, &H51, &H50, &H52, &H8B, &H85,
+            &H00, &H00, &H00, &H00, &H50, &H8B, &H85, &H63, &H00, &H00, &H00, &HFF, &H10, &H83, &HC4, &H04,
+            &H5A, &H58, &HC3, &H60, &HC2, &H0C, &H01, &H90
+        }
+        
+        Dim pipeBytes() As Byte = BitConverter.GetBytes(CType(foreignWritePipe, UInt32))
+        Array.Copy(pipeBytes, 0, code, 0, pipeBytes.Length)
+
+        debugLogMemory = New AllocatedMemory(_targetProcessHandle, code.Length)
+        WriteProcessMemory(_targetProcessHandle, debugLogMemory, code, code.Length, 0)
+
+        Dim funcAddressBytes() As Byte = BitConverter.GetBytes(CType(debugLogMemory.address + 4, UInt32))
+        Dim loggingFuncPtrLoc As IntPtr = &H136304C
+        WriteProcessMemory(_targetProcessHandle, loggingFuncPtrLoc, funcAddressBytes, funcAddressBytes.Length, 0)
+
+        
+        debugLogThread = New Thread(AddressOf DebugLogThreadMain)
+        debugLogThread.IsBackground = True
+        debugLogThread.Start()
+    End Sub
+    Private Sub TearDownDebugLog()
+        If IsNothing(debugLogMemory) Then Return
+        Dim loggingFuncPtrLoc As IntPtr = &H136304C
+        Dim zero() As Byte = {0, 0, 0 ,0}
+        WriteProcessMemory(_targetProcessHandle, loggingFuncPtrLoc, zero, zero.Length, 0)
+        debugLogMemory.Dispose()
+        debugLogMemory = Nothing
+
+        If Not IsNothing(debugLogThreadHandle) Then
+            CancelSynchronousIo(debugLogThreadHandle)
+            debugLogThreadHandle = Nothing
+        End If
+        If Not IsNothing(debugLogThread) Then
+            debugLogThread.Join()
+            debugLogThread = Nothing
+        End If
+    End Sub
+    Public Property enableDebugLog As Boolean
+        Get
+            Return Not IsNothing(debugLogMemory)
+        End Get
+        Set(value As Boolean)
+            If value = enableDebugLog Then Return
+            If value Then
+                SetupDebugLog()
+            Else
+                TearDownDebugLog()
+            End If
+            End Set
+        End Property
+    Private Sub DebugLogThreadMain()
+        Dim severityMap As New Dictionary(Of Integer, String)
+        severityMap.Add(200000001,  "DBG")
+        severityMap.Add(1000000001, "INF")
+        severityMap.Add(1300000001, "WRN")
+        severityMap.Add(1400000001, "ERR")
+
+        Dim buffer = New Byte() {}
+        Dim readBuffer = New Byte(8000) {}
+        Dim readBytes As New Int32
+        SyncLock debugLog
+            AddDebugLogLine("INF", "###################################################")
+            AddDebugLogLine("INF", "Logger connected")
+            AddDebugLogLine("INF", "###################################################")
+        End SyncLock
+        While Not IsNothing(debugLogMemory)
+            Dim selfHandle = GetCurrentThread()
+            Dim selfHandleCopy As IntPtr
+            DuplicateHandle(Process.GetCurrentProcess.Handle, selfHandle,
+                            Process.GetCurrentProcess.Handle, selfHandleCopy, 0, True, 3)
+            debugLogThreadHandle = selfHandleCopy
+            If Not ReadFile(debugLogPipeHandle, readBuffer, 8000, readBytes, 0) then
+                Exit While
+            Else
+                Dim bufferPos = 0
+                buffer = buffer.Concat(readBuffer.Take(readBytes)).ToArray()
+                SyncLock debugLog
+                    While True
+                        Dim strEnd = -1
+                        For p = bufferPos + 4 To buffer.Length-2 Step 2
+                            If buffer(p) = 0 AndAlso buffer(p + 1) = 0 Then
+                                strEnd = p
+                                Exit For
+                            End If
+                        Next
+                        If strEnd = -1
+                            buffer = buffer.Skip(bufferPos).ToArray()
+                            Exit While
+                        End If
+                    
+                        Dim severity As UInt32 = BitConverter.ToUInt32(buffer, bufferPos)
+                        Dim decoded As String = Encoding.Unicode.GetChars(buffer, bufferPos + 4, strEnd - bufferPos - 4)
+                        bufferPos = strEnd + 2
+                        AddDebugLogLine(severityMap(severity), decoded)
+                    End While
+                End SyncLock
+            End If
+        End While
+        SyncLock debugLog
+            AddDebugLogLine("INF", "###################################################")
+            AddDebugLogLine("INF", "Logger disconnected")
+            AddDebugLogLine("INF", "###################################################")
+        End SyncLock
+    End Sub
+    Private Sub AddDebugLogLine(severity As String, line As String)
+        debugLog.Add(New DebugLogEntry(DateTime.Now, severity, line))
+    End Sub
+    Private Sub SetupLobbyDumpHook()
+        'ASM in ASM\ASM-LobbyDump.txt
+        Dim code() As Byte = {
+            &H50, &H53, &H51, &H52, &H56, &HE8, &H00, &H00, &H00, &H00, &H5B, &H81, &HEB, &H0A, &H00, &H00,
+            &H00, &H81, &HC3, &H00, &H00, &H00, &H00, &H81, &HC3, &H00, &H02, &H00, &H00, &H8B, &H70, &H08,
+            &H8B, &H48, &H04, &H89, &HF0, &H29, &HC8, &H3D, &H40, &H06, &H00, &H00, &H75, &H18, &H39, &HCE,
+            &H76, &H14, &H8B, &H41, &H18, &H8B, &H51, &H1C, &H83, &HC3, &H08, &H83, &HC1, &H20, &H89, &H43,
+            &HF8, &H89, &H53, &HFC, &HEB, &HE8, &H5E, &H5A, &H59, &H5B, &H58
+        }
+
+
+        Dim bufferSize = &H200 + 8*50
+        Dim hookLoc As IntPtr = dsBase + &H323A0D
+        lobbyDumpMemory = New AllocatedMemory(_targetProcessHandle, bufferSize)
+        lobbyDumpHook = New JmpHook(_targetProcessHandle, hookLoc, lobbyDumpMemory, 7)
+        code = lobbyDumpHook.PatchCode(code)
+        WriteProcessMemory(_targetProcessHandle, lobbyDumpMemory, code, bufferSize, 0)
+        lobbyDumpHook.Activate()
+    End Sub
+    Private Sub TearDownLobbyDumpHook()
+        If lobbyDumpHook IsNot Nothing THen
+            lobbyDumpHook.Dispose()
+            lobbyDumpHook = Nothing
+        End If
+        If lobbyDumpMemory IsNot Nothing Then
+            lobbyDumpMemory.Dispose()
+            lobbyDumpMemory = Nothing
+        End If
+    End Sub
 
     Private Sub SetupNodeDumpHook()
-        'Note to self, buffer is overly large.  Trim down some day.
-        Dim TargetBufferSize = 4096
-
-        Dim bytes2() As Byte
-
-        Dim bytjmp As Integer = &H78
-        Dim hookLoc As IntPtr = dsBase + &H7E637E
-
-        nodeDumpMemory = New AllocatedMemory(_targetProcessHandle, TargetBufferSize)
-
-        'ASM in Resources\ASM-NodeDump.txt
+        'ASM in ASM\ASM-NodeDump.txt
         Dim code() As Byte = {&H50, &H53, &H51, &H52, &H56, &H57, &HBF, &H0, &H0, &H0, &H0, &HB8, &H0, &H0, &H0, &H0,
                     &HBB, &H0, &H0, &H0, &H0, &HB9, &H0, &H0, &H0, &H0, &HBA, &H0, &H0, &H0, &H0, &H8A,
                     &H1F, &H80, &HFB, &H0, &HF, &H84, &H30, &H0, &H0, &H0, &H8A, &H6, &H8A, &H1F, &H46, &H47,
@@ -366,18 +581,21 @@ Public Class DarkSoulsProcess
                     &H29, &HCF, &HB9, &H0, &H0, &H0, &H0, &HE9, &HE, &H0, &H0, &H0, &H29, &HCE, &H29, &HCF,
                     &HB9, &H0, &H0, &H0, &H0, &H83, &HC7, &H30, &HEB, &HC5, &H8A, &H1E, &H88, &H1F, &H46, &H47,
                     &H41, &H83, &HF9, &H30, &HF, &H84, &H2, &H0, &H0, &H0, &HEB, &HEE, &H5F, &H5E, &H5A, &H59,
-                    &H5B, &H58, &H66, &HF, &HD6, &H46, &H14, &HE9, &H0, &H0, &H0, &H0}
+                    &H5B, &H58}
+
+        'Note to self, buffer is overly large.  Trim down some day.
+        Dim bufferSize = 4096
+        Dim hookLoc As IntPtr = dsBase + &H7E637E
+        nodeDumpMemory = New AllocatedMemory(_targetProcessHandle, bufferSize)
+        nodeDumpHook = New JmpHook(_targetProcessHandle, hookLoc, nodeDumpMemory, 5)
 
         'Adjust EDI
-        bytes2 = BitConverter.GetBytes(CType(nodeDumpMemory.address + &H200, UInt32))
-        Array.Copy(bytes2, 0, code, &H7, bytes2.Length)
+        Dim dumpStorageAddr() As Byte = BitConverter.GetBytes(CType(nodeDumpMemory.address + &H200, UInt32))
+        Array.Copy(dumpStorageAddr, 0, code, &H7, dumpStorageAddr.Length)
 
-        'Adjust the jump home
-        bytes2 = BitConverter.GetBytes(CType((hookLoc - &H77) - nodeDumpMemory.address, Int32))
-        Array.Copy(bytes2, 0, code, bytjmp, bytes2.Length)
-        WriteProcessMemory(_targetProcessHandle, nodeDumpMemory, code, TargetBufferSize, 0)
-
-        nodeDumpHook = New JmpHook(_targetProcessHandle, hookLoc, nodeDumpMemory)
+        code = nodeDumpHook.PatchCode(code)
+        WriteProcessMemory(_targetProcessHandle, nodeDumpMemory, code, bufferSize, 0)
+        nodeDumpHook.Activate()
     End Sub
     Private Sub TearDownNodeDumpHook()
         If nodeDumpHook IsNot Nothing THen
@@ -392,9 +610,9 @@ Public Class DarkSoulsProcess
 
     Public Property MaxNodes As Integer
         Get
-            Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F838)
-            tmpptr = ReadInt32(tmpptr + &H38)
+            Dim tmpptr As IntPtr
+            tmpptr = ReadIntPtr(dsBase + &HF7F838)
+            tmpptr = ReadIntPtr(tmpptr + &H38)
             If Not tmpptr = 0 Then
                 Dim value = ReadInt32(tmpptr + &H70)
                 If value > 64 Then Return -1
@@ -404,9 +622,9 @@ Public Class DarkSoulsProcess
             End If
         End Get
         Set(value As Integer)
-            Dim tmpptr As Integer
-            tmpptr = ReadInt32(dsBase + &HF7F838)
-            tmpptr = ReadInt32(tmpptr + &H38)
+            Dim tmpptr As IntPtr
+            tmpptr = ReadIntPtr(dsBase + &HF7F838)
+            tmpptr = ReadIntPtr(tmpptr + &H38)
             WriteInt32(tmpptr + &H70, value)
         End Set
     End Property
@@ -419,8 +637,21 @@ Public Class DarkSoulsProcess
 
     Public ReadOnly Property SelfSteamId As String
         Get
-            Return ReadSteamIdAscii(ReadInt32(dsBase + &HF7E204) + &HA00)
+            Return ReadSteamIdAscii(ReadIntPtr(dsBase + &HF7E204) + &HA00)
         End Get
+    End Property
+    Public Property SelfSteamName As String
+        Get
+            Dim byt() As Byte
+            byt = ReadBytes(ReadIntPtr(dsBase + &HF62DD4) + &H30, &H40)
+            Return Encoding.Unicode.GetString(byt)
+        End Get
+        Set(value As String)
+            Dim byt(&H22) As Byte
+
+            byt = Encoding.Unicode.GetBytes(value)
+            WriteBytes(ReadIntPtr(dsBase + &HF62DD4) + &H30, byt)
+        End Set
     End Property
 
     Public Sub ConnectToSteamId(ByVal steamId As String)
@@ -476,28 +707,59 @@ Public Class DarkSoulsProcess
 
         'Set up code
         'Note to self, as usual, comment in the actual ASM before it gets lost.
-        Dim code() As Byte = {
-            &HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H0, &H0,
-            &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
-            &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
+        'Dim code() As Byte = {
+        '    &HE8, &H0, &H0, &H0, &H0, &H8B, &H10, &H8B, &H12, &H6A, &H1, &H6A, &H2, &HBF, &H0, &H0,
+        '    &H0, &H0, &H57, &HB9, &H0, &H0, &H0, &H0, &H51, &H68, &H0, &H0, &H0, &H0, &H68, &H0,
+        '    &H0, &H0, &H0, &H8B, &HC8, &HFF, &HD2, &HC3}
 
         'Set steam_api.SteamNetworking call
-        Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - connectMemory.address - 5, Int32))
-        Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
+        'Dim steamApiNetworkingRelative() As Byte = BitConverter.GetBytes(CType(steamApiNetworking - connectMemory.address - 5, Int32))
+        'Array.Copy(steamApiNetworkingRelative, 0, code, &H1, steamApiNetworkingRelative.Length)
 
-        Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
-        Array.Copy(dataPacketLen, 0, code, &HE, dataPacketLen.Length)
+        'Dim dataPacketLen() As Byte = BitConverter.GetBytes(CType(data.Length, UInt32))
+        'Array.Copy(dataPacketLen, 0, code, &HE, dataPacketLen.Length)
 
-        Dim dataPacketPtrBytes() As Byte = BitConverter.GetBytes(CType(dataPacketPtr, UInt32))
-        Array.Copy(dataPacketPtrBytes, 0, code, &H14, dataPacketPtrBytes.Length)
+        'Dim dataPacketPtrBytes() As Byte = BitConverter.GetBytes(CType(dataPacketPtr, UInt32))
+        'Array.Copy(dataPacketPtrBytes, 0, code, &H14, dataPacketPtrBytes.Length)
 
-        Dim steamIdLeft() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
-        Array.Copy(steamIdLeft, 0, code, &H1A, steamIdLeft.Length)
+        'Dim steamIdLeft() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
+        'Array.Copy(steamIdLeft, 0, code, &H1A, steamIdLeft.Length)
 
-        Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
-        Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
+        'Dim steamIdRight() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
+        'Array.Copy(steamIdRight, 0, code, &H1F, steamIdRight.Length)
 
-        WriteProcessMemory(_targetProcessHandle, connectMemory, code, code.Length, 0)
+
+        'Attempt at compiling ASM through new method
+        Dim a As New ASM
+        a.pos = CInt(connectMemory.address)
+        
+        a.AddVar("connectmemory", connectMemory.address)
+        a.AddVar("steamapinetworking", steamApiNetworking)
+        a.AddVar("datapacketlen", data.Length)
+        a.AddVar("datapacketptr", connectMemory.address + &H100)
+        a.AddVar("steamidleft", Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
+        a.AddVar("steamidright", Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
+
+            
+
+        a.Asm("call steamapinetworking")
+        a.Asm("mov edx, [eax]")
+        a.Asm("mov edx, [edx]")
+        a.Asm("push 1")
+        a.Asm("push 2")
+        a.Asm("mov edi, datapacketlen")
+        a.Asm("push edi")
+        a.Asm("mov ecx, datapacketptr")
+        a.Asm("push ecx")
+        a.Asm("push steamidleft")
+        a.Asm("push steamidright")
+        a.Asm("mov ecx, eax")
+        a.Asm("call edx")
+        a.Asm("ret")
+
+
+
+        WriteProcessMemory(_targetProcessHandle, connectMemory, a.bytes, a.bytes.Length, 0)
 
         CreateRemoteThread(_targetProcessHandle, 0, 0, connectMemory, 0, 0, 0)
     End Sub
@@ -506,10 +768,12 @@ Public Class DarkSoulsProcess
         Dim nodeCount As Integer = ReadInt32(dsBase + &HF62DD0)
         Dim basicNodeInfo As New Dictionary(Of String, String)
         Dim steamNodeList = ReadInt32(dsBase + &HF62DCC)
-        Dim steamNodesPtr As Integer = ReadInt32(steamNodeList)
+        Dim steamNodesPtr As IntPtr = ReadIntPtr(steamNodeList)
         For i = 0 To nodeCount - 1
             Dim node As New DSNode
-            Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC)
+            ' SteamPlayerData
+            Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC) 
+            ' SteamOnlineIDData
             Dim steamData2 As Integer = ReadInt32(steamData1 + &HC)
             node.SteamId = ReadSteamIdUnicode(steamData2 + &H30)
             node.CharacterName = ReadSteamName(steamData1 + &H30)
@@ -530,7 +794,7 @@ Public Class DarkSoulsProcess
         Next
 
         Dim nodeSteamId As String
-        Dim nodePtr As Integer
+        Dim nodePtr As IntPtr
         nodePtr = nodeDumpMemory.address + &H200
         While True
             nodeSteamId = ReadSteamIdAscii(nodePtr)
@@ -557,31 +821,363 @@ Public Class DarkSoulsProcess
             nodePtr += &H30
         End While
 
-        Dim selfPtr As Integer = ReadInt32(dsBase + &HF7E204)
+        Dim sessionManagerAddress = dsBase + &HF62CC0
+        Dim p2pSystem = ReadIntPtr(sessionManagerAddress + &H64)
+        Dim connectionList = ReadIntPtr(p2pSystem + &H54)
+        Dim connectionListEntry = ReadIntPtr(connectionList)
+        Dim connection As IntPtr
+        While connectionListEntry <> connectionList
+            connection = ReadIntPtr(connectionListEntry + &H08)
+            Dim connectionStatus = ReadInt32(connection + &H08)
+            If connectionStatus > 2 Then
+                nodeSteamId = LCase(Hex(ReadUInt64(connection + &H170))).PadLeft(16, "0")
+                If ConnectedNodes.ContainsKey(nodeSteamId) Then
+                    Dim node = ConnectedNodes(nodeSteamId)
+                    node.Ping = ReadInt32(connection + &H178)
+                End If
+            End If
+            connectionListEntry = ReadIntPtr(connectionListEntry)
+        End While
+
+
+
+        Dim selfPtr As IntPtr = ReadIntPtr(dsBase + &HF7E204)
         SelfNode.SoulLevel = ReadInt32(selfPtr + &HA30)
         SelfNode.MPZone = ReadInt32(selfPtr + &HA14)
         SelfNode.World = ReadInt8(selfPtr + &HA13) & "-" & ReadInt8(selfPtr + &HA12)
         SelfNode.PhantomType = ReadInt32(selfPtr + &HA28)
 
-        Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
-        heroPtr = ReadInt32(heroPtr + &H8)
+        Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+        heroPtr = ReadIntPtr(heroPtr + &H8)
         SelfNode.Indictments = ReadInt32(heroPtr + &HEC)
         SelfNode.Covenant = ReadInt8(heroPtr + &H10B)
     End Sub
-    Public ReadOnly Property HasDarkmoonRingEquiped As Boolean
+    Public Function ReadLobbyList As List(Of UInt64)
+        Dim outList As New List(Of UInt64)
+        Dim steamIdPtr As IntPtr
+        For i = 1 To 50
+            steamIdPtr = lobbyDumpMemory.address + &H200 + 8 * (i-1)
+            If steamIdPtr = 0 Then
+                Exit For
+            End If
+            outList.Add(ReadUInt64(steamIdPtr))
+        Next
+        Return outList
+    End Function
+    Public ReadOnly Property HasDarkmoonRingEquipped As Boolean
         Get
-            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
-            heroPtr = ReadInt32(heroPtr + &H8)
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            heroPtr = ReadIntPtr(heroPtr + &H8)
             Return ReadInt32(heroPtr + &H280) = 102 Or ReadInt32(heroPtr + &H284) = 102
         End Get
     End Property
-    Public ReadOnly Property HasCatCovenantRingEquiped As Boolean
+    Public ReadOnly Property HasCatCovenantRingEquipped As Boolean
         Get
-            Dim heroPtr As Integer = ReadInt32(dsBase + &HF78700)
-            heroPtr = ReadInt32(heroPtr + &H8)
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            heroPtr = ReadIntPtr(heroPtr + &H8)
             Return ReadInt32(heroPtr + &H280) = 103 Or ReadInt32(heroPtr + &H284) = 103
         End Get
     End Property
+
+    Public ReadOnly Property ClearCount As Integer
+    Get
+            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            Return ReadInt32(statsPtr + &H3C)
+    End Get
+    End Property
+    Public ReadOnly Property Deaths As Integer
+        Get
+            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            Return ReadInt32(statsPtr + &H5C)
+        End Get
+    End Property
+    Public ReadOnly Property PhantomType As Integer
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            Return ReadInt32(heroPtr + &H70)
+        End Get
+    End Property
+    Public ReadOnly Property TeamType As Integer
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            Return ReadInt32(heroPtr + &H74)
+        End Get
+    End Property
+    Public ReadOnly Property TimePlayed As Integer
+        Get
+            Dim statsPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            Return ReadInt32(statsPtr + &H68)
+        End Get
+    End Property
+    Public ReadOnly Property Sin As Integer
+    Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF78700)
+            heroPtr = ReadIntPtr(heroPtr + &H8)
+            Return ReadInt32(heroPtr + &HEC)
+    End Get
+    End Property
+
+
+    Public ReadOnly Property redCooldown As Single
+        Get
+            Return ReadFloat(dsBase + &HF795E0)
+        End Get
+    End Property
+    Public ReadOnly Property blueCooldown As Single
+        Get
+            Return ReadFloat(dsBase + &HF79658)
+        End Get
+    End Property
+
+
+    Public ReadOnly Property FlagsArtoriasDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H40000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsBedOfChaosDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H200000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsBellGargoylesDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H10000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsCapraDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &HF70) And &H2000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsCeaselessDischargeDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H3C70) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsCentipedeDemonDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H3C70) And &H4000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsDarkAnorLondo As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H4630) And &H8000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsDemonFiresageDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H3C30) And &H20)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsFourKingsDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H40000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsGapingDragonDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H20000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsGwynDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H10000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsGwyndolinDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H4670) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsIronGolemDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H100000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsKalameetDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsManusDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H20000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsMoonlightButterflyDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H1E70) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsNewLondoDrained As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H4B0C) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsNitoDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H1000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsOnSDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H80000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsPinwheelDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H2000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsPriscillaDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H8000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsQuelaagDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H400000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsSanctuaryGuardianDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H2300) And &H80000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsSeathDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H20000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsSifDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &H0) And &H4000000)
+        End Get
+    End Property
+    Public ReadOnly Property FlagsTaurusDead As Boolean
+        Get
+            Dim flagsPtr As IntPtr = ReadIntPtr(dsBase + &HF7D7D4)
+            flagsPtr = ReadIntPtr(flagsPtr)
+
+            Return (ReadInt32(flagsPtr + &HF70) And &H4000000)
+        End Get
+    End Property
+
+
+    Public ReadOnly Property xPos As Single
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            heroPtr = ReadIntPtr(heroPtr + &H28)
+            heroPtr = ReadIntPtr(heroPtr + &H1C)
+
+            Return ReadFloat(heroPtr + &H10)
+        End Get
+    End Property
+    Public ReadOnly Property yPos As Single
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            heroPtr = ReadIntPtr(heroPtr + &H28)
+            heroPtr = ReadIntPtr(heroPtr + &H1C)
+
+            Return ReadFloat(heroPtr + &H14)
+        End Get
+    End Property
+    Public ReadOnly Property zPos As Single
+        Get
+            Dim heroPtr As IntPtr = ReadIntPtr(dsBase + &HF7DC70)
+            heroPtr = ReadIntPtr(heroPtr + &H4)
+            heroPtr = ReadIntPtr(heroPtr)
+            heroPtr = ReadIntPtr(heroPtr + &H28)
+            heroPtr = ReadIntPtr(heroPtr + &H1C)
+
+            Return ReadFloat(heroPtr + &H18)
+        End Get
+    End Property
+
 
     Public Function ReadInt8(ByVal addr As IntPtr) As SByte
         Dim _rtnBytes(0) As Byte
@@ -639,7 +1235,7 @@ Public Class DarkSoulsProcess
         Dim _rtnBytes(IntPtr.Size - 1) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, _rtnBytes, IntPtr.Size, Nothing)
         If IntPtr.Size = 4 Then
-            Return New IntPtr(BitConverter.ToUInt32(_rtnBytes, 0))
+            Return New IntPtr(BitConverter.ToInt32(_rtnBytes, 0))
         Else
             Return New IntPtr(BitConverter.ToInt64(_rtnBytes, 0))
         End If
@@ -660,7 +1256,7 @@ Public Class DarkSoulsProcess
         ReadProcessMemory(_targetProcessHandle, addr, bytes, 32, vbNull)
         Return Encoding.Unicode.GetChars(bytes)
     End Function
-    Private Function ReadSteamName(ByVal addr As UInteger) As String
+    Private Function ReadSteamName(ByVal addr As IntPtr) As String
         Dim str As New StringBuilder()
         Dim bytes(63) As Byte
         ReadProcessMemory(_targetProcessHandle, addr, bytes, 64, vbNull)
@@ -685,7 +1281,7 @@ Public Class DarkSoulsProcess
     Public Sub WriteBytes(ByVal addr As IntPtr, val As Byte())
         WriteProcessMemory(_targetProcessHandle, addr, val, val.Length, Nothing)
     End Sub
-    Public Sub WriteAsciiStr(addr As UInteger, str As String)
+    Public Sub WriteAsciiStr(ByVal addr As IntPtr, str As String)
         WriteProcessMemory(_targetProcessHandle, addr, System.Text.Encoding.ASCII.GetBytes(str), str.Length, Nothing)
     End Sub
 End Class

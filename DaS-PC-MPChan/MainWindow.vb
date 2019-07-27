@@ -1,4 +1,5 @@
-﻿Imports System.Threading
+﻿Imports System.Collections.Specialized
+Imports System.Threading
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Net.Sockets
@@ -13,6 +14,7 @@ Public Class MainWindow
     Private WithEvents updateOnlineStateTimer As New System.Windows.Forms.Timer()
     Private WithEvents netNodeConnectTimer As New System.Windows.Forms.Timer()
     Private WithEvents publishNodesTimer As New System.Windows.Forms.Timer()
+    Private WithEvents checkWatchNodeTimer As New System.Windows.Forms.Timer()
     Private WithEvents dsAttachmentTimer As New System.Windows.Forms.Timer()
     Private WithEvents hotkeyTimer As New System.Windows.Forms.Timer()
 
@@ -26,17 +28,24 @@ Public Class MainWindow
 
     Public Version As String
 
+    Private random As New Random()
+
+    Private optionsLoaded As Boolean = False
+
     Private dsProcess As DarkSoulsProcess = Nothing
     Private _netClient As NetClient = Nothing
     Private netNodeDisplayList As New DSNodeBindingList()
     Private activeNodesDisplayList As New DSNodeBindingList()
     Private connectedNodes As New Dictionary(Of String, ConnectedNode)
+    Private watchSteamId As String = Nothing
+    Private watchExchangedLastTime As Date = DateTime.UTCNow
 
     Private manualConnections As New HashSet(Of String)
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        lbxDebugLog.Load(Me)
         Version = lblVer.Text
 
         Dim oldFileArg As String = Nothing
@@ -67,6 +76,8 @@ Public Class MainWindow
             End If
         End If
 
+        
+        
 
         txtTargetSteamID.SetPlaceholder(txtTargetSteamID.Text)
         txtTargetSteamID.Text = ""
@@ -84,6 +95,7 @@ Public Class MainWindow
         updateNetNodesTimer.Interval = Config.UpdateNetNodesInterval
         netNodeConnectTimer.Interval = Config.NetNodeConnectInterval
         publishNodesTimer.Interval = Config.PublishNodesInterval
+        checkWatchNodeTimer.Interval = Config.CheckWatchNodeInterval
 
         attachDSProcess()
 
@@ -102,7 +114,7 @@ Public Class MainWindow
         'Resize window
         chkExpand_CheckedChanged()
 
-        updatecheck()
+        'updatecheck()    'Neutered due to lack of planned features
         updateOnlineState()
     End Sub
     Private Sub setupGridViews()
@@ -129,8 +141,12 @@ Public Class MainWindow
             .Columns("mpArea").Width = 60
             .Columns("mpArea").DataPropertyName = "MPZoneColumn"
             .Columns.Add("world", "World")
-            .Columns("world").Width = 200
+            .Columns("world").Width = 180
             .Columns("world").DataPropertyName = "WorldText"
+            .Columns.Add("ping", "Ping")
+            .Columns("ping").Width = 50
+            .Columns("ping").DataPropertyName = "PingColumn"
+            .Columns("ping").DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Font = New Font("Consolas", 10)
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
             .Sort(.Columns("soulLevel"), ListSortDirection.Ascending)
@@ -140,14 +156,14 @@ Public Class MainWindow
 
         With dgvFavoriteNodes
             .Columns.Add("name", "Name")
-            .Columns(0).Width = 180
-            .Columns(0).ValueType = GetType(String)
+            .Columns("name").Width = 180
+            .Columns("name").ValueType = GetType(String)
             .Columns.Add("steamId", "Steam ID")
-            .Columns(1).Width = 145
-            .Columns(1).ValueType = GetType(String)
+            .Columns("steamId").Width = 145
+            .Columns("steamId").ValueType = GetType(String)
             .Columns.Add("isOnline", "O")
-            .Columns(2).Width = 20
-            .Columns(2).ValueType = GetType(String)
+            .Columns("isOnline").Width = 20
+            .Columns("isOnline").ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
@@ -156,17 +172,17 @@ Public Class MainWindow
         With dgvRecentNodes
             .AutoGenerateColumns = False
             .Columns.Add("name", "Name")
-            .Columns(0).Width = 180
-            .Columns(0).ValueType = GetType(String)
+            .Columns("name").Width = 180
+            .Columns("name").ValueType = GetType(String)
             .Columns.Add("steamId", "Steam ID")
-            .Columns(1).Width = 145
-            .Columns(1).ValueType = GetType(String)
+            .Columns("steamId").Width = 145
+            .Columns("steamId").ValueType = GetType(String)
             .Columns.Add("orderId", "Order ID")
-            .Columns(2).Visible = False
-            .Columns(2).ValueType = GetType(Long)
+            .Columns("orderId").Visible = False
+            .Columns("orderId").ValueType = GetType(Long)
             .Columns.Add("isOnline", "O")
-            .Columns(3).Width = 20
-            .Columns(3).ValueType = GetType(String)
+            .Columns("isOnline").Width = 20
+            .Columns("isOnline").ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
@@ -267,9 +283,15 @@ Public Class MainWindow
         regval = key.GetValue("JoinDSCM-Net")
         If regval Is Nothing Then key.SetValue("JoinDSCM-Net", "True")
 
+        regval = key.GetValue("MaxNodes")
+        If regval Is Nothing Then key.SetValue("MaxNodes", "20")
+
 
         chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
+        nmbMaxNodes.Value = key.GetValue("MaxNodes")
+
+        optionsLoaded = True
     End Sub
     Private Sub updateOnlineState_Tick() Handles updateOnlineStateTimer.Tick
         updateOnlineState()
@@ -364,16 +386,17 @@ Public Class MainWindow
         End If
     End Sub
     Private Sub connectToNetNode() Handles netNodeConnectTimer.Tick
-        If (_netClient Is Nothing OrElse
-                dsProcess Is Nothing OrElse
-                dsProcess.SelfSteamId = "" OrElse
+        If _netClient Is Nothing OrElse dsProcess Is Nothing Then Return
+
+        Dim inMenu = (dsProcess.SelfSteamId = "" OrElse
                 dsProcess.SelfNode.CharacterName = "" OrElse
-                dsProcess.SelfNode.PhantomType = -1) Then
-            'We either can't connect to other players yet or are lacking the
-            'neccessary information to make a good choice (our character is not loaded)
+                dsProcess.SelfNode.PhantomType = -1)
+
+        If inMenu AndAlso dsProcess.NodeCount >= Config.BadNodesThreshold
             Return
         End If
-        If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
+
+        If dsProcess.NodeCount < dsProcess.MaxNodes - Config.NodesReservedForSteam - 1 Then
             Dim candidate As DSNode = selectNetNodeForConnecting()
             If candidate IsNot Nothing Then
                 connectToSteamId(candidate.SteamId)
@@ -398,11 +421,17 @@ Public Class MainWindow
 
         If candidates.Count = 0 Then Return Nothing
 
+        'Pick the first few nodes at random to improve the network structure
+        If dsProcess.NodeCount < Config.BadNodesThreshold Then
+            Dim idx = random.Next(candidates.Count)
+            Return candidates.Item(idx)
+        End If
+
         Dim self = dsProcess.SelfNode
 
         'These read out dsProcess memory, so don't calculate them for every node
-        Dim anorLondoInvading = self.Covenant = Covenant.DarkmoonBlade AndAlso dsProcess.HasDarkmoonRingEquiped
-        Dim forestInvading = self.Covenant = Covenant.ForestHunter AndAlso dsProcess.HasCatCovenantRingEquiped
+        Dim anorLondoInvading = self.Covenant = Covenant.DarkmoonBlade AndAlso dsProcess.HasDarkmoonRingEquipped
+        Dim forestInvading = self.Covenant = Covenant.ForestHunter AndAlso dsProcess.HasCatCovenantRingEquipped
         Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
             .OrderByDescending(Function(other) (other.World <> "-1--1")) _
             .ThenByDescending(Function(other) As Boolean
@@ -413,7 +442,7 @@ Public Class MainWindow
                                            Return self.canDarkmoonInvade(other)
                                        End If
                                    ElseIf forestInvading Then
-                                       If other.World = DarkrootGardenWorld Then
+                                       If DarkrootGardenZones.Contains(other.MPZone) Then
                                            If other.HasExtendedInfo And other.Covenant = Covenant.ForestHunter Then
                                                Return False
                                            Else
@@ -476,9 +505,9 @@ Public Class MainWindow
         'Half-Bad = I can't interact with them, but they can invade me
         Dim self = dsProcess.SelfNode
         If (self.Covenant = Covenant.DarkmoonBlade AndAlso other.World = AnorLondoWorld AndAlso
-            self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquiped) Then Return 0
-        If (self.Covenant = Covenant.ForestHunter AndAlso other.World = DarkrootGardenWorld AndAlso
-            self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquiped) Then Return 0
+            self.canDarkmoonInvade(other) AndAlso dsProcess.HasDarkmoonRingEquipped) Then Return 0
+        If (self.Covenant = Covenant.ForestHunter AndAlso DarkrootGardenZones.Contains(other.MPZone) AndAlso
+            self.canForestInvade(other) AndAlso dsProcess.HasCatCovenantRingEquipped) Then Return 0
 
         If self.World = other.World Then
             Dim coopPossible = (self.canBeSummoned(other) OrElse other.canBeSummoned(self))
@@ -492,7 +521,7 @@ Public Class MainWindow
 
         'TODO: check whether Sif is alive
         'If we knew that the other player is a Forest Hunter, we could mark this as a good node
-        If (self.Covenant <> Covenant.ForestHunter AndAlso self.World = DarkrootGardenWorld AndAlso
+        If (self.Covenant <> Covenant.ForestHunter AndAlso DarkrootGardenZones.Contains(self.MPZone) AndAlso
             other.canForestInvade(self)) Then Return 1
         'TODO: Add Dark Anor Londo check once we read out anor londo darkness
         Return 2
@@ -505,6 +534,9 @@ Public Class MainWindow
         Dim disconnectCandidates As New List(Of Tuple(Of ConnectedNode, Integer))()
         Dim badNodeCount = 0
         For Each connectedNode In connectedNodes.Values
+            If Not IsNothing(watchSteamId) AndAlso connectedNode.node.SteamId = watchSteamId Then
+                Continue For
+            End If
             Dim ranking = nodeRanking(connectedNode.node)
             If ranking = 0 Then
                 connectedNode.lastGoodTime = now
@@ -527,17 +559,14 @@ Public Class MainWindow
             End If
         Next
 
-        If badNodeCount <= Config.BadNodesThreshold Then
-            Return
-        End If
+        Dim disconnectCount = Math.Min(badNodeCount - Config.BadNodesThreshold, disconnectCandidates.Count)
+        disconnectCount = Math.Min(DisconnectTargetFreeNodes - (nmbMaxNodes.Value - dsProcess.NodeCount), disconnectCount)
 
-        Dim disconnectCount = DisconnectTargetFreeNodes - (nmbMaxNodes.Value - dsProcess.NodeCount)
-        If disconnectCount < 1 Or disconnectCandidates.Count < disconnectCount  Then
+        If disconnectCount < 1 Then
             Return
         End If
         Dim disconnectNodes = disconnectCandidates _
                 .OrderByDescending(Function(x) x.Item2) _
-                .ThenByDescending(Function(x) x.Item1.lastGoodTime) _
                 .Take(disconnectCount)
         For Each disconnectNode In disconnectNodes
             dsProcess.DisconnectSteamId(disconnectNode.Item1.node.SteamId)
@@ -545,16 +574,27 @@ Public Class MainWindow
     End Sub
     Private Sub updateUI() Handles updateUITimer.Tick
         If dsProcess Is Nothing Then
-            nmbMaxNodes.Enabled = False
-            nmbMaxNodes.BackColor = New Color()
+            btnLaunchDS.Visible = true
         Else
             'Node display
             'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
             chkDebugDrawing.Checked = dsProcess.DrawNodes
 
+            btnLaunchDS.Visible = False
+
             Dim maxNodes = dsProcess.MaxNodes
+            ' Reading the value messes with input
+            If Not nmbMaxNodes.Focused Then
+                If maxNodes <> nmbMaxNodes.Value And maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
+                    dsProcess.MaxNodes = nmbMaxNodes.Value
+                    'Read again, in case something else is force-setting it
+                    maxNodes = dsProcess.MaxNodes
+                End If
+            End If
             If maxNodes >= nmbMaxNodes.Minimum And maxNodes <= nmbMaxNodes.Maximum Then
-                nmbMaxNodes.Value = maxNodes
+                If Not nmbMaxNodes.Focused Then
+                    nmbMaxNodes.Value = maxNodes
+                End If
                 nmbMaxNodes.Enabled = True
                 nmbMaxNodes.BackColor = New Color()
             Else
@@ -569,11 +609,108 @@ Public Class MainWindow
             End If
 
             txtCurrNodes.Text = dsProcess.NodeCount
+
+            'errorCheckSteamName()
+            txtLocalSteamName.Text = dsProcess.SelfSteamName
+            If txtLocalSteamName.Text.length > 15 Then 
+                txtLocalSteamName.BackColor = Color.OrangeRed
+            Else
+                txtLocalSteamName.BackColor = DefaultBackColor
+            End If
+
+
+
+            txtWatchdogActive.Text = dsProcess.HasWatchdog
+            txtSin.Text = dsProcess.Sin
+            txtDeaths.Text = dsProcess.Deaths
+            txtPhantomType.Text = dsProcess.PhantomType
+            txtTeamType.Text = dsProcess.TeamType
+            txtClearCount.Text = dsProcess.ClearCount
+            txtTimePlayed.Text = TimeSpan.FromMilliseconds(dsProcess.TimePlayed).ToString("ddd\.hh\:mm\:ss")
+
+            txtRedCooldown.Text = math.Round(dsProcess.redCooldown, 0)
+            txtBlueCooldown.Text = math.Round(dsProcess.blueCooldown, 0)
+
+
+            txtXPos.Text = Math.Round(dsProcess.xPos, 1)
+            txtYPos.Text = Math.Round(dsProcess.yPos, 1)
+            txtZPos.Text = Math.Round(dsProcess.zPos, 1)
+
+            Dim flaglist As New NameValueCollection
+
+            flaglist.Add("Gaping Dragon", dsProcess.FlagsGapingDragonDead)
+            flaglist.Add("Bell Gargoyles", dsProcess.FlagsBellGargoylesDead)
+            flaglist.Add("Priscilla", dsProcess.FlagsPriscillaDead)
+            flaglist.Add("Sif", dsProcess.FlagsSifDead)
+            flaglist.Add("Pinwheel", dsProcess.FlagsPinwheelDead)
+            flaglist.Add("Nito", dsProcess.FlagsNitoDead)
+            flaglist.Add("Chaos Witch Quelaag", dsProcess.FlagsQuelaagDead)
+            flaglist.Add("Bed of Chaos", dsProcess.FlagsBedOfChaosDead)
+            flaglist.Add("Iron Golem", dsProcess.FlagsIronGolemDead)
+            flaglist.Add("Ornstein & Smough", dsProcess.FlagsOnSDead)
+            flaglist.Add("Four Kings", dsProcess.FlagsFourKingsDead)
+            flaglist.Add("Seath", dsProcess.FlagsSeathDead)
+            flaglist.Add("Gwyn", dsProcess.FlagsGwynDead)
+            flaglist.Add("Taurus Demon", dsProcess.FlagsTaurusDead)
+            flaglist.Add("Capra Demon", dsProcess.FlagsCapraDead)
+            flaglist.Add("Moonlight Butterfly", dsProcess.FlagsMoonlightButterflyDead)
+            flaglist.Add("Sanctuary Guardian", dsProcess.FlagsSanctuaryGuardianDead)
+            flaglist.Add("Artorias", dsProcess.FlagsArtoriasDead)
+            flaglist.Add("Manus", dsProcess.FlagsManusDead)
+            flaglist.Add("Kalameet", dsProcess.FlagsKalameetDead)
+            flaglist.Add("Demon Firesage", dsProcess.FlagsDemonFiresageDead)
+            flaglist.Add("Ceaseless Discharge", dsProcess.FlagsCeaselessDischargeDead)
+            flaglist.Add("Centipede Demon", dsProcess.FlagsCentipedeDemonDead)
+            flaglist.Add("Gwyndolin", dsProcess.FlagsGwyndolinDead)
+            flaglist.Add("Dark Anor Londo", dsProcess.FlagsDarkAnorLondo)
+            flaglist.Add("New Londo Drained", dsProcess.FlagsNewLondoDrained)
+
+            For Each item in flaglist.keys
+                Try
+                    clbEventFlags.SetItemChecked(clbEventFlags.Items.IndexOf(item), flaglist.GetValues(item)(0))
+                Catch ex As Exception
+                    MsgBox("Failed flag lookup - " & ex.Message)
+                End Try
+            Next
+
+            UpdateDebugLog()
         End If
 
 
         If Not tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")" Then
             tabDSCMNet.Text = "DSCM-Net (" & dgvDSCMNet.Rows.Count & ")"
+        End If
+    End Sub
+    Private Sub UpdateDebugLog()
+        If Not IsNothing(dsProcess) Then
+            lbxDebugLog.UpdateFromDS(dsProcess.debugLog)
+        End If
+    End Sub
+    Private Sub chkLoggerEnabled_CheckedChanged( sender As Object,  e As EventArgs) Handles chkLoggerEnabled.CheckedChanged
+        If Not IsNothing(dsProcess) Then dsProcess.enableDebugLog = chkLoggerEnabled.Checked
+    End Sub
+    Private Async Sub checkWatchNode() Handles checkWatchNodeTimer.Tick
+        If _netClient Is Nothing Or dsProcess Is Nothing Then Return
+
+        Dim connectedToOldNode = Not IsNothing(watchSteamId) AndAlso connectedNodes.ContainsKey(watchSteamId)
+
+        If connectedToOldNode And (DateTime.UtcNow - watchExchangedLastTime).TotalMilliseconds <= Config.ExchangeWatchNodeInterval
+            Return
+        End If
+
+        If dsProcess.NodeCount - connectedToOldNode < dsProcess.MaxNodes - Config.NodesReservedForSteam Then
+            If Not IsNothing(watchSteamId) Then
+                dsProcess.DisconnectSteamId(watchSteamId)
+            End If
+
+            Try
+                Dim newWatchId = Await _netClient.getWatchId()
+                watchSteamId = newWatchId
+                watchExchangedLastTime = DateTime.UtcNow
+                dsProcess.ConnectToSteamId(newWatchId)
+            Catch ex As Exception
+                txtIRCDebug.Text = "Failed to get new watch: " & ex.Message
+            End Try
         End If
     End Sub
     Private Async Sub updateNetNodes() Handles updateNetNodesTimer.Tick
@@ -582,9 +719,9 @@ Public Class MainWindow
             netNodeDisplayList.SyncWithDict(_netClient.netNodes, dgvDSCMNet)
         End If
     End Sub
-        Private Async Sub publishNodes() Handles publishNodesTimer.Tick
+    Private Async Sub publishNodes() Handles publishNodesTimer.Tick
         If _netClient IsNot Nothing AndAlso dsProcess IsNot Nothing AndAlso dsProcess.SelfNode.SteamId IsNot Nothing Then
-            Await _netClient.publishLocalNodes(dsProcess.SelfNode, dsProcess.ConnectedNodes.Values())
+            Await _netClient.publishLocalNodes(dsProcess.SelfNode, dsProcess.ConnectedNodes.Values(), dsProcess.ReadLobbyList())
         End If
     End Sub
     Private Shared Sub hotkeyTimer_Tick() Handles hotkeyTimer.Tick
@@ -621,6 +758,7 @@ Public Class MainWindow
                 dsProcess = New DarkSoulsProcess()
                 dsProcessStatus.Text = " Attached to Dark Souls process"
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(200, 255, 200)
+                dsProcess.enableDebugLog = chkLoggerEnabled.Checked
             Catch ex As DSProcessAttachException
                 dsProcessStatus.Text = " " & ex.Message
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(255, 200, 200)
@@ -634,6 +772,22 @@ Public Class MainWindow
             Exit Sub
         End If
         dsProcess.DrawNodes = chkDebugDrawing.Checked
+    End Sub
+
+    Private Sub errorCheckSteamName()
+        'Disabled temporarily due to being non-functional
+        Dim byt() As Byte
+        byt = Encoding.Unicode.GetBytes(dsProcess.SelfSteamName)
+        
+        If byt.Length > &H1d Then ReDim Preserve byt(&H1d)
+        
+        Dim tmpStr As String
+        tmpStr = Encoding.Unicode.GetString(byt)
+        tmpStr = tmpStr.Replace("#", "")
+        
+        If byt(0) = 0 Then tmpStr = "Invalid Name"
+
+        dsProcess.SelfSteamName = tmpStr
     End Sub
 
     Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
@@ -668,8 +822,12 @@ Public Class MainWindow
         'Color Rows according to ranking
         For Each row As DataGridViewRow In dgvMPNodes.Rows
             Dim steamId = row.Cells("steamId").Value
+            row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0)
             If steamId = selfNode.SteamId Then
                 row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(198, 239, 206)
+            ElseIf steamId = watchSteamId Then
+                row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(100, 100, 100)
+                row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(200, 200, 200)
             Else
                 Dim ranking = nodeRanking(activeNodes(steamId))
                 If ranking = 2 Then
@@ -753,6 +911,10 @@ Public Class MainWindow
     Private Sub nmbMaxNodes_ValueChanged(sender As Object, e As EventArgs) Handles nmbMaxNodes.ValueChanged
         If Not IsNothing(dsProcess) Then
             dsProcess.MaxNodes = nmbMaxNodes.Value
+        End If
+        If optionsLoaded Then
+            Dim key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+            key.SetValue("MaxNodes", nmbMaxNodes.Value)
         End If
     End Sub
     Private Sub connectToSteamId(steamId As String)
@@ -899,18 +1061,122 @@ Public Class MainWindow
             netNodeConnectTimer.Start()
             updateNetNodesTimer.Start()
             publishNodesTimer.Start()
+            checkWatchNodeTimer.Start()
             updateNetNodes()
         Else
             If _netClient IsNot Nothing Then
                 updateNetNodesTimer.Stop()
                 netNodeConnectTimer.Stop()
                 publishNodesTimer.Stop()
+                checkWatchNodeTimer.Stop()
                 _netClient = Nothing
             End If
         End If
     End Sub
+
+    Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvRecentNodes.DoubleClick, dgvFavoriteNodes.DoubleClick, dgvDSCMNet.DoubleClick
+
+    End Sub
+
+    Private Sub btnLaunchDS_Click(sender As Object, e As EventArgs) Handles btnLaunchDS.Click
+        Try
+            Dim proc As New System.Diagnostics.Process()
+            proc = Process.Start("steam://rungameid/211420", "")
+        Catch ex As Exception
+            MsgBox("Error launching." & Environment.NewLine & ex.Message)
+        End Try
+    End Sub
 End Class
 
+
+Class DebugLogForm
+Inherits ListBox
+    Private mw As MainWindow
+    Private LobbyRegex As New Regex("^SteamMatchmaking|^Property added:|^LobbyData")
+    Public Sub Load(mainWindow As MainWindow)
+        mw = mainWindow
+        AddHandler mw.chkLogDBG.CheckedChanged, AddressOf FilterEntries
+        AddHandler mw.chkLogLobby.CheckedChanged, AddressOf FilterEntries
+    End Sub
+    Private ReadOnly Property ShowDbgEntries As Boolean
+        Get
+            Return mw.chkLogDBG.Checked
+        End Get
+    End Property
+    Private ReadOnly Property ShowLobbyEntries As Boolean
+        Get
+            Return mw.chkLogLobby.Checked
+        End Get
+    End Property
+    Private Function EntryAllowed(entry As DebugLogEntry) As Boolean
+        If Not ShowDbgEntries AndAlso entry.severity = "DBG" Then Return False
+        If Not ShowLobbyEntries AndAlso entry.severity = "DBG" AndAlso LobbyRegex.IsMatch(entry.msg) Then Return False
+        Return True
+    End Function
+    Public Sub FilterEntries()
+        Me.BeginUpdate()
+        For i = Items.Count - 1 To 0 Step -1
+            If Not EntryAllowed(Items(i)) Then
+                Items.RemoveAt(i)
+            End If
+        Next
+        Me.EndUpdate()
+    End Sub
+    Public Sub UpdateFromDS(dsDebugLog As List(Of DebugLogEntry))
+        SyncLock dsDebugLog
+            If dsDebugLog.Count
+                Me.BeginUpdate()
+                Dim itemsVisible As Integer = (Me.Height \ Me.ItemHeight)
+                Dim scrollToBottom = Me.TopIndex > Items.Count - itemsVisible - 1
+
+                For Each entry In dsDebugLog
+                    entry.msg = LogTranslations.TranslateMessage(entry.msg)
+                    If EntryAllowed(entry) Then Items.Add(entry)
+                Next
+                dsDebugLog.Clear()
+
+                While Items.Count > Config.DebugLogLength
+                    Items.RemoveAt(0)
+                End While
+                
+                Me.EndUpdate()
+                If scrollToBottom Then Me.TopIndex = Me.Items.Count - 1
+            End If
+        End SyncLock
+    End Sub
+    Public Sub InitContextMenu() Handles Me.ContextMenuStripChanged
+        If IsNothing(ContextMenuStrip) Then Return
+        AddHandler ContextMenuStrip.ItemClicked, AddressOf ContextMenuItemClicked
+    End Sub
+    Private Sub ContextMenuItemClicked(sender As Object, e As ToolStripItemClickedEventArgs)
+        If e.ClickedItem.Name = "copy" Then
+            Dim text = String.Join(vbCrLf, SelectedItems.Cast(Of DebugLogEntry).Select(Function(x) x.ToString()).ToArray())
+            Clipboard.SetData(DataFormats.UnicodeText, text)
+        ElseIf e.ClickedItem.Name = "selectAll" Then
+            BeginUpdate()
+            For i = 0 To Items.Count - 1
+                Me.SetSelected(i, True)
+            Next
+            EndUpdate()
+        End If
+    End Sub
+End Class
+
+Public Class DebugLogEntry
+    Public severity As String
+    Public msg As String
+    Public ts As Date
+
+    Sub New(ts, severity, msg)
+        Me.ts = ts
+        Me.severity = severity
+        Me.msg = msg
+    End Sub
+
+    Public Overrides Function ToString() As String
+        Return ts.ToString("hh:mm:ss.fff") & " " & severity & ": " & msg
+    End Function
+End Class
 
 Class ConnectedNode
     Public node As DSNode

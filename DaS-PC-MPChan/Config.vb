@@ -3,6 +3,8 @@
     Public Const OnlineCheckUrl = "http://chronial.de/scripts/dscm/is_online.php"
     Public Const NetServerUrl = "http://dscm-net.chronial.de:8811"
 
+    Public Const DebugLogLength = 10000
+
     'How frequently should we update the node list from the central server?
     Public Const UpdateNetNodesInterval = 120 * 1000
 
@@ -11,6 +13,11 @@
 
     'How frequently should we connect to node from the central server?
     Public Const NetNodeConnectInterval = 10 * 1000
+    
+    'How frequently should we check our watch node?
+    Public Const CheckWatchNodeInterval = 20 * 1000
+    'How frequently should we exchange our watch node?
+    Public Const ExchangeWatchNodeInterval = 5 * 60 * 1000
 
     'How frequenlty should we check the only state of recent nodes and favourites via steam api?
     Public Const OnlineCheckInterval = 10 * 60 * 1000

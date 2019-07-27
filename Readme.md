@@ -118,6 +118,32 @@ DSCM now disables Dark Souls' check that will kick you offline when your FPS dip
 low.
 
 
+Covenants
+=========
+DSCM adapts its connection behaviour to your covenant.
+
+* The following covenants are considered coop covenants: Princess's Guard,
+  Warrior of Sunlight, Way of White, *no covenant*
+* The following covenants are considered PvP covenants: Blade of the Darkmoon,
+  Chaos Servant, Darkwraith, Forest Hunter, Gravelord Servant, Path of the
+  Dragon
+
+If you are in a coop covenant, DSCM will preferably connect you to people that
+are in the same area and within coop level of you. For PvP covenants, DSCM will
+also consider players that you can invade and that can invade you. Also:
+
+* If you are a *Forest Hunter* and have the *Cat Covenant Ring* equipped, you
+  will be connected to people that are in Darkroot Garden and fulfill the level
+  requirements for you invading them. This is indepedent of your own location.
+* If you are a *Blade of the Darkmoon* and have the *Darkmoon Blade Covenant
+  Ring* equipped, you will be connected to people that are in Anor Londo and
+  fulfill the level requirements for you invading them, in the hopes that their
+  Anor Londo is dark and you can punish them for your sins. This is independent
+  of your own location. If you don't have the ring equipped, then you are
+  preferably connected to players that are in the same are as you and have
+  Indictments.
+
+
 Contact/ Bug Reports:
 =====================
 
@@ -127,8 +153,9 @@ As a backup you can try contacting [/u/illusorywall](https://www.reddit.com/u/il
 or [@illusorywall](https://twitter.com/illusorywall), but I can't help as much
 with the technical stuff.
 
-Source code is available at: <https://github.com/Wulf2k/DaS-PC-MPChan>
+Source code is available at: <https://github.com/Wulf2k/DaS-PC-MPChan>  
+Source code for the DSCM-Net server: <https://github.com/Chronial/dscm-server>
 
 - - - - - - - - - - - - - - - - - - - - - - - -
-Brought to you by Wulf2k.  
+Brought to you by Lane Hatland (wulf2k@gmail.com).  
 With thanks to Illusorywall, Jellybaby44, Chronial, and many others.

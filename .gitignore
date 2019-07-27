@@ -1,6 +1,7 @@
 # VS
 .vs/
 .ionide/
+v16/
 
 # NuGet packages
 /packages
@@ -59,7 +60,6 @@ Temporary Items
 *.pdb
 *.rar
 *.Cache
-*.dll
 *.suo
 **/bin
 **/obj

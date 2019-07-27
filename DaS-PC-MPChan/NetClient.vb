@@ -14,6 +14,8 @@ Public Class NetClient
         Dim handler = New HttpClientHandler()
         handler.AutomaticDecompression = Net.DecompressionMethods.GZip Or Net.DecompressionMethods.Deflate
         client = New HttpClient(handler)
+        Dim version = mainWindow.lblVer.Text
+        client.DefaultRequestHeaders.Add("User-Agent", "DSCM/" & version)
         Me.mainWindow = mainWindow
     End Sub
     Private Function JSONContent(data As Object) As StringContent
@@ -24,10 +26,11 @@ Public Class NetClient
         content.Headers.ContentType = New Headers.MediaTypeHeaderValue("application/json")
         Return content
     End Function
-    Public Async Function publishLocalNodes(self As DSNode, nodes As IEnumerable(Of DSNode)) As Task
+    Public Async Function publishLocalNodes(self As DSNode, nodes As IEnumerable(Of DSNode), onlineSteamIds As List(Of UInt64)) As Task
         Dim data As New Dictionary(Of String, Object)() From {
             {"self", self},
-            {"nodes", nodes}
+            {"nodes", nodes},
+            {"online_ids", onlineSteamIds}
         }
         Dim content = JSONContent(data)
         Try
@@ -55,6 +58,17 @@ Public Class NetClient
             setStatus("Error loading node list: " & ex.Message)
         End Try
         Return Nothing
+    End Function
+    Public Async Function getWatchId() As Task(Of String)
+        Dim response As HttpResponseMessage = Await client.GetAsync(Config.NetServerUrl & "/get_watch")
+        response.EnsureSuccessStatusCode()
+        Dim content = Await response.Content.ReadAsStringAsync()
+        Dim serializer As New JavaScriptSerializer()
+        Dim dsNodeSer As New DSNodeSerializer()
+
+        Dim data As IDictionary(Of String, Object) = serializer.Deserialize(Of Dictionary(Of String, Object))(content)
+        Dim watch As String = data("watch")
+        Return watch
     End Function
     Private Sub setStatus(status As String)
         If mainWindow.InvokeRequired Then

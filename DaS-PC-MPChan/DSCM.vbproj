@@ -70,7 +70,8 @@
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>Wulf2k-DSCM.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommonMark">
@@ -103,8 +104,10 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ASM.vb" />
     <Compile Include="Config.vb" />
     <Compile Include="DarkSoulsProcess.vb" />
+    <Compile Include="LogTranslations.vb" />
     <Compile Include="MainWindow.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -129,9 +132,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="SortableBindingList.vb">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="SortableBindingList.vb" />
     <Compile Include="UpdateWindow.Designer.vb">
       <DependentUpon>UpdateWindow.vb</DependentUpon>
     </Compile>
@@ -163,9 +164,10 @@
       <CustomToolNamespace>My</CustomToolNamespace>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Resources\namecrash.bin" />
-    <None Include="Wulf2k-DSCM.pfx" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
@@ -193,6 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ASM\ASM-ConnectSteamId.txt" />
+    <None Include="Resources\watchdog.dll" />
     <None Include="Resources\Readme_compiled.html" />
   </ItemGroup>
   <ItemGroup>
