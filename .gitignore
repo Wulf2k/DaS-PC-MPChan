@@ -1,3 +1,7 @@
+# VS
+.vs/
+.ionide/
+
 # NuGet packages
 /packages
 
