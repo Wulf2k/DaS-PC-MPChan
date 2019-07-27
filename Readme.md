@@ -142,6 +142,23 @@ also consider players that you can invade and that can invade you. Also:
   of your own location. If you don't have the ring equipped, then you are
   preferably connected to players that are in the same are as you and have
   Indictments.
+  
+Blocking
+=========
+DSCM now allows you to block up to 5 players.
+Users you block will not be able to connect to you by any means, such as direct connection, standard node gathering, or otherwise. 
+
+* Copy the other player's steam profile URL or SteamID64 into the `Block` field
+* Click `Block Connection`
+
+or
+
+* Select the user you wish to block from your current connections
+* Click `Add Block`
+
+After a few seconds, they should appear in the `Block List` tab
+
+To remove a user from you block list, select the `Block List` tab, select a user, and press `Remove Block`.
 
 
 Contact/ Bug Reports:

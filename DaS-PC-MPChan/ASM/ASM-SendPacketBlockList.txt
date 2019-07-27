@@ -1,0 +1,34 @@
+50                    - push eax
+53                    - push ebx
+51                    - push ecx
+52                    - push edx
+
+8B 44 24 14           - mov eax,[esp+14] //steamid (upper half)
+8B 54 24 18           - mov edx,[esp+18] //steamid (lower half)
+BB 00 00 00 00        - mov ebx,0 //counter 
+B9 {BLOCKLIST}        - mov ecx,blocklist 
+
+looptop:
+3B 04 19              - cmp eax,[ecx+ebx]
+0F 85 0A 00 00 00     - jne loopcontinue
+3B 54 19 04           - cmp edx,[ecx+ebx+04]
+0F 84 10 00 00 00     - je abortsend
+
+loopcontinue:
+83 C3 08              - add ebx,08
+81 FB {LISTSIZE}      - cmp ebx,size of block list memory allocated
+7C E2                 - jl looptop
+E9 07 00 00 00        - jmp normalsend
+
+abortsend:
+5A                    - pop edx
+59                    - pop ecx
+5B                    - pop ebx
+58                    - pop eax
+C2 18 00              - ret 0018
+
+normalsend:
+5A                    - pop edx
+59                    - pop ecx
+5B                    - pop ebx
+58                    - pop eax

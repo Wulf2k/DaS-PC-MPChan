@@ -164,6 +164,13 @@ Public Class DarkSoulsProcess
     Private lobbyDumpHook As JmpHook
     Private connectMemory As AllocatedMemory
 
+    Private blocklistSendHook As JmpHook
+    Private blocklistRecvHook As JmpHook
+    Private blocklistSendDetour As AllocatedMemory
+    Private blocklistRecvDetour As AllocatedMemory
+    Private blocklistInMemory As AllocatedMemory
+    Private blocklistInMemorySize As Int32
+
     Private debugLogMemory As AllocatedMemory
     Private debugLogThread As Thread
     Private debugLogThreadHandle As IntPtr
@@ -198,6 +205,7 @@ Public Class DarkSoulsProcess
         If Not HasWatchdog Then
             InstallNamecrashFix()
         End If
+        Inject_P2PPacket()
         SetupNodeDumpHook()
         SetupLobbyDumpHook()
     End Sub
@@ -732,7 +740,7 @@ Public Class DarkSoulsProcess
         'Attempt at compiling ASM through new method
         Dim a As New ASM
         a.pos = CInt(connectMemory.address)
-        
+
         a.AddVar("connectmemory", connectMemory.address)
         a.AddVar("steamapinetworking", steamApiNetworking)
         a.AddVar("datapacketlen", data.Length)
@@ -740,7 +748,7 @@ Public Class DarkSoulsProcess
         a.AddVar("steamidleft", Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
         a.AddVar("steamidright", Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
 
-            
+
 
         a.Asm("call steamapinetworking")
         a.Asm("mov edx, [eax]")
@@ -762,6 +770,99 @@ Public Class DarkSoulsProcess
         WriteProcessMemory(_targetProcessHandle, connectMemory, a.bytes, a.bytes.Length, 0)
 
         CreateRemoteThread(_targetProcessHandle, 0, 0, connectMemory, 0, 0, 0)
+    End Sub
+
+    Private Sub Inject_P2PPacket()
+        Dim allocatedCodeSize = 256 'this should be plenty of space
+
+        Dim steamApiNetworking As IntPtr = steamApiBase + &H2F70
+
+        'Extremely weak check to be sure we're at the right spot
+        If Not ReadUInt8(steamApiNetworking) = &HA1& Then
+            Throw New ApplicationException("Unexpected byte at steam_api.dll|Networking")
+        End If
+
+        'locate injection points
+        Dim steamApiNetworking_addr As IntPtr = ReadInt32(steamApiNetworking + 1) 'get the dynamic address of the steamApiNetworking vtable or something
+        Dim steamApiNetworking_ptrs As IntPtr = ReadInt32(steamApiNetworking_addr) 'follow 1st pointer to base of list of pointers to steamApiNetworking functions
+        Dim sendP2PPacket_addrptr As IntPtr = ReadInt32(steamApiNetworking_ptrs)
+        Dim sendP2PPacket_addr As IntPtr = ReadInt32(sendP2PPacket_addrptr + 0) 'get address of 1st function in the steamApiNetworking vtable
+        Dim readP2PPacket_1 As IntPtr = ReadInt32(steamApiNetworking_ptrs + 4)
+        Dim readP2PPacket_2 As IntPtr = ReadInt32(readP2PPacket_1 + 0)
+        Dim readP2PPacket_3 As IntPtr = ReadInt32(readP2PPacket_2 + 8)
+        Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + 274 'get the last instruction of the readP2PPacket
+
+        'Init in-memory block list
+        blocklistInMemorySize = 8 * 200 '200 block slots should be good for now
+        blocklistInMemory = New AllocatedMemory(_targetProcessHandle, blocklistInMemorySize)
+
+        Dim blocklist_asm_addr = BitConverter.GetBytes(CType(CType(blocklistInMemory, IntPtr), Integer))
+        Dim blocklist_asm_length = BitConverter.GetBytes(blocklistInMemorySize)
+
+        'for 1st instruction of sendP2PPacket, jump to a check if the target is in our blocklist. Immediate return if so
+        'ASM in ASM\ASM-SendPacketBlockList.txt
+        Dim sendP2PdetourCode() As Byte = {
+        &H50, &H53, &H51, &H52, &H8B, &H44, &H24, &H14, &H8B, &H54, &H24, &H18, &HBB, &H0, &H0, &H0, &H0, &HB9,
+        blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3), &H3B, &H4,
+        &H19, &HF, &H85, &HA, &H0, &H0, &H0, &H3B, &H54, &H19, &H4, &HF, &H84, &H10, &H0, &H0, &H0, &H83, &HC3,
+        &H8, &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
+        &H7C, &HE2, &HE9, &H7, &H0, &H0, &H0, &H5A, &H59, &H5B, &H58, &HC2, &H18, &H0, &H5A, &H59, &H5B, &H58}
+
+        Debug.Assert(sendP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the SendP2PPacket code")
+
+        blocklistSendDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize) 'alloc memory for new code
+
+        blocklistSendHook = New JmpHook(_targetProcessHandle, sendP2PPacket_addr, blocklistSendDetour, 6) 'inject jump into function
+
+        sendP2PdetourCode = blocklistSendHook.PatchCode(sendP2PdetourCode) 'patch new code to include overwritten old code and return
+
+        WriteProcessMemory(_targetProcessHandle, blocklistSendDetour, sendP2PdetourCode, allocatedCodeSize, 0) 'write new code to alloc'd memory
+
+        blocklistSendHook.Activate()
+
+        'for the last (return) instruction of ReadP2PPacket, jump to a check if the target that the function tells us the packet is from is in our blocklist. Return false if so
+        'ASM in ASM\ASM-ReadPacketBlockList.txt
+        Dim readP2PdetourCode() As Byte = {
+        &H50, &H53, &H51, &H52, &H8B, &H44, &H24, &H20, &H8B, &H0, &H8B, &H54, &H24, &H20, &H8B, &H52, &H4, &HBB,
+        &H0, &H0, &H0, &H0, &HB9, blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
+        &H3B, &H4, &H19, &HF, &H85, &HA, &H0, &H0, &H0, &H3B, &H54, &H19, &H4, &HF, &H84, &H10, &H0, &H0, &H0,
+        &H83, &HC3, &H8, &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
+        &H7C, &HE2, &HE9, &H9, &H0, &H0, &H0, &H5A, &H59, &H5B, &H58, &HB0, &H0, &HC2, &H14, &H0, &H5A, &H59, &H5B, &H58}
+
+        Debug.Assert(readP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the ReadP2PPacket code")
+
+        blocklistRecvDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)
+
+        blocklistRecvHook = New JmpHook(_targetProcessHandle, readP2PPacket_end, blocklistRecvDetour, 5)
+
+        readP2PdetourCode = blocklistRecvHook.PatchCode(readP2PdetourCode)
+
+        WriteProcessMemory(_targetProcessHandle, blocklistRecvDetour, readP2PdetourCode, allocatedCodeSize, 0)
+
+        blocklistRecvHook.Activate()
+    End Sub
+
+    Public Sub Sync_MemoryBlockList(blockednodes As DataGridViewRowCollection)
+        Debug.Assert(blocklistInMemorySize >= blockednodes.Count * 8, "Blocklist larger than allocated memory. Need to increase size.")
+
+        'convert steam64 strings to in-memory (steam64) ints
+        Dim steamid_array(blocklistInMemorySize) As Byte
+        Dim i = 0
+        For Each blockNode As DataGridViewRow In blockednodes
+            Dim upperSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(blockNode.Cells("steamId").Value, 8), 16))
+            Dim lowerSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(blockNode.Cells("steamId").Value, 8), 16))
+            'little endian order the ints
+            steamid_array(i + 0) = lowerSteamId(0)
+            steamid_array(i + 1) = lowerSteamId(1)
+            steamid_array(i + 2) = lowerSteamId(2)
+            steamid_array(i + 3) = lowerSteamId(3)
+            steamid_array(i + 4) = upperSteamId(0)
+            steamid_array(i + 5) = upperSteamId(1)
+            steamid_array(i + 6) = upperSteamId(2)
+            steamid_array(i + 7) = upperSteamId(3)
+            i += 8
+        Next
+        WriteProcessMemory(_targetProcessHandle, blocklistInMemory, steamid_array, blocklistInMemorySize, 0)
     End Sub
 
     Public Sub UpdateNodes()
