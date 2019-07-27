@@ -1,4 +1,12 @@
+# VS
+.vs/
+.ionide/
 v16/
+
+# Builds
+bin/
+dist/
+merge.log
 
 # NuGet packages
 /packages
@@ -53,7 +61,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-*.exe
+**/*.exe
 *.pdb
 *.rar
 *.Cache
