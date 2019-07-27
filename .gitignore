@@ -61,7 +61,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-*.exe
+**/*.exe
 *.pdb
 *.rar
 *.Cache
