@@ -214,6 +214,7 @@ Public Class DarkSoulsProcess
             Catch ex As Exception
                 'hard failure. no recovering the blocking feature now
                 Throw New ApplicationException(ex.Message)
+                Exit While
             End Try
             Thread.Sleep(200)
         End While
