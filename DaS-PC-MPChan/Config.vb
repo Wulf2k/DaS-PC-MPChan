@@ -2,6 +2,7 @@
     Public Const VersionCheckUrl = "http://wulf2k.ca/pc/das/dscm-ver.txt"
     Public Const OnlineCheckUrl = "http://chronial.de/scripts/dscm/is_online.php"
     Public Const NetServerUrl = "http://dscm-net.chronial.de:8811"
+    Public Const GlobalBlocklistUrl = "https://raw.githubusercontent.com/metal-crow/DaS-PC-MPChan/master/GlobalBlocklist"
 
     Public Const DebugLogLength = 10000
 

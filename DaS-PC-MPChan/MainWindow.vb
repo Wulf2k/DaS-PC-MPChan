@@ -280,11 +280,31 @@ Public Class MainWindow
         Next
     End Sub
 
-    'Read in blocked node list from register
-    Private Sub loadBlockedNodes()
+    'Read in blocked node list from register and global block list
+    Private Async Sub loadBlockedNodes()
         Dim key As Microsoft.Win32.RegistryKey
         key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\BlockedNodes", True)
 
+        Try
+            Dim client As New Net.WebClient()
+            Net.ServicePointManager.SecurityProtocol = Net.SecurityProtocolType.Tls12
+            Dim content As String = Await client.DownloadStringTaskAsync(Config.GlobalBlocklistUrl)
+
+            'grab users from global blocklist and save them to the registry
+            Dim lines() As String = content.Split({vbCrLf, vbLf}, StringSplitOptions.None)
+            For Each line In lines
+                If line.Length > 0 Then
+                    Dim sublines() As String = line.Split("="c)
+                    Dim steamid As String = sublines(0)
+                    Dim steamname As String = sublines(1)
+                    key.SetValue(CType(steamid, Object), steamname)
+                End If
+            Next
+        Catch ex As Exception
+            'Fail silently since nobody wants to be bothered for an blocklist check.
+        End Try
+
+        'load blocked users from registry
         If key IsNot Nothing Then
             For Each id As String In key.GetValueNames()
                 dgvBlockedNodes.Rows.Add(key.GetValue(id), id)
