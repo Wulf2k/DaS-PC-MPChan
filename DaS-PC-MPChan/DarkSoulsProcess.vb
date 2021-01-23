@@ -790,7 +790,7 @@ Public Class DarkSoulsProcess
         Dim readP2PPacket_1 As IntPtr = ReadInt32(steamApiNetworking_ptrs + 4)
         Dim readP2PPacket_2 As IntPtr = ReadInt32(readP2PPacket_1 + 0)
         Dim readP2PPacket_3 As IntPtr = ReadInt32(readP2PPacket_2 + 8)
-        Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + 274 'get the last instruction of the readP2PPacket
+        Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + 295 'get the last instruction of the readP2PPacket
 
         'Init in-memory block list
         blocklistInMemorySize = 8 * 200 '200 block slots should be good for now
@@ -830,6 +830,15 @@ Public Class DarkSoulsProcess
         &H7C, &HE2, &HE9, &H9, &H0, &H0, &H0, &H5A, &H59, &H5B, &H58, &HB0, &H0, &HC2, &H14, &H0, &H5A, &H59, &H5B, &H58}
 
         Debug.Assert(readP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the ReadP2PPacket code")
+
+        'check that we're injecting into where we expect. the steamapi may change/update
+        'make sure we don't check the exact instruction we're injecting at, since we may be doing a re-connect after another DSCM so our jmp may be there
+        Dim correctAobProlog() As Byte = {&H5F, &H5E, &H8A, &HC3, &H5B, &H8B, &HE5, &H5D}
+        Dim processAobProlog = ReadBytes(readP2PPacket_end - 8, 8)
+        If Not correctAobProlog.SequenceEqual(processAobProlog) Then
+            MessageBox.Show("DSCM detected that the Blocklist feature probably will not work. Disabled. (please report to the developer)")
+            Return
+        End If
 
         blocklistRecvDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)
 
