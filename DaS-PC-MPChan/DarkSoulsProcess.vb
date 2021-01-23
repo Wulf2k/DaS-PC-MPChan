@@ -205,7 +205,18 @@ Public Class DarkSoulsProcess
         If Not HasWatchdog Then
             InstallNamecrashFix()
         End If
-        Inject_P2PPacket()
+        While True
+            Try
+                Dim success = Inject_P2PPacket()
+                If success Then
+                    Exit While
+                End If
+            Catch ex As Exception
+                'hard failure. no recovering the blocking feature now
+                Throw New ApplicationException(ex.Message)
+            End Try
+            Thread.Sleep(200)
+        End While
         SetupNodeDumpHook()
         SetupLobbyDumpHook()
     End Sub
@@ -772,14 +783,14 @@ Public Class DarkSoulsProcess
         CreateRemoteThread(_targetProcessHandle, 0, 0, connectMemory, 0, 0, 0)
     End Sub
 
-    Private Sub Inject_P2PPacket()
+    Private Function Inject_P2PPacket() As Boolean
         Dim allocatedCodeSize = 256 'this should be plenty of space
 
         Dim steamApiNetworking As IntPtr = steamApiBase + &H2F70
 
         'Extremely weak check to be sure we're at the right spot
         If Not ReadUInt8(steamApiNetworking) = &HA1& Then
-            Throw New ApplicationException("Unexpected byte at steam_api.dll|Networking")
+            Return False
         End If
 
         'locate injection points
@@ -791,6 +802,11 @@ Public Class DarkSoulsProcess
         Dim readP2PPacket_2 As IntPtr = ReadInt32(readP2PPacket_1 + 0)
         Dim readP2PPacket_3 As IntPtr = ReadInt32(readP2PPacket_2 + 8)
         Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + 295 'get the last instruction of the readP2PPacket
+
+        'Check to make sure all of the steamApi is loaded before we inject (in cause we're playing with another mod that delays it's loading)
+        If readP2PPacket_3 = 0 Then
+            Return False
+        End If
 
         'Init in-memory block list
         blocklistInMemorySize = 8 * 200 '200 block slots should be good for now
@@ -836,8 +852,7 @@ Public Class DarkSoulsProcess
         Dim correctAobProlog() As Byte = {&H5F, &H5E, &H8A, &HC3, &H5B, &H8B, &HE5, &H5D}
         Dim processAobProlog = ReadBytes(readP2PPacket_end - 8, 8)
         If Not correctAobProlog.SequenceEqual(processAobProlog) Then
-            MessageBox.Show("DSCM detected that the Blocklist feature probably will not work. Disabled. (please report to the developer)")
-            Return
+            Throw New ApplicationException("DSCM detected that the Blocklist feature probably will not work. Disabled. (please report to the developer)")
         End If
 
         blocklistRecvDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)
@@ -849,7 +864,9 @@ Public Class DarkSoulsProcess
         WriteProcessMemory(_targetProcessHandle, blocklistRecvDetour, readP2PdetourCode, allocatedCodeSize, 0)
 
         blocklistRecvHook.Activate()
-    End Sub
+
+        Return True
+    End Function
 
     Public Sub Sync_MemoryBlockList(blockednodes As DataGridViewRowCollection)
         Debug.Assert(blocklistInMemorySize >= blockednodes.Count * 8, "Blocklist larger than allocated memory. Need to increase size.")
