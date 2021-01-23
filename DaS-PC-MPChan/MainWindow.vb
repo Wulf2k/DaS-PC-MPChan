@@ -1071,7 +1071,7 @@ Public Class MainWindow
     'Blocked the given user id if possible
     'Adds to registery and the block list
     Private Sub blockUser(idString As String)
-        If dgvBlockedNodes.Rows.Count < 5 Then
+        If dgvBlockedNodes.Rows.Count < 200 Then
             Dim BlockRegistryKey As RegistryKey = Registry.CurrentUser.OpenSubKey("Software\DSCM\BlockedNodes", True)
             Dim str2 As String = Conversions.ToString(Convert.ToInt64(idString, 16))
             Dim xmlDocument As XmlDocument = New XmlDocument()
@@ -1085,7 +1085,7 @@ Public Class MainWindow
                 dsProcess.Sync_MemoryBlockList(dgvBlockedNodes.Rows) 'before completely dropping all communications
             End If
         Else
-            MsgBox("You can only simulatiously block 5 players. Please remove someone from your block list.", MsgBoxStyle.Critical)
+            MsgBox("You can only simulatiously block 200 players. Please remove someone from your block list.", MsgBoxStyle.Critical)
         End If
     End Sub
 
