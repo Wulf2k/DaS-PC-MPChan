@@ -408,6 +408,7 @@ Public Class MainWindow
     Private Async Sub updatecheck()
         Try
             Dim client As New Net.WebClient()
+            Net.ServicePointManager.SecurityProtocol = Net.SecurityProtocolType.Tls12
             Dim content As String = Await client.DownloadStringTaskAsync(Config.VersionCheckUrl)
 
             Dim lines() As String = content.Split({vbCrLf, vbLf}, StringSplitOptions.None)
