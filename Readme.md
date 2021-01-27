@@ -151,7 +151,7 @@ also consider players that you can invade and that can invade you. Also:
   
 Blocking
 =========
-DSCM now allows you to block up to 5 players.
+DSCM now allows you to block players.  
 Users you block will not be able to connect to you by any means, such as direct connection, standard node gathering, or otherwise. 
 
 * Copy the other player's steam profile URL or SteamID64 into the `Block` field
