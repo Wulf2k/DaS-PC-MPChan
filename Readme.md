@@ -8,7 +8,7 @@ Instructions
 Global Blocklist
 ----------------------
 
-**If you think you've been added to the global blocklist incorrectly, open a PR or PM me on discord (MetalCrow#7285).**
+**If you think you've been added to the global blocklist incorrectly, open a PR or PM me on discord (MetalCrow#7285).**  
 I'll figure out what's going on and do my best to get you removed.
 
 Automatic node finding
