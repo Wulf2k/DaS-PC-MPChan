@@ -5,6 +5,12 @@ Instructions
 2. Start Dark Souls
 3. Enjoy Dark Souls Multiplayer :)
 
+Global Blocklist
+----------------------
+
+**If you think you've been added to the global blocklist incorrectly, open a PR or PM me on discord (MetalCrow#7285).**
+I'll figure out what's going on and do my best to get you removed.
+
 Automatic node finding
 ----------------------
 While DSCM-Net is active, it will automatically connect to players in the same
