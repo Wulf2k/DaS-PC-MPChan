@@ -40,4 +40,7 @@
     Public Const HalfBadNodeGracePeriod = 15 * 60
     'Grace period for nodes that have been added manually
     Public Const ManualNodeGracePeriod = 15 * 60
+
+    'Minimum time an account must have existed before we allow a connection to it if option is enabled
+    Public Const AccountCreatedMinMonthsOld = 12
 End Module

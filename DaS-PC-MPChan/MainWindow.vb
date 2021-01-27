@@ -66,14 +66,14 @@ Public Class MainWindow
             If oldFileArg.EndsWith(".old") Then
                 Dim t = New Thread(
                     Sub()
-                    Try
-                        'Give the old version time to shut down
-                        Thread.Sleep(1000)
-                        File.Delete(oldFileArg)
-                    Catch ex As Exception
-                        Me.Invoke(Function() MsgBox("Deleting old version failed: " & vbCrLf & ex.Message, MsgBoxStyle.Exclamation))
-                    End Try
-                End Sub)
+                        Try
+                            'Give the old version time to shut down
+                            Thread.Sleep(1000)
+                            File.Delete(oldFileArg)
+                        Catch ex As Exception
+                            Me.Invoke(Function() MsgBox("Deleting old version failed: " & vbCrLf & ex.Message, MsgBoxStyle.Exclamation))
+                        End Try
+                    End Sub)
                 t.Start()
             Else
                 MsgBox("Deleting old version failed: Invalid filename ", MsgBoxStyle.Exclamation)
@@ -348,6 +348,8 @@ Public Class MainWindow
         chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
         nmbMaxNodes.Value = key.GetValue("MaxNodes")
+
+        mandateMinAccountAge.Checked = (key.GetValue("MinAccountAge") = "True")
 
         optionsLoaded = True
     End Sub
@@ -1109,6 +1111,43 @@ Public Class MainWindow
             MsgBox("You can only simulatiously block 200 players. Please remove someone from your block list.", MsgBoxStyle.Critical)
         End If
     End Sub
+
+    Public Async Sub blockUserForMinAccountAge(idStringHex As String)
+        Dim idString = Convert.ToInt64(idStringHex, 16).ToString
+        'if we have this option turned on
+        If mandateMinAccountAge.Checked Then
+            'check the account creation date and compare to the specified time ago
+            Dim accountCreated = Await lookupUserAccountCreation(idString) 'this need to have a timeout
+            If accountCreated.HasValue Then
+                If accountCreated.Value > Date.Now.AddMonths(-Config.AccountCreatedMinMonthsOld) Then
+                    blockUser(idString)
+                End If
+            End If
+        End If
+    End Sub
+
+    'Lookup the given user, and return their account creation date
+    'Return Datetime on success, or Nothing on error
+    'Apologies to steamid.uk for bypassing your API, but 500 requests per day for everyone isn't sufficent
+    Private Async Function lookupUserAccountCreation(idString As String) As Task(Of Date?)
+        Try
+            Dim client As New Net.WebClient()
+            Net.ServicePointManager.SecurityProtocol = Net.SecurityProtocolType.Tls12
+            Dim content As String = Await client.DownloadStringTaskAsync("https://steamid.uk/profile/" + idString)
+
+            'regex search the html for the content.
+            'this is awful but i'm already using Visual Basic. What do you want, an html parser?
+            Dim result = RegularExpressions.Regex.Matches(content, "Steam member since: <b>([0-9]{2}/[0-9]{2}/[0-9]{4})</b>")
+            If result.Count > 0 Then
+                Dim dateresult As Date = Date.ParseExact(result(0).Groups(1).Value, "dd/MM/yyyy", System.Globalization.DateTimeFormatInfo.InvariantInfo)
+                Return dateresult
+            End If
+        Catch ex As Exception
+            'generalized failure, return Nothing
+        End Try
+
+        Return Nothing
+    End Function
 
     Private Sub blockUserId_MouseClick(sender As Object, e As EventArgs) Handles blockUserId.Click
         Dim idString As String = verifySteamId(txtBlockSteamID)

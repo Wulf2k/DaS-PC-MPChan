@@ -900,7 +900,7 @@ Public Class DarkSoulsProcess
         For i = 0 To nodeCount - 1
             Dim node As New DSNode
             ' SteamPlayerData
-            Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC) 
+            Dim steamData1 As Integer = ReadInt32(steamNodesPtr + &HC)
             ' SteamOnlineIDData
             Dim steamData2 As Integer = ReadInt32(steamData1 + &HC)
             node.SteamId = ReadSteamIdUnicode(steamData2 + &H30)
@@ -935,6 +935,7 @@ Public Class DarkSoulsProcess
                 If ConnectedNodes.ContainsKey(nodeSteamId) Then
                     node = ConnectedNodes(nodeSteamId)
                 Else
+                    MainWindow.blockUserForMinAccountAge(nodeSteamId)
                     node = New DSNode()
                     node.SteamId = nodeSteamId
                     node.CharacterName = basicNodeInfo(nodeSteamId)

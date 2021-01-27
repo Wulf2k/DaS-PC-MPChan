@@ -105,6 +105,7 @@ Partial Class MainWindow
         Me.btnAddBlock = New System.Windows.Forms.Button()
         Me.lblNewVersion = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
+        Me.mandateMinAccountAge = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
         Me.btnUpdate = New System.Windows.Forms.Button()
         Me.btnLaunchDS = New System.Windows.Forms.Button()
@@ -1009,6 +1010,17 @@ Partial Class MainWindow
         Me.chkDSCMNet.Text = "Join DSCM-Net"
         Me.chkDSCMNet.UseVisualStyleBackColor = false
         '
+        'MinAccountAge
+        '
+        Me.mandateMinAccountAge.AutoSize = True
+        Me.mandateMinAccountAge.BackColor = System.Drawing.SystemColors.Control
+        Me.mandateMinAccountAge.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.mandateMinAccountAge.Location = New System.Drawing.Point(12, 72)
+        Me.mandateMinAccountAge.Name = "MinAccountAge"
+        Me.mandateMinAccountAge.Size = New System.Drawing.Size(119, 20)
+        Me.mandateMinAccountAge.Text = "Mandate minimum steam account age"
+        Me.mandateMinAccountAge.UseVisualStyleBackColor = False
+        '
         'dsProcessStatus
         '
         Me.dsProcessStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
@@ -1048,6 +1060,7 @@ Partial Class MainWindow
         Me.Controls.Add(Me.btnUpdate)
         Me.Controls.Add(Me.dsProcessStatus)
         Me.Controls.Add(Me.chkDSCMNet)
+        Me.Controls.Add(Me.mandateMinAccountAge)
         Me.Controls.Add(Me.lblNewVersion)
         Me.Controls.Add(Me.btnRemFavorite)
         Me.Controls.Add(Me.btnRemBlock)
@@ -1118,6 +1131,7 @@ End Sub
     Friend WithEvents lblNewVersion As Label
     Friend WithEvents tabDSCMNet As TabPage
     Friend WithEvents chkDSCMNet As CheckBox
+    Friend WithEvents mandateMinAccountAge As CheckBox
     Friend WithEvents txtIRCDebug As System.Windows.Forms.TextBox
     Friend WithEvents dsProcessStatus As System.Windows.Forms.TextBox
     Friend WithEvents tabHelp As System.Windows.Forms.TabPage
