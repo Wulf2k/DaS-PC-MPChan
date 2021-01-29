@@ -1117,7 +1117,7 @@ Public Class MainWindow
         'if we have this option turned on
         If mandateMinAccountAge.Checked Then
             'check the account creation date and compare to the specified time ago
-            Dim accountCreated = Await lookupUserAccountCreation(idString) 'this need to have a timeout
+            Dim accountCreated = Await lookupUserAccountCreation(idString)
             If accountCreated.HasValue Then
                 If accountCreated.Value > Date.Now.AddMonths(-Config.AccountCreatedMinMonthsOld) Then
                     blockUser(idString)
@@ -1133,7 +1133,7 @@ Public Class MainWindow
         Try
             Dim client As New Net.WebClient()
             Net.ServicePointManager.SecurityProtocol = Net.SecurityProtocolType.Tls12
-            Dim content As String = Await client.DownloadStringTaskAsync("https://steamid.uk/profile/" + idString)
+            Dim content As String = Await client.DownloadStringTaskAsync("https://steamid.uk/profile/" + idString) 'built in timeout here will throw an exception if the site is down
 
             'regex search the html for the content.
             'this is awful but i'm already using Visual Basic. What do you want, an html parser?
