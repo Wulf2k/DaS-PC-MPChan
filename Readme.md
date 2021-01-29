@@ -171,12 +171,13 @@ Contact/ Bug Reports:
 =====================
 
 This program was created by Wulf, who can be found on reddit as
-[/u/Wulf2k](https://www.reddit.com/u/wulf2k).
+[/u/Wulf2k](https://www.reddit.com/u/wulf2k).  
+This fork is maintained by Metal-Crow, who can be found on Discord as MetalCrow#7285.  
 As a backup you can try contacting [/u/illusorywall](https://www.reddit.com/u/illusorywall)
 or [@illusorywall](https://twitter.com/illusorywall), but I can't help as much
-with the technical stuff.
+with the technical stuff.  
 
-Source code is available at: <https://github.com/Wulf2k/DaS-PC-MPChan>  
+Source code is available at: <https://github.com/metal-crow/DaS-PC-MPChan>  
 Source code for the DSCM-Net server: <https://github.com/Chronial/dscm-server>
 
 - - - - - - - - - - - - - - - - - - - - - - - -
