@@ -344,11 +344,12 @@ Public Class MainWindow
         regval = key.GetValue("MaxNodes")
         If regval Is Nothing Then key.SetValue("MaxNodes", "20")
 
+        regval = key.GetValue("MinAccountAge")
+        If regval Is Nothing Then key.SetValue("MinAccountAge", "False")
 
         chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
         nmbMaxNodes.Value = key.GetValue("MaxNodes")
-
         mandateMinAccountAge.Checked = (key.GetValue("MinAccountAge") = "True")
 
         optionsLoaded = True
@@ -1287,6 +1288,12 @@ Public Class MainWindow
                 _netClient = Nothing
             End If
         End If
+    End Sub
+
+    Private Sub mandateMinAccountAge_CheckedChanged(sender As Object, e As EventArgs) Handles mandateMinAccountAge.CheckedChanged
+        Dim key As Microsoft.Win32.RegistryKey
+        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+        key.SetValue("MinAccountAge", mandateMinAccountAge.Checked)
     End Sub
 
     Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvRecentNodes.DoubleClick, dgvFavoriteNodes.DoubleClick, dgvDSCMNet.DoubleClick
