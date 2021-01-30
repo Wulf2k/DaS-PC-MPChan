@@ -1129,20 +1129,18 @@ Public Class MainWindow
 
     'Lookup the given user, and return their account creation date
     'Return Datetime on success, or Nothing on error
-    'Apologies to steamid.uk for bypassing your API, but 500 requests per day for everyone isn't sufficent
     Private Async Function lookupUserAccountCreation(idString As String) As Task(Of Date?)
         Try
             Dim client As New Net.WebClient()
             Net.ServicePointManager.SecurityProtocol = Net.SecurityProtocolType.Tls12
-            Dim content As String = Await client.DownloadStringTaskAsync("https://steamid.uk/profile/" + idString) 'built in timeout here will throw an exception if the site is down
+            'use async to grab the website
+            Dim content As String = Await client.DownloadStringTaskAsync("http://steamcommunity.com/profiles/" + idString + "?xml=1") 'built in timeout here will throw an exception if the site is down
 
-            'regex search the html for the content.
-            'this is awful but i'm already using Visual Basic. What do you want, an html parser?
-            Dim result = RegularExpressions.Regex.Matches(content, "Steam member since: <b>([0-9]{2}/[0-9]{2}/[0-9]{4})</b>")
-            If result.Count > 0 Then
-                Dim dateresult As Date = Date.ParseExact(result(0).Groups(1).Value, "dd/MM/yyyy", System.Globalization.DateTimeFormatInfo.InvariantInfo)
-                Return dateresult
-            End If
+            'load the website content into the xml parser
+            Dim xmlElem = XDocument.Parse(content)
+            Dim creationDate As String = xmlElem.Elements("profile").Elements("memberSince").First
+            Dim dateresult As Date = Date.ParseExact(creationDate, "MMMM dd, yyyy", System.Globalization.DateTimeFormatInfo.InvariantInfo)
+            Return dateresult
         Catch ex As Exception
             'generalized failure, return Nothing
         End Try
