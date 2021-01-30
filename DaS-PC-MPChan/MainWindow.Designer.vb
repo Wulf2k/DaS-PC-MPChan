@@ -944,7 +944,7 @@ Partial Class MainWindow
         '
         'btnAddFavorite
         '
-        Me.btnAddFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
+        Me.btnAddFavorite.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
         Me.btnAddFavorite.Location = New System.Drawing.Point(200, 453)
         Me.btnAddFavorite.Name = "btnAddFavorite"
         Me.btnAddFavorite.Size = New System.Drawing.Size(100, 23)
@@ -955,7 +955,7 @@ Partial Class MainWindow
         '
         'btnRemFavorite
         '
-        Me.btnRemFavorite.Anchor = System.Windows.Forms.AnchorStyles.Bottom
+        Me.btnRemFavorite.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
         Me.btnRemFavorite.Location = New System.Drawing.Point(305, 453)
         Me.btnRemFavorite.Name = "btnRemFavorite"
         Me.btnRemFavorite.Size = New System.Drawing.Size(100, 23)
@@ -966,7 +966,7 @@ Partial Class MainWindow
         '
         'btnAddBlock
         '
-        Me.btnAddBlock.Anchor = System.Windows.Forms.AnchorStyles.Bottom
+        Me.btnAddBlock.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
         Me.btnAddBlock.Location = New System.Drawing.Point(410, 453)
         Me.btnAddBlock.Name = "btnAddBlock"
         Me.btnAddBlock.Size = New System.Drawing.Size(100, 23)
@@ -977,7 +977,7 @@ Partial Class MainWindow
         '
         'btnRemBlock
         '
-        Me.btnRemBlock.Anchor = System.Windows.Forms.AnchorStyles.Bottom
+        Me.btnRemBlock.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
         Me.btnRemBlock.Location = New System.Drawing.Point(515, 453)
         Me.btnRemBlock.Name = "btnRemBlock"
         Me.btnRemBlock.Size = New System.Drawing.Size(100, 23)
