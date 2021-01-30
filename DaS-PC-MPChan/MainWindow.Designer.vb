@@ -1015,7 +1015,7 @@ Partial Class MainWindow
         Me.mandateMinAccountAge.AutoSize = True
         Me.mandateMinAccountAge.BackColor = System.Drawing.SystemColors.Control
         Me.mandateMinAccountAge.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.mandateMinAccountAge.Location = New System.Drawing.Point(12, 72)
+        Me.mandateMinAccountAge.Location = New System.Drawing.Point(135, 4)
         Me.mandateMinAccountAge.Name = "MinAccountAge"
         Me.mandateMinAccountAge.Size = New System.Drawing.Size(119, 20)
         Me.mandateMinAccountAge.Text = "Mandate minimum steam account age"
