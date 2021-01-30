@@ -345,7 +345,7 @@ Public Class MainWindow
         If regval Is Nothing Then key.SetValue("MaxNodes", "20")
 
         regval = key.GetValue("MinAccountAge")
-        If regval Is Nothing Then key.SetValue("MinAccountAge", "False")
+        If regval Is Nothing Then key.SetValue("MinAccountAge", "True")
 
         chkExpand.Checked = (key.GetValue("ExpandDSCM") = "True")
         chkDSCMNet.Checked = (key.GetValue("JoinDSCM-Net") = "True")
