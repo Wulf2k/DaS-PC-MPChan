@@ -1148,6 +1148,48 @@ Public Class MainWindow
         Return Nothing
     End Function
 
+    'Lookup the given user, and return their name history
+    'Return a list with the ordered history of the avilable past names, including their current one
+    'Also get their steam RealName and Custom URL
+    'On error the list will be empty
+    Private Async Function lookupUserNameHistory(idString As String) As Task(Of List(Of String))
+        Try
+            Dim names = New List(Of String)
+            Dim client As New Net.WebClient()
+            Net.ServicePointManager.SecurityProtocol = Net.SecurityProtocolType.Tls12
+            'use async to grab the website
+            Dim content As String = Await client.DownloadStringTaskAsync("http://steamcommunity.com/profiles/" + idString + "?xml=1") 'built in timeout here will throw an exception if the site is down
+
+            'load the website content into the xml parser
+            Dim xmlElem = XDocument.Parse(content)
+            Dim curName As String = xmlElem.Elements("profile").Elements("steamID").First
+            names.Add(curName)
+            Dim realname As String = xmlElem.Elements("profile").Elements("realname").First
+            If realname <> "" Then
+                names.Add(realname)
+            End If
+            Dim customURL As String = xmlElem.Elements("profile").Elements("customURL").First
+            If customURL <> "" Then
+                names.Add(customURL)
+            End If
+
+            'now grab their older names
+            Dim contentOlder As String = Await client.DownloadStringTaskAsync("http://steamcommunity.com/profiles/" + idString + "/namehistory")
+
+            'use regex to parse html because fuck visual basic
+            Dim result = RegularExpressions.Regex.Matches(contentOlder, "<div class=""historyItem[b]*"">.*<span class=""historyDash"">")
+            For Each m As Match In result
+                names.Add(m.Groups(1).Value)
+            Next
+
+            Return names
+        Catch ex As Exception
+            'generalized failure, return Nothing
+        End Try
+
+        Return New List(Of String)
+    End Function
+
     Private Sub blockUserId_MouseClick(sender As Object, e As EventArgs) Handles blockUserId.Click
         Dim idString As String = verifySteamId(txtBlockSteamID)
         If idString.Equals("") Then
