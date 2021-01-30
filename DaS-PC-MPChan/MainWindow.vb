@@ -1121,7 +1121,7 @@ Public Class MainWindow
             Dim accountCreated = Await lookupUserAccountCreation(idString)
             If accountCreated.HasValue Then
                 If accountCreated.Value > Date.Now.AddMonths(-Config.AccountCreatedMinMonthsOld) Then
-                    blockUser(idString)
+                    blockUser(idStringHex)
                 End If
             End If
         End If
