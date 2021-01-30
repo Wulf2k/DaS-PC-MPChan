@@ -853,7 +853,7 @@ Public Class DarkSoulsProcess
         Dim correctAobProlog() As Byte = {&H5F, &H5E, &H8A, &HC3, &H5B, &H8B, &HE5, &H5D}
         Dim processAobProlog = ReadBytes(readP2PPacket_end - 8, 8)
         If Not correctAobProlog.SequenceEqual(processAobProlog) Then
-            Throw New ApplicationException("DSCM detected that the Blocklist feature probably will not work. Disabled. (please report to the developer)")
+            Throw New ApplicationException("DSCM detected that the Blocklist feature probably will not work. Disabled. (please report to the developer, or opt-out of the steam beta if you are in it under Settings->Account)")
         End If
 
         blocklistRecvDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)
