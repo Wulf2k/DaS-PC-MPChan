@@ -876,8 +876,14 @@ Public Class DarkSoulsProcess
         Dim steamid_array(blocklistInMemorySize) As Byte
         Dim i = 0
         For Each blockNode As DataGridViewRow In blockednodes
-            Dim upperSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(blockNode.Cells("steamId").Value, 8), 16))
-            Dim lowerSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(blockNode.Cells("steamId").Value, 8), 16))
+            'remove the postfix notation about the block type from the id
+            Dim steamID As String = blockNode.Cells("steamId").Value
+            If steamID.Contains("_") Then
+                steamID = steamID.Remove(steamID.LastIndexOf("_"),2)
+            End If
+
+            Dim upperSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
+            Dim lowerSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
             'little endian order the ints
             steamid_array(i + 0) = lowerSteamId(0)
             steamid_array(i + 1) = lowerSteamId(1)

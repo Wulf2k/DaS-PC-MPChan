@@ -10,6 +10,12 @@ Imports Microsoft.VisualBasic
 Imports Microsoft.VisualBasic.CompilerServices
 Imports System.Xml
 
+Structure BlockTypes
+    Const GlobalBlock = "_G"
+    Const ManualBlock = "_M"
+    Const AgeBlock = "_A"
+End Structure
+
 Public Class MainWindow
     'Timers
     Private WithEvents updateActiveNodesTimer As New System.Windows.Forms.Timer()
@@ -290,12 +296,22 @@ Public Class MainWindow
             Net.ServicePointManager.SecurityProtocol = Net.SecurityProtocolType.Tls12
             Dim content As String = Await client.DownloadStringTaskAsync(Config.GlobalBlocklistUrl)
 
+            'clear existing users marked as from global blocklist
+            'this is done so if we remove people from the blocklist they also get removed here
+            If key IsNot Nothing Then
+                For Each id As String In key.GetValueNames()
+                    If id.Contains(BlockTypes.GlobalBlock) Then
+                        key.DeleteSubKey(id)
+                    End If
+                Next
+            End If
+
             'grab users from global blocklist and save them to the registry
             Dim lines() As String = content.Split({vbCrLf, vbLf}, StringSplitOptions.None)
             For Each line In lines
                 If line.Length > 0 Then
                     Dim sublines() As String = line.Split("="c)
-                    Dim steamid As String = sublines(0)
+                    Dim steamid As String = sublines(0) + BlockTypes.GlobalBlock 'add notation to indicate this is from the global blocklist
                     Dim steamname As String = sublines(1)
                     key.SetValue(CType(steamid, Object), steamname)
                 End If
@@ -1094,7 +1110,7 @@ Public Class MainWindow
 
     'Blocked the given user id if possible
     'Adds to registery and the block list
-    Private Sub blockUser(idString As String)
+    Private Sub blockUser(idString As String, blockType As String)
         If dgvBlockedNodes.Rows.Count < 200 Then
             Dim BlockRegistryKey As RegistryKey = Registry.CurrentUser.OpenSubKey("Software\DSCM\BlockedNodes", True)
             Dim str2 As String = Conversions.ToString(Convert.ToInt64(idString, 16))
@@ -1121,7 +1137,7 @@ Public Class MainWindow
             Dim accountCreated = Await lookupUserAccountCreation(idString)
             If accountCreated.HasValue Then
                 If accountCreated.Value > Date.Now.AddMonths(-Config.AccountCreatedMinMonthsOld) Then
-                    blockUser(idStringHex)
+                    blockUser(idStringHex, BlockTypes.AgeBlock)
                 End If
             End If
         End If
@@ -1195,7 +1211,7 @@ Public Class MainWindow
         If idString.Equals("") Then
             Return
         End If
-        blockUser(idString)
+        blockUser(idString, BlockTypes.ManualBlock)
     End Sub
 
     Private Function getSelectedNode() As Tuple(Of String, String)
@@ -1276,7 +1292,7 @@ Public Class MainWindow
 
         Dim steamId As String = selectedNode.Item1
 
-        blockUser(steamId)
+        blockUser(steamId, BlockTypes.ManualBlock)
     End Sub
 
     'Button to unblock selected user
@@ -1331,9 +1347,20 @@ Public Class MainWindow
     End Sub
 
     Private Sub mandateMinAccountAge_CheckedChanged(sender As Object, e As EventArgs) Handles mandateMinAccountAge.CheckedChanged
-        Dim key As Microsoft.Win32.RegistryKey
-        key = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
-        key.SetValue("MinAccountAge", mandateMinAccountAge.Checked)
+        Dim keyopts = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\Options", True)
+        keyopts.SetValue("MinAccountAge", mandateMinAccountAge.Checked)
+
+        'when user turns off min account age, unblock all users blocked by it
+        If Not mandateMinAccountAge.Checked Then
+            Dim keyblocks = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\BlockedNodes", True)
+            If keyblocks IsNot Nothing Then
+                For Each id As String In keyblocks.GetValueNames()
+                    If id.Contains(BlockTypes.GlobalBlock) Then
+                        keyblocks.DeleteSubKey(id)
+                    End If
+                Next
+            End If
+        End If
     End Sub
 
     Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvRecentNodes.DoubleClick, dgvFavoriteNodes.DoubleClick, dgvDSCMNet.DoubleClick
