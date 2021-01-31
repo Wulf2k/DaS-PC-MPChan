@@ -301,7 +301,7 @@ Public Class MainWindow
             If key IsNot Nothing Then
                 For Each id As String In key.GetValueNames()
                     If id.Contains(BlockTypes.GlobalBlock) Then
-                        key.DeleteSubKey(id)
+                        key.DeleteValue(id)
                     End If
                 Next
             End If
