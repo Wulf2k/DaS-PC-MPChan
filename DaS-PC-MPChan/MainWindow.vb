@@ -1362,16 +1362,16 @@ Public Class MainWindow
                     End If
                 Next
             End If
-        End If
 
-        For i = dgvBlockedNodes.Rows.Count - 1 To 0 Step -1
-            If dgvBlockedNodes.Rows(i).Cells("steamId").Value.Contains(BlockTypes.AgeBlock) Then
-                dgvBlockedNodes.Rows.Remove(dgvBlockedNodes.Rows(i))
-                If dsProcess IsNot Nothing Then
-                    dsProcess.Sync_MemoryBlockList(dgvBlockedNodes.Rows)
+            For i = dgvBlockedNodes.Rows.Count - 1 To 0 Step -1
+                If dgvBlockedNodes.Rows(i).Cells("steamId").Value.Contains(BlockTypes.AgeBlock) Then
+                    dgvBlockedNodes.Rows.Remove(dgvBlockedNodes.Rows(i))
+                    If dsProcess IsNot Nothing Then
+                        dsProcess.Sync_MemoryBlockList(dgvBlockedNodes.Rows)
+                    End If
                 End If
-            End If
-        Next
+            Next
+        End If
     End Sub
 
     Private Sub dgvNodes_doubleclick(sender As Object, e As EventArgs) Handles dgvRecentNodes.DoubleClick, dgvFavoriteNodes.DoubleClick, dgvDSCMNet.DoubleClick
