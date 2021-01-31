@@ -1358,7 +1358,7 @@ Public Class MainWindow
             If keyblocks IsNot Nothing Then
                 For Each id As String In keyblocks.GetValueNames()
                     If id.Contains(BlockTypes.GlobalBlock) Then
-                        keyblocks.DeleteSubKey(id)
+                        keyblocks.DeleteValue(id)
                     End If
                 Next
             End If
