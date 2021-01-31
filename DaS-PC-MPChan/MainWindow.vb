@@ -1357,7 +1357,7 @@ Public Class MainWindow
             Dim keyblocks = My.Computer.Registry.CurrentUser.OpenSubKey("Software\DSCM\BlockedNodes", True)
             If keyblocks IsNot Nothing Then
                 For Each id As String In keyblocks.GetValueNames()
-                    If id.Contains(BlockTypes.GlobalBlock) Then
+                    If id.Contains(BlockTypes.AgeBlock) Then
                         keyblocks.DeleteValue(id)
                     End If
                 Next
