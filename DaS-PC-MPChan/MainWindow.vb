@@ -1111,14 +1111,16 @@ Public Class MainWindow
     'Blocked the given user id if possible
     'Adds to registery and the block list
     Private Sub blockUser(idString As String, blockType As String)
+        Dim idStringNoted = idString + blockType
+
         If dgvBlockedNodes.Rows.Count < 200 Then
             Dim BlockRegistryKey As RegistryKey = Registry.CurrentUser.OpenSubKey("Software\DSCM\BlockedNodes", True)
             Dim str2 As String = Conversions.ToString(Convert.ToInt64(idString, 16))
             Dim xmlDocument As XmlDocument = New XmlDocument()
             xmlDocument.Load("http://steamcommunity.com/profiles/" + str2 + "?xml=1")
             Dim innerText As String = xmlDocument.SelectSingleNode("/profile/steamID").InnerText
-            BlockRegistryKey.SetValue(CType(idString, Object), innerText)
-            dgvBlockedNodes.Rows.Add(CType(innerText, Object), CType(idString, Object))
+            BlockRegistryKey.SetValue(CType(idStringNoted, Object), innerText)
+            dgvBlockedNodes.Rows.Add(CType(innerText, Object), CType(idStringNoted, Object))
 
             If dsProcess IsNot Nothing Then
                 dsProcess.DisconnectSteamId(idString) 'be polite and nicely request a disconnection
