@@ -755,10 +755,10 @@ Public Class DarkSoulsProcess
 
         a.AddVar("connectmemory", connectMemory.address)
         a.AddVar("steamapinetworking", steamApiNetworking)
-        a.AddVar("datapacketlen", data.Length)
+        a.AddVar("datapacketlen", Convert.ToUInt32(data.Length))
         a.AddVar("datapacketptr", connectMemory.address + &H100)
-        a.AddVar("steamidleft", Convert.ToInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
-        a.AddVar("steamidright", Convert.ToInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
+        a.AddVar("steamidleft", Convert.ToUInt32(Microsoft.VisualBasic.Left(targetSteamId, 8), 16))
+        a.AddVar("steamidright", Convert.ToUInt32(Microsoft.VisualBasic.Right(targetSteamId, 8), 16))
 
 
 

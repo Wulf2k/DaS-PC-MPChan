@@ -54,12 +54,12 @@
         bytes = bytes.Concat(newbytes).ToArray
     End Sub
     Public Sub AddVar(ByVal name As String, hexval As String)
-        AddVar(name, Convert.ToInt32(Microsoft.VisualBasic.Right(hexval, hexval.Length - 2), 16))
+        AddVar(name, Convert.ToUInt32(Microsoft.VisualBasic.Right(hexval, hexval.Length - 2), 16))
     End Sub
     Public Sub AddVar(ByVal name As String, val As IntPtr)
-        AddVar(name, CInt(val))
+        AddVar(name, CUInt(val))
     End Sub
-    Public Sub AddVar(ByVal name As String, val As Int32)
+    Public Sub AddVar(ByVal name As String, val As UInt32)
         vars.Add(name.Replace(":", ""), val)
     End Sub
     Public Sub Clear()
