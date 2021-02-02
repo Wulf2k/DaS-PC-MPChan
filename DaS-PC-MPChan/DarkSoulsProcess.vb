@@ -695,11 +695,7 @@ Public Class DarkSoulsProcess
         Dim selfSteamNameBytes() As Byte = Encoding.Unicode.GetBytes(selfSteamName)
         Array.Copy(selfSteamNameBytes, 0, data, 1, selfSteamNameBytes.Length)
 
-        Try
-            sendP2PPacket(steamId, data)
-        Catch ex As Exception
-            Throw New DSConnectException(ex.Message)
-        End Try
+        sendP2PPacket(steamId, data)
     End Sub
 
     Private Sub sendP2PPacket(targetSteamId As String, data As Byte())

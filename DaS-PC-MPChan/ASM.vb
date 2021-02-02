@@ -115,20 +115,20 @@
         'Check if there are offsets in params
         If param1.Contains("+") Or param1.Contains("-") Then
             If param1.Contains("0x") Then
-                plus1 = Convert.ToInt32(param1(3) & Microsoft.VisualBasic.Right(param1, param1.Length - 6), 16)
+                plus1 = Convert.ToUInt32(param1(3) & Microsoft.VisualBasic.Right(param1, param1.Length - 6), 16)
             Else
-                plus1 = Convert.ToInt32(param1(3) & Microsoft.VisualBasic.Right(param1, param1.Length - 4))
+                plus1 = Convert.ToUInt32(param1(3) & Microsoft.VisualBasic.Right(param1, param1.Length - 4))
             End If
             param1 = param1.Split("+")(0)
             param1 = param1.Split("-")(0)
         End If
         If param2.Contains("+") Or param2.Contains("-") Then
             If param2.Contains("0x") Then
-                'plus2 = Convert.ToInt32(param2(3) & Microsoft.VisualBasic.Right(param2, param2.Length - 6), 16)
-                plus2 = Convert.ToInt32(Microsoft.VisualBasic.Right(param2, param2.Length - 4), 16)
+                'plus2 = Convert.ToUInt32(param2(3) & Microsoft.VisualBasic.Right(param2, param2.Length - 6), 16)
+                plus2 = Convert.ToUInt32(Microsoft.VisualBasic.Right(param2, param2.Length - 4), 16)
                 If param2(3) = "-" Then plus2 *= -1
             Else
-                plus2 = Convert.ToInt32(param2(3) & Microsoft.VisualBasic.Right(param2, param2.Length - 4))
+                plus2 = Convert.ToUInt32(param2(3) & Microsoft.VisualBasic.Right(param2, param2.Length - 4))
             End If
             param2 = param2.Split("+")(0)
             param2 = param2.Split("-")(0)
@@ -136,10 +136,10 @@
 
         'If not registers, convert params from hex to dec
         If param1.Contains("0x") Then
-            val1 = Convert.ToInt32(param1, 16)
+            val1 = Convert.ToUInt32(param1, 16)
         End If
         If param2.Contains("0x") Then
-            val2 = Convert.ToInt32(param2, 16)
+            val2 = Convert.ToUInt32(param2, 16)
         End If
 
         'If numeric, set values
@@ -219,7 +219,7 @@
                         newbytes(1) = newbytes(1) Or reg32(reg1)
                     Else
                         newbytes = {&HE8}
-                        Dim addr = Convert.ToInt32(val1) - pos - 5
+                        Dim addr = Convert.ToUInt32(val1) - pos - 5
                         newbytes = newbytes.Concat(BitConverter.GetBytes(addr)).ToArray
 
                     End If
@@ -253,7 +253,7 @@
                         newbytes(1) = newbytes(1) Or reg32(reg1)
                     Else
                         newbytes = {&HE9}
-                        Dim addr = Convert.ToInt32(val1) - pos - 5
+                        Dim addr = Convert.ToUInt32(val1) - pos - 5
                         newbytes = newbytes.Concat(BitConverter.GetBytes(addr)).ToArray
 
                     End If
