@@ -70,8 +70,8 @@
                            ByRef cmd As String,
                            ByRef reg1 As String, ByRef reg2 As String,
                            ByRef ptr1 As Boolean, ByRef ptr2 As Boolean,
-                           ByRef plus1 As Int32, ByRef plus2 As Int32,
-                           ByRef val1 As Int32, ByRef val2 As Int32)
+                           ByRef plus1 As UInt32, ByRef plus2 As UInt32,
+                           ByRef val1 As UInt32, ByRef val2 As UInt32)
 
         'Raw parameters
         Dim params As String = ""
@@ -182,12 +182,12 @@
         Dim ptr2 As Boolean = False
 
         'Offsets from registers
-        Dim plus1 As Int32 = 0
-        Dim plus2 As Int32 = 0
+        Dim plus1 As UInt32 = 0
+        Dim plus2 As UInt32 = 0
 
         'Values, if not registers
-        Dim val1 As Int32 = 0
-        Dim val2 As Int32 = 0
+        Dim val1 As UInt32 = 0
+        Dim val2 As UInt32 = 0
 
         ParseInput(str, cmd, reg1, reg2, ptr1, ptr2, plus1, plus2, val1, val2)
 
@@ -219,7 +219,7 @@
                         newbytes(1) = newbytes(1) Or reg32(reg1)
                     Else
                         newbytes = {&HE8}
-                        Dim addr = Convert.ToUInt32(val1) - pos - 5
+                        Dim addr As UInt32 = Convert.ToUInt32(val1) - pos - 5
                         newbytes = newbytes.Concat(BitConverter.GetBytes(addr)).ToArray
 
                     End If
@@ -253,7 +253,7 @@
                         newbytes(1) = newbytes(1) Or reg32(reg1)
                     Else
                         newbytes = {&HE9}
-                        Dim addr = Convert.ToUInt32(val1) - pos - 5
+                        Dim addr As UInt32 = Convert.ToUInt32(val1) - pos - 5
                         newbytes = newbytes.Concat(BitConverter.GetBytes(addr)).ToArray
 
                     End If
@@ -321,7 +321,7 @@
                         newbytes(1) = newbytes(1) Or &HC0
                     End If
 
-                    Dim offset
+                    Dim offset As Uint32
                     offset = plus1 + plus2
 
                     If (ptr1 And reg1 = "esp") Or (ptr2 And reg2 = "esp") Then
