@@ -213,7 +213,13 @@ Public Class DarkSoulsProcess
                 End If
             Catch ex As Exception
                 'hard failure. no recovering the blocking feature now
-                MsgBox(ex.Message, MsgBoxStyle.Critical)
+                'don't wait for a return here otherwise the auto-attach timer will call this function again
+                Dim thread as New Thread(
+                  Sub() 
+                    MsgBox(ex.Message, MsgBoxStyle.Critical)
+                  End Sub
+                )
+                thread.Start()
                 Exit While
             End Try
             Thread.Sleep(200)
