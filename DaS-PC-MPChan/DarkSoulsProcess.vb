@@ -800,12 +800,40 @@ Public Class DarkSoulsProcess
         Dim readP2PPacket_1 As IntPtr = ReadInt32(steamApiNetworking_ptrs + 4)
         Dim readP2PPacket_2 As IntPtr = ReadInt32(readP2PPacket_1 + 0)
         Dim readP2PPacket_3 As IntPtr = ReadInt32(readP2PPacket_2 + 8)
-        Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + 383 'get the last instruction of the readP2PPacket
 
         'Check to make sure all of the steamApi is loaded before we inject (in cause we're playing with another mod that delays it's loading)
         If readP2PPacket_3 = 0 Then
             Return False
         End If
+
+        'search through the readP2PPacket function to get the end
+        'the function is always followed by a spacer of 0xCC bytes
+        'in order to get the last _instruction_ (which could be the original retn or a leftover jmp from us in the past), hunt backwards from the 0xCCs for a known chunk
+        Dim readP2PPacket_3_end_offset = 0
+        'hunt forwards for end of function
+        Dim CC_spaces() As Byte = {&HCC, &HCC, &HCC}
+        While True
+            Dim readP2PPacket_3_bytes = ReadBytes(readP2PPacket_3+readP2PPacket_3_end_offset, 3)
+            If readP2PPacket_3_bytes.SequenceEqual(CC_spaces) Then
+                Exit While
+            Else
+                readP2PPacket_3_end_offset += 1
+            End If
+        End While
+        'hunt backwards for last instruction by searching for the known epilog
+        Dim epilog_ops() As Byte = {&H5B, &H8B, &HE5, &H5D}
+        While True
+            Dim readP2PPacket_3_bytes = ReadBytes(readP2PPacket_3+readP2PPacket_3_end_offset, 4)
+            If readP2PPacket_3_bytes.SequenceEqual(epilog_ops) Then
+                'add 4 to account for the epilog ops length, and end
+                readP2PPacket_3_end_offset += 4
+                Exit While
+            Else
+                readP2PPacket_3_end_offset -= 1
+            End If
+        End While
+
+        Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + readP2PPacket_3_end_offset
 
         'Init in-memory block list
         blocklistInMemorySize = 8 * 200 '200 block slots should be good for now
