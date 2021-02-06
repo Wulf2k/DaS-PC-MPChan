@@ -818,6 +818,9 @@ Public Class DarkSoulsProcess
                 Exit While
             Else
                 readP2PPacket_3_end_offset += 1
+                If readP2PPacket_3_end_offset < 0 Or readP2PPacket_3_end_offset > 1000
+                    Throw New ApplicationException("Unable to find end of readP2PPacket function")
+                End If
             End If
         End While
         'hunt backwards for last instruction by searching for the known epilog
@@ -830,6 +833,9 @@ Public Class DarkSoulsProcess
                 Exit While
             Else
                 readP2PPacket_3_end_offset -= 1
+                If readP2PPacket_3_end_offset < 0 Or readP2PPacket_3_end_offset > 1000
+                    Throw New ApplicationException("Unable to find last instruction in readP2PPacket function")
+                End If
             End If
         End While
 
@@ -873,14 +879,6 @@ Public Class DarkSoulsProcess
         &H7C, &HE2, &HE9, &H9, &H0, &H0, &H0, &H5A, &H59, &H5B, &H58, &HB0, &H0, &HC2, &H14, &H0, &H5A, &H59, &H5B, &H58}
 
         Debug.Assert(readP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the ReadP2PPacket code")
-
-        'check that we're injecting into where we expect. the steamapi may change/update
-        'make sure we don't check the exact instruction we're injecting at, since we may be doing a re-connect after another DSCM so our jmp may be there
-        Dim correctAobProlog() As Byte = {&H5F, &H8A, &HC3, &H5B, &H8B, &HE5, &H5D}
-        Dim processAobProlog = ReadBytes(readP2PPacket_end - 7, 7)
-        If Not correctAobProlog.SequenceEqual(processAobProlog) Then
-            Throw New ApplicationException("DSCM detected that the Blocklist feature probably will not work. Disabled. (please report to the developer, or opt-out of the steam beta if you are in it under Settings->Account)")
-        End If
 
         blocklistRecvDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)
 
