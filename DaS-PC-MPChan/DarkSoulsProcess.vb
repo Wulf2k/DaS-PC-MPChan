@@ -800,7 +800,7 @@ Public Class DarkSoulsProcess
         Dim readP2PPacket_1 As IntPtr = ReadInt32(steamApiNetworking_ptrs + 4)
         Dim readP2PPacket_2 As IntPtr = ReadInt32(readP2PPacket_1 + 0)
         Dim readP2PPacket_3 As IntPtr = ReadInt32(readP2PPacket_2 + 8)
-        Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + 295 'get the last instruction of the readP2PPacket
+        Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + 383 'get the last instruction of the readP2PPacket
 
         'Check to make sure all of the steamApi is loaded before we inject (in cause we're playing with another mod that delays it's loading)
         If readP2PPacket_3 = 0 Then
@@ -848,8 +848,8 @@ Public Class DarkSoulsProcess
 
         'check that we're injecting into where we expect. the steamapi may change/update
         'make sure we don't check the exact instruction we're injecting at, since we may be doing a re-connect after another DSCM so our jmp may be there
-        Dim correctAobProlog() As Byte = {&H5F, &H5E, &H8A, &HC3, &H5B, &H8B, &HE5, &H5D}
-        Dim processAobProlog = ReadBytes(readP2PPacket_end - 8, 8)
+        Dim correctAobProlog() As Byte = {&H5F, &H8A, &HC3, &H5B, &H8B, &HE5, &H5D}
+        Dim processAobProlog = ReadBytes(readP2PPacket_end - 7, 7)
         If Not correctAobProlog.SequenceEqual(processAobProlog) Then
             Throw New ApplicationException("DSCM detected that the Blocklist feature probably will not work. Disabled. (please report to the developer, or opt-out of the steam beta if you are in it under Settings->Account)")
         End If
