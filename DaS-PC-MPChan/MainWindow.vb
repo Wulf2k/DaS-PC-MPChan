@@ -877,16 +877,19 @@ Public Class MainWindow
     End Sub
 
     Private sub checkOnHitPacketStorage() Handles checkOnHitPacketStorageTimer.Tick
-        If dsProcess IsNot Nothing And dsProcess.type18TmpStorageSteamId IsNot Nothing Then
-            'grab the steam id and unset it
-            Dim steamid_int = dsProcess.ReadUInt64(dsProcess.type18TmpStorageSteamId)
-            Dim steamid = steamid_int.ToString("x16")
+        If dsProcess IsNot Nothing Then
+            'VS doesn't have short circut eval lmao
+            If dsProcess.type18TmpStorageSteamId IsNot Nothing Then
+                'grab the steam id and unset it
+                Dim steamid_int = dsProcess.ReadUInt64(dsProcess.type18TmpStorageSteamId)
+                Dim steamid = steamid_int.ToString("x16")
 
-            If steamid_int <> 0 Then
-                dsProcess.WriteBytes(dsProcess.type18TmpStorageSteamId, {0,0,0,0,0,0,0,0})
-                'since we're grabbing this asynchronously, make sure we didn't already just block them
-                If Not isUserBlocked(steamid) Then
-                    blockUser(steamid, BlockTypes.OnHitHackBlock)
+                If steamid_int <> 0 Then
+                    dsProcess.WriteBytes(dsProcess.type18TmpStorageSteamId, {0,0,0,0,0,0,0,0})
+                    'since we're grabbing this asynchronously, make sure we didn't already just block them
+                    If Not isUserBlocked(steamid) Then
+                        blockUser(steamid, BlockTypes.OnHitHackBlock)
+                    End If
                 End If
             End If
         End If
