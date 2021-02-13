@@ -1,0 +1,43 @@
+50                    - push eax
+53                    - push ebx
+51                    - push ecx
+52                    - push edx
+
+a1 f8 88 40 01        - mov eax, [0x14088D0+0x28] //spell speffect
+8b 1d 0c 89 40 01     - mov ebx, [0x14088D0+0x3C] //weapon speffect
+B9 {badSpeffectList}  - mov ecx, badSpeffectList 
+BA {storage}          - mov edx, type18TmpStorageSteamId
+
+loop:
+83 39 ff              - cmp DWORD PTR [ecx], 0xffffffff //check for the end marker of the list
+74 3a                 - je normalread
+3b 01                 - cmp eax, [ecx] //compare the spell speffect
+74 09                 - je abortread
+3b 19                 - cmp ebx, [ecx] //compare the weapon speffect
+74 05                 - je abortread
+83 c1 04	          - add ecx, 0x4 //next bad speffect
+eb ee                 - jmp loop
+
+abortread:
+8b 06                           - mov eax, [esi] //go to the steamid pointer
+8b 40 0c                        - mov eax, [eax+0xc]
+8b 58 2c                        - mov ebx, [eax+0x2c] //save steamid upper
+89 5a 04                        - mov [edx+4], ebx
+8b 58 28                        - mov ebx, [eax+0x28] //save steamid lower
+89 1a                           - mov [edx], ebx
+c7 05 f8 88 40 01 ff ff ff ff   - mov dword ptr [0x14088D0+0x28], -1 //unset the bad speffects
+c7 05 0c 89 40 01 ff ff ff ff   - mov dword ptr [0x14088D0+0x3C], -1
+5A                              - pop edx
+59                              - pop ecx
+5B                              - pop ebx
+58                              - pop eax
+e9 {abortread_return}           - jmp 0xd2f87b //the function we're injecting to's abortread block
+
+normalread:
+5A                    - pop edx
+59                    - pop ecx
+5B                    - pop ebx
+58                    - pop eax
+83 ec 24              - sub esp, 0x24 //original code
+89 e1                 - mov ecx, esp //original code
+e9 {read_return}      - jmp 0xd2f8b9 //return location

@@ -171,6 +171,12 @@ Public Class DarkSoulsProcess
     Private blocklistInMemory As AllocatedMemory
     Private blocklistInMemorySize As Int32
 
+    Public type18TmpStorageSteamId As AllocatedMemory
+    Private badSpeffectList As AllocatedMemory
+    Private badSpeffectListSize As Int32
+    Private ReceiveOnHitPacketDetour As AllocatedMemory
+    Private ReceiveOnHitPacketHook As JmpHook
+
     Private debugLogMemory As AllocatedMemory
     Private debugLogThread As Thread
     Private debugLogThreadHandle As IntPtr
@@ -224,6 +230,16 @@ Public Class DarkSoulsProcess
             End Try
             Thread.Sleep(200)
         End While
+        Dim success2 = Inject_ReceiveOnHitPacket()
+        If not success2 Then
+            'error injecting the hook
+            Dim thread2 as New Thread(
+              Sub() 
+                MsgBox("Unable to perform Inject_ReceiveOnHitPacket. Please inform developer", MsgBoxStyle.Critical)
+              End Sub
+            )
+            thread2.Start()
+        End If
         SetupNodeDumpHook()
         SetupLobbyDumpHook()
     End Sub
@@ -781,6 +797,69 @@ Public Class DarkSoulsProcess
 
         CreateRemoteThread(_targetProcessHandle, 0, 0, connectMemory, 0, 0, 0)
     End Sub
+
+    Private Function Inject_ReceiveOnHitPacket() As Boolean
+        Dim allocatedCodeSize = 512 'this should be plenty of space
+
+        Dim recieveType18Packet_location As IntPtr = &H0D2F8B4
+        Dim recieveType18Packet_abortread_location As IntPtr = &Hd2f87b
+
+        'Extremely weak check to be sure we're at the right spot
+        Dim checkBytes As Byte() = {&H39, &H1d, &H44, &Hd6, &H37, &H01}
+        If Not ReadBytes(recieveType18Packet_location - 8, checkBytes.Length).SequenceEqual(checkBytes) Then
+            Return False
+        End If
+
+        'Init in-memory location to save the wchar_t steamid of the person we detect with this
+        type18TmpStorageSteamId = New AllocatedMemory(_targetProcessHandle, 8)
+
+        'set up the list of forbidden SpEffects
+        Dim badSpeffectList_VB() As UInt32 = {
+            6, 7, 13, 33, 34, 71, 72, 73, 74, 80, 1520, 1530, 3220, 3240, 3250, 5210, 5211, 5212, 5213, 
+            5214, 5295, 5296, 5221, 5222, 5280, 5290, 5220, 5281, 5291, 5282, 5292, 5283, 5293, 5284, 5294,
+            -1} 'include terminator
+        badSpeffectListSize = 4*badSpeffectList_VB.Length
+        badSpeffectList = New AllocatedMemory(_targetProcessHandle, badSpeffectListSize)
+        For i As Integer = 0 To badSpeffectList_VB.Length-1:
+            WriteInt32(badSpeffectList.address + i*4, badSpeffectList_VB(i))
+        Next
+
+        'inject into the point in readparseType18NetMessage right before it would return the packet it recieved.
+        'Check if the speffects in the packet are bad or not, and -1 them out and save the sender steamid if so
+        'ASM in ASM\ASM-OnHitPacketCheck.txt
+        Dim badSpeffectList_asm_addr = BitConverter.GetBytes(CType(CType(badSpeffectList, IntPtr), Integer))
+        Dim type18TmpStorageSteamId_asm_addr = BitConverter.GetBytes(CType(CType(type18TmpStorageSteamId, IntPtr), Integer))
+
+        Dim readType18MessagedetourCode() As Byte = { 
+        &H50, &H53, &H51, &H52, &HA1, &HF8, &H88, &H40, &H01, &H8B, &H1D, &H0C, &H89, &H40, &H01,
+        &HB9, badSpeffectList_asm_addr(0), badSpeffectList_asm_addr(1), badSpeffectList_asm_addr(2), badSpeffectList_asm_addr(3),
+        &HBA, type18TmpStorageSteamId_asm_addr(0), type18TmpStorageSteamId_asm_addr(1), type18TmpStorageSteamId_asm_addr(2), type18TmpStorageSteamId_asm_addr(3),
+        &H83, &H39, &HFF, &H74, &H3A, &H3B, &H01, &H74, &H09, &H3B, &H19, &H74, &H05,
+        &H83, &HC1, &H04, &HEB, &HEE, &H8B, &H06, &H8B, &H40, &H0C, &H8B, &H58, &H2C, &H89, &H5A, &H04, &H8B, &H58, &H28, &H89,
+        &H1A, &HC7, &H05, &HF8, &H88, &H40, &H01, &HFF, &HFF, &HFF, &HFF, &HC7, &H05, &H0C, &H89, &H40, &H01, &HFF,
+        &HFF, &HFF, &HFF, &H5A, &H59, &H5B, &H58,
+        &HE9}
+
+        ReceiveOnHitPacketDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)
+
+        ReceiveOnHitPacketHook = New JmpHook(_targetProcessHandle, recieveType18Packet_location, ReceiveOnHitPacketDetour, 5)
+
+        'set the jmp address for the abortread_return
+        Dim abortread_returnAddress = BitConverter.GetBytes(CType((recieveType18Packet_abortread_location - (ReceiveOnHitPacketDetour.address + readType18MessagedetourCode.Length + 4)), Int32))
+        readType18MessagedetourCode = readType18MessagedetourCode.Concat({abortread_returnAddress(0), abortread_returnAddress(1), abortread_returnAddress(2), abortread_returnAddress(3)}).ToArray()
+
+        'add the normalread end
+        readType18MessagedetourCode = readType18MessagedetourCode.Concat({&H5A, &H59, &H5B, &H58}).ToArray()
+        readType18MessagedetourCode = ReceiveOnHitPacketHook.PatchCode(readType18MessagedetourCode)
+
+        Debug.Assert(readType18MessagedetourCode.Count <= allocatedCodeSize, "You need more space for the readType18MessagedetourCode code")
+
+        WriteProcessMemory(_targetProcessHandle, ReceiveOnHitPacketDetour, readType18MessagedetourCode, allocatedCodeSize, 0)
+
+        ReceiveOnHitPacketHook.Activate()
+
+        Return True
+    End Function
 
     Private Function Inject_P2PPacket() As Boolean
         Dim allocatedCodeSize = 256 'this should be plenty of space

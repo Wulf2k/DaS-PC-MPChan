@@ -14,11 +14,13 @@ Structure BlockTypes
     Const GlobalBlock = "_G"
     Const ManualBlock = "_M"
     Const AgeBlock = "_A"
+    Const OnHitHackBlock = "_C"
 End Structure
 
 Public Class MainWindow
     'Timers
     Private WithEvents updateActiveNodesTimer As New System.Windows.Forms.Timer()
+    Private WithEvents checkOnHitPacketStorageTimer As New System.Windows.Forms.Timer()
     Private WithEvents updateUITimer As New System.Windows.Forms.Timer()
     Private WithEvents updateNetNodesTimer As New System.Windows.Forms.Timer()
     Private WithEvents updateOnlineStateTimer As New System.Windows.Forms.Timer()
@@ -100,6 +102,8 @@ Public Class MainWindow
         hotkeyTimer.Start()
         updateActiveNodesTimer.Interval = 5000
         updateActiveNodesTimer.Start()
+        checkOnHitPacketStorageTimer.Interval = 200
+        checkOnHitPacketStorageTimer.Start()
         dsAttachmentTimer.Interval = 1000
         dsAttachmentTimer.Start()
         updateOnlineStateTimer.Interval = Config.OnlineCheckInterval
@@ -871,6 +875,18 @@ Public Class MainWindow
 
         dsProcess.SelfSteamName = tmpStr
     End Sub
+
+    Private sub checkOnHitPacketStorage() Handles checkOnHitPacketStorageTimer.Tick
+        If dsProcess IsNot Nothing And dsProcess.type18TmpStorageSteamId IsNot Nothing Then
+            'grab the steam id and unset it
+            Dim steamid_int = dsProcess.ReadUInt64(dsProcess.type18TmpStorageSteamId)
+
+            If steamid_int <> 0 Then
+                dsProcess.WriteBytes(dsProcess.type18TmpStorageSteamId, {0,0,0,0,0,0,0,0})
+                blockUser(steamid_int.ToString("x16"), BlockTypes.OnHitHackBlock)
+            End If
+        End If
+    End sub
 
     Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
         Dim selfNode As DSNode = Nothing

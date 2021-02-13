@@ -195,6 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ASM\ASM-ConnectSteamId.txt" />
+    <Content Include="ASM\ASM-OnHitPacketCheck.txt" />
     <Content Include="ASM\ASM-ReadPacketBlockList.txt" />
     <Content Include="ASM\ASM-SendPacketBlockList.txt" />
     <None Include="Resources\watchdog.dll" />
