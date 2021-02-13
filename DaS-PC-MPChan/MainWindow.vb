@@ -880,10 +880,14 @@ Public Class MainWindow
         If dsProcess IsNot Nothing And dsProcess.type18TmpStorageSteamId IsNot Nothing Then
             'grab the steam id and unset it
             Dim steamid_int = dsProcess.ReadUInt64(dsProcess.type18TmpStorageSteamId)
+            Dim steamid = steamid_int.ToString("x16")
 
             If steamid_int <> 0 Then
                 dsProcess.WriteBytes(dsProcess.type18TmpStorageSteamId, {0,0,0,0,0,0,0,0})
-                blockUser(steamid_int.ToString("x16"), BlockTypes.OnHitHackBlock)
+                'since we're grabbing this asynchronously, make sure we didn't already just block them
+                If Not isUserBlocked(steamid) Then
+                    blockUser(steamid, BlockTypes.OnHitHackBlock)
+                End If
             End If
         End If
     End sub
@@ -1127,6 +1131,7 @@ Public Class MainWindow
     'Blocked the given user id if possible
     'Adds to registery and the block list
     Private Sub blockUser(idString As String, blockType As String)
+        idString = idString.ToLower()
         Dim idStringNoted = idString + blockType
 
         If dgvBlockedNodes.Rows.Count < 200 Then
@@ -1146,6 +1151,22 @@ Public Class MainWindow
             MsgBox("You can only simulatiously block 200 players. Please remove someone from your block list.", MsgBoxStyle.Critical)
         End If
     End Sub
+
+    Private Function isUserBlocked(idString As String) As Boolean
+        idString = idString.ToLower()
+        For Each blockNode As DataGridViewRow In dgvBlockedNodes.Rows
+            Dim steamID As String = blockNode.Cells("steamId").Value
+            steamID = steamID.ToLower()
+            If steamID.Contains("_") Then
+                steamID = steamID.Remove(steamID.LastIndexOf("_"),2)
+            End If
+
+            If steamID.Equals(idString)
+                Return True
+            End If
+        Next
+        Return False
+    End Function
 
     Public Async Sub blockUserForMinAccountAge(idStringHex As String)
         Dim idString = Convert.ToInt64(idStringHex, 16).ToString
