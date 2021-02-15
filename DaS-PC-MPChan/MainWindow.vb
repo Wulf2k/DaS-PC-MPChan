@@ -21,6 +21,7 @@ Public Class MainWindow
     'Timers
     Private WithEvents updateActiveNodesTimer As New System.Windows.Forms.Timer()
     Private WithEvents checkOnHitPacketStorageTimer As New System.Windows.Forms.Timer()
+    Private WithEvents damageLogTimer As New System.Windows.Forms.Timer()
     Private WithEvents updateUITimer As New System.Windows.Forms.Timer()
     Private WithEvents updateNetNodesTimer As New System.Windows.Forms.Timer()
     Private WithEvents updateOnlineStateTimer As New System.Windows.Forms.Timer()
@@ -104,6 +105,8 @@ Public Class MainWindow
         updateActiveNodesTimer.Start()
         checkOnHitPacketStorageTimer.Interval = 200
         checkOnHitPacketStorageTimer.Start()
+        damageLogTimer.Interval = 1000
+        damageLogTimer.Start()
         dsAttachmentTimer.Interval = 1000
         dsAttachmentTimer.Start()
         updateOnlineStateTimer.Interval = Config.OnlineCheckInterval
@@ -194,27 +197,53 @@ Public Class MainWindow
             .Columns("name").Width = 180
             .Columns("name").ValueType = GetType(String)
             .Columns.Add("steamId", "Steam ID")
-            .Columns("steamId").Width = 145
+            .Columns("steamId").Width = 180
             .Columns("steamId").ValueType = GetType(String)
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
         End With
 
+        'make sure this isn't sortable, since we need it to be ordered chronologically
+        With dgvDamageLog
+            .Columns.Add("name", "Name")
+            .Columns("name").Width = 180
+            .Columns("name").ValueType = GetType(String)
+            .Columns("name").SortMode = DataGridViewColumnSortMode.NotSortable
+            .Columns.Add("steamId", "Steam ID")
+            .Columns("steamId").Width = 145
+            .Columns("steamId").ValueType = GetType(String)
+            .Columns("steamId").SortMode = DataGridViewColumnSortMode.NotSortable
+            .Columns.Add("attack", "Attack")
+            .Columns("attack").Width = 140
+            .Columns("attack").ValueType = GetType(UInt32)
+            .Columns("attack").SortMode = DataGridViewColumnSortMode.NotSortable
+            .Font = New Font("Consolas", 10)
+            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+            .SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        End With
+        'pre-populate the rows
+        For i As Integer = 0 To DarkSoulsProcess.onHitListTmpStorageSteamIdSize-1
+            dgvDamageLog.Rows.Add()
+        Next
+
         With dgvRecentNodes
             .AutoGenerateColumns = False
             .Columns.Add("name", "Name")
             .Columns("name").Width = 180
             .Columns("name").ValueType = GetType(String)
+            .Columns("name").SortMode = DataGridViewColumnSortMode.NotSortable
             .Columns.Add("steamId", "Steam ID")
             .Columns("steamId").Width = 145
             .Columns("steamId").ValueType = GetType(String)
+            .Columns("steamId").SortMode = DataGridViewColumnSortMode.NotSortable
             .Columns.Add("orderId", "Order ID")
             .Columns("orderId").Visible = False
             .Columns("orderId").ValueType = GetType(Long)
             .Columns.Add("isOnline", "O")
             .Columns("isOnline").Width = 20
             .Columns("isOnline").ValueType = GetType(String)
+            .Columns("isOnline").SortMode = DataGridViewColumnSortMode.NotSortable
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
@@ -895,6 +924,29 @@ Public Class MainWindow
         End If
     End sub
 
+    Private sub damageLog_Sync() Handles damageLogTimer.Tick
+        If dsProcess IsNot Nothing Then
+            If dsProcess.onHitListTmpStorageSteamId IsNot Nothing Then
+                Dim damageLog_data = dsProcess.ReadBytes(dsProcess.onHitListTmpStorageSteamId, DarkSoulsProcess.onHitListTmpStorageSteamIdSize*(8+4+4))
+
+                'fill in the ui with the grabbed data
+                For i As Integer = 0 To DarkSoulsProcess.onHitListTmpStorageSteamIdSize-1
+                    Dim steamid = BitConverter.ToUInt64(damageLog_data, (i*(8+4+4)))
+                    Dim steamid_str As String = steamid.ToString("x16")
+                    Dim spellSpeffect = BitConverter.ToUInt32(damageLog_data, (i*(8+4+4))+4)
+                    Dim weaponSpeffect = BitConverter.ToUInt32(damageLog_data, (i*(8+4+4))+4+4)
+
+                    'use the connected list to grab the name
+                    If steamid <> 0 And dsProcess.ConnectedNodes.ContainsKey(steamid_str) Then
+                        dgvDamageLog.Rows(i).Cells("name").Value = dsProcess.ConnectedNodes(steamid_str).CharacterName
+                    End If
+                    dgvDamageLog.Rows(i).Cells("steamId").Value = steamid_str
+                    dgvDamageLog.Rows(i).Cells("attack").Value = weaponSpeffect
+                Next
+            End If
+        End If
+    End sub
+
     Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
         Dim selfNode As DSNode = Nothing
         If dsProcess IsNot Nothing Then
@@ -1266,6 +1318,8 @@ Public Class MainWindow
             currentGrid = dgvFavoriteNodes
         ElseIf tabs.SelectedTab Is tabBlock Then
             currentGrid = dgvBlockedNodes
+        ElseIf tabs.SelectedTab Is tabDamageLog Then
+            currentGrid = dgvDamageLog
         ElseIf tabs.SelectedTab Is tabDSCMNet Then
             currentGrid = dgvDSCMNet
         Else

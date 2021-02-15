@@ -69,8 +69,10 @@ Partial Class MainWindow
         Me.dgvMPNodes = New DSCM.ExtendedDataGridView()
         Me.tabFavorites = New System.Windows.Forms.TabPage()
         Me.tabBlock = New System.Windows.Forms.TabPage()
+        Me.tabDamageLog = New System.Windows.Forms.TabPage()
         Me.dgvFavoriteNodes = New System.Windows.Forms.DataGridView()
         Me.dgvBlockedNodes = New System.Windows.Forms.DataGridView()
+        Me.dgvDamageLog = New System.Windows.Forms.DataGridView()
         Me.tabRecent = New System.Windows.Forms.TabPage()
         Me.dgvRecentNodes = New System.Windows.Forms.DataGridView()
         Me.tabDSCMNet = New System.Windows.Forms.TabPage()
@@ -135,6 +137,8 @@ Partial Class MainWindow
         CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabBlock.SuspendLayout()
         CType(Me.dgvBlockedNodes, System.ComponentModel.ISupportInitialize).BeginInit
+        Me.tabDamageLog.SuspendLayout()
+        CType(Me.dgvDamageLog, System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabRecent.SuspendLayout
         CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).BeginInit
         Me.tabDSCMNet.SuspendLayout
@@ -423,6 +427,7 @@ Partial Class MainWindow
         Me.tabs.Controls.Add(Me.tabActive)
         Me.tabs.Controls.Add(Me.tabFavorites)
         Me.tabs.Controls.Add(Me.tabBlock)
+        Me.tabs.Controls.Add(Me.tabDamageLog)
         Me.tabs.Controls.Add(Me.tabRecent)
         Me.tabs.Controls.Add(Me.tabDSCMNet)
         Me.tabs.Controls.Add(Me.tabLocal)
@@ -562,8 +567,34 @@ Partial Class MainWindow
         Me.dgvBlockedNodes.ReadOnly = True
         Me.dgvBlockedNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle6
         Me.dgvBlockedNodes.RowHeadersVisible = False
-        Me.dgvBlockedNodes.Size = New System.Drawing.Size(370, 290)
+        Me.dgvBlockedNodes.Size = New System.Drawing.Size(425, 290)
         Me.dgvBlockedNodes.TabIndex = 54
+        '
+        'tabDamageLog
+        '
+        Me.tabDamageLog.BackColor = System.Drawing.SystemColors.Control
+        Me.tabDamageLog.Controls.Add(Me.dgvDamageLog)
+        Me.tabDamageLog.Name = "tabDamageLog"
+        Me.tabDamageLog.Padding = New System.Windows.Forms.Padding(3)
+        Me.tabDamageLog.Text = "Damage Log"
+        '
+        'dgvDamageLog
+        '
+        Me.dgvDamageLog.AllowUserToAddRows = False
+        Me.dgvDamageLog.AllowUserToDeleteRows = False
+        Me.dgvDamageLog.AllowUserToResizeRows = False
+        Me.dgvDamageLog.AllowUserToOrderColumns = False
+        Me.dgvDamageLog.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.dgvDamageLog.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle4
+        Me.dgvDamageLog.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.dgvDamageLog.DefaultCellStyle = DataGridViewCellStyle5
+        Me.dgvDamageLog.Location = New System.Drawing.Point(6, 6)
+        Me.dgvDamageLog.Name = "dgvDamageLog"
+        Me.dgvDamageLog.ReadOnly = True
+        Me.dgvDamageLog.RowHeadersDefaultCellStyle = DataGridViewCellStyle6
+        Me.dgvDamageLog.RowHeadersVisible = False
+        Me.dgvDamageLog.Size = New System.Drawing.Size(600, 90)
         '
         'tabRecent
         '
@@ -611,7 +642,7 @@ Partial Class MainWindow
         DataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.[True]
         Me.dgvRecentNodes.RowHeadersDefaultCellStyle = DataGridViewCellStyle9
         Me.dgvRecentNodes.RowHeadersVisible = false
-        Me.dgvRecentNodes.Size = New System.Drawing.Size(370, 293)
+        Me.dgvRecentNodes.Size = New System.Drawing.Size(400, 293)
         Me.dgvRecentNodes.TabIndex = 55
         '
         'tabDSCMNet
@@ -1091,6 +1122,8 @@ Partial Class MainWindow
         CType(Me.dgvFavoriteNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabBlock.ResumeLayout(False)
         CType(Me.dgvBlockedNodes, System.ComponentModel.ISupportInitialize).EndInit
+        Me.tabDamageLog.ResumeLayout(False)
+        CType(Me.dgvDamageLog, System.ComponentModel.ISupportInitialize).EndInit
         Me.tabRecent.ResumeLayout(false)
         CType(Me.dgvRecentNodes,System.ComponentModel.ISupportInitialize).EndInit
         Me.tabDSCMNet.ResumeLayout(false)
@@ -1120,6 +1153,7 @@ End Sub
     Friend WithEvents tabActive As TabPage
     Friend WithEvents tabFavorites As TabPage
     Friend WithEvents tabBlock As TabPage
+    Friend WithEvents tabDamageLog As TabPage
     Friend WithEvents tabRecent As TabPage
     Friend WithEvents btnAddFavorite As Button
     Friend WithEvents btnRemFavorite As Button
@@ -1127,6 +1161,7 @@ End Sub
     Friend WithEvents btnAddBlock As Button
     Friend WithEvents dgvFavoriteNodes As DataGridView
     Friend WithEvents dgvBlockedNodes As DataGridView
+    Friend WithEvents dgvDamageLog As DataGridView
     Friend WithEvents dgvRecentNodes As DataGridView
     Friend WithEvents lblNewVersion As Label
     Friend WithEvents tabDSCMNet As TabPage

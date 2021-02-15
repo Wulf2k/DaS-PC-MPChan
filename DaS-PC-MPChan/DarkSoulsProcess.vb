@@ -172,6 +172,8 @@ Public Class DarkSoulsProcess
     Private blocklistInMemorySize As Int32
 
     Public type18TmpStorageSteamId As AllocatedMemory
+    Public const onHitListTmpStorageSteamIdSize As UInt32 = 200
+    Public onHitListTmpStorageSteamId As AllocatedMemory
     Private badSpeffectList As AllocatedMemory
     Private badSpeffectListSize As Int32
     Private ReceiveOnHitPacketDetour As AllocatedMemory
@@ -810,8 +812,12 @@ Public Class DarkSoulsProcess
             Return False
         End If
 
-        'Init in-memory location to save the wchar_t steamid of the person we detect with this
+        'Init in-memory location to save the steamid of the person we detect with this
         type18TmpStorageSteamId = New AllocatedMemory(_targetProcessHandle, 8)
+
+        'Init in-memory location to save the list of people who last hit us
+        'save their steamid and the speffects they applied, and have room for 200
+        onHitListTmpStorageSteamId = New AllocatedMemory(_targetProcessHandle, (8+4+4)*onHitListTmpStorageSteamIdSize)
 
         'set up the list of forbidden SpEffects
         Dim badSpeffectList_VB() As UInt32 = {
@@ -827,17 +833,54 @@ Public Class DarkSoulsProcess
         'inject into the point in readparseType18NetMessage right before it would return the packet it recieved.
         'Check if the speffects in the packet are bad or not, and -1 them out and save the sender steamid if so
         'ASM in ASM\ASM-OnHitPacketCheck.txt
+        Dim onHitListTmpStorageSteamId_asm_addr = BitConverter.GetBytes(CType(CType(onHitListTmpStorageSteamId, IntPtr), Integer))
         Dim badSpeffectList_asm_addr = BitConverter.GetBytes(CType(CType(badSpeffectList, IntPtr), Integer))
         Dim type18TmpStorageSteamId_asm_addr = BitConverter.GetBytes(CType(CType(type18TmpStorageSteamId, IntPtr), Integer))
 
         Dim readType18MessagedetourCode() As Byte = { 
-        &H50, &H53, &H51, &H52, &HA1, &HF8, &H88, &H40, &H01, &H8B, &H1D, &H0C, &H89, &H40, &H01,
+        &H50,
+        &H53,
+        &H51,
+        &H52,
+        &HB9, onHitListTmpStorageSteamId_asm_addr(0), onHitListTmpStorageSteamId_asm_addr(1), onHitListTmpStorageSteamId_asm_addr(2), onHitListTmpStorageSteamId_asm_addr(3),
+        &Hba, &H70, &H0c, &H00, &H00,
+        &H8a, &H04, &H11,
+        &H88, &H44, &H11, &H10,
+        &H83, &Hfa, &H00,
+        &H4a,
+        &H7d, &Hf3,
+        &H8b, &H06,
+        &H8b, &H40, &H0c,
+        &H8b, &H58, &H2c,
+        &H89, &H59, &H04,
+        &H8b, &H58, &H28,
+        &H89, &H19,
+        &HA1, &HF8, &H88, &H40, &H01,
+        &H8B, &H1D, &H0C, &H89, &H40, &H01,
+        &H89, &H41, &H08,
+        &H89, &H59, &H0c,
         &HB9, badSpeffectList_asm_addr(0), badSpeffectList_asm_addr(1), badSpeffectList_asm_addr(2), badSpeffectList_asm_addr(3),
         &HBA, type18TmpStorageSteamId_asm_addr(0), type18TmpStorageSteamId_asm_addr(1), type18TmpStorageSteamId_asm_addr(2), type18TmpStorageSteamId_asm_addr(3),
-        &H83, &H39, &HFF, &H74, &H3A, &H3B, &H01, &H74, &H09, &H3B, &H19, &H74, &H05,
-        &H83, &HC1, &H04, &HEB, &HEE, &H8B, &H06, &H8B, &H40, &H0C, &H8B, &H58, &H2C, &H89, &H5A, &H04, &H8B, &H58, &H28, &H89,
-        &H1A, &HC7, &H05, &HF8, &H88, &H40, &H01, &HFF, &HFF, &HFF, &HFF, &HC7, &H05, &H0C, &H89, &H40, &H01, &HFF,
-        &HFF, &HFF, &HFF, &H5A, &H59, &H5B, &H58,
+        &H83, &H39, &HFF,
+        &H74, &H3A,
+        &H3B, &H01,
+        &H74, &H09,
+        &H3B, &H19,
+        &H74, &H05,
+        &H83, &HC1, &H04,
+        &HEB, &HEE,
+        &H8B, &H06,
+        &H8B, &H40, &H0C,
+        &H8B, &H58, &H2C,
+        &H89, &H5A, &H04,
+        &H8B, &H58, &H28,
+        &H89, &H1A,
+        &HC7, &H05, &HF8, &H88, &H40, &H01, &HFF, &HFF, &HFF, &HFF,
+        &HC7, &H05, &H0C, &H89, &H40, &H01, &HFF, &HFF, &HFF, &HFF,
+        &H5A,
+        &H59,
+        &H5B,
+        &H58,
         &HE9}
 
         ReceiveOnHitPacketDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)

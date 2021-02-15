@@ -3,8 +3,29 @@
 51                    - push ecx
 52                    - push edx
 
+B9 {storageList}      - mov ecx, onHitListTmpStorageSteamId
+ba 70 0c 00 00        - mov edx, (onHitListTmpStorageSteamIdSize-1)*(8+4+4) //use as a index, and treat the array as just bytes
+
+shiftlist:
+8a 04 11              - mov al, [ecx+edx]
+88 44 11 10           - mov [ecx+edx+16], al
+83 fa 00              - cmp edx, 0
+4a                    - dec edx
+7d f3                 - jge shiftlist
+
+8b 06                 - mov eax, [esi] //go to the steamid pointer
+8b 40 0c              - mov eax, [eax+0xc]
+8b 58 2c              - mov ebx, [eax+0x2c] //save steamid upper
+89 59 04              - mov [ecx+4], ebx
+8b 58 28              - mov ebx, [eax+0x28] //save steamid lower
+89 19                 - mov [ecx], ebx
+
 a1 f8 88 40 01        - mov eax, [0x14088D0+0x28] //spell speffect
 8b 1d 0c 89 40 01     - mov ebx, [0x14088D0+0x3C] //weapon speffect
+
+89 41 08              - mov [ecx+8], eax
+89 59 0c              - mov [ecx+8+4], ebx
+
 B9 {badSpeffectList}  - mov ecx, badSpeffectList 
 BA {storage}          - mov edx, type18TmpStorageSteamId
 
