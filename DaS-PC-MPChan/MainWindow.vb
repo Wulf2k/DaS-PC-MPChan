@@ -214,10 +214,14 @@ Public Class MainWindow
             .Columns("steamId").Width = 145
             .Columns("steamId").ValueType = GetType(String)
             .Columns("steamId").SortMode = DataGridViewColumnSortMode.NotSortable
-            .Columns.Add("attack", "Attack")
-            .Columns("attack").Width = 140
-            .Columns("attack").ValueType = GetType(UInt32)
-            .Columns("attack").SortMode = DataGridViewColumnSortMode.NotSortable
+            .Columns.Add("spellAttack", "Spell Sp")
+            .Columns("spellAttack").Width = 80
+            .Columns("spellAttack").ValueType = GetType(Int32)
+            .Columns("spellAttack").SortMode = DataGridViewColumnSortMode.NotSortable
+            .Columns.Add("weaponAttack", "Weapon Sp")
+            .Columns("weaponAttack").Width = 100
+            .Columns("weaponAttack").ValueType = GetType(Int32)
+            .Columns("weaponAttack").SortMode = DataGridViewColumnSortMode.NotSortable
             .Font = New Font("Consolas", 10)
             .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
@@ -933,15 +937,16 @@ Public Class MainWindow
                 For i As Integer = 0 To DarkSoulsProcess.onHitListTmpStorageSteamIdSize-1
                     Dim steamid = BitConverter.ToUInt64(damageLog_data, (i*(8+4+4)))
                     Dim steamid_str As String = steamid.ToString("x16")
-                    Dim spellSpeffect = BitConverter.ToUInt32(damageLog_data, (i*(8+4+4))+4)
-                    Dim weaponSpeffect = BitConverter.ToUInt32(damageLog_data, (i*(8+4+4))+4+4)
+                    Dim spellSpeffect = BitConverter.ToInt32(damageLog_data, (i*(8+4+4))+8)
+                    Dim weaponSpeffect = BitConverter.ToInt32(damageLog_data, (i*(8+4+4))+8+4)
 
                     'use the connected list to grab the name
                     If steamid <> 0 And dsProcess.ConnectedNodes.ContainsKey(steamid_str) Then
                         dgvDamageLog.Rows(i).Cells("name").Value = dsProcess.ConnectedNodes(steamid_str).CharacterName
                     End If
                     dgvDamageLog.Rows(i).Cells("steamId").Value = steamid_str
-                    dgvDamageLog.Rows(i).Cells("attack").Value = weaponSpeffect
+                    dgvDamageLog.Rows(i).Cells("spellAttack").Value = spellSpeffect
+                    dgvDamageLog.Rows(i).Cells("weaponAttack").Value = weaponSpeffect
                 Next
             End If
         End If
