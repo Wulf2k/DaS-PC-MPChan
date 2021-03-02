@@ -108,6 +108,7 @@ Partial Class MainWindow
         Me.lblNewVersion = New System.Windows.Forms.Label()
         Me.chkDSCMNet = New System.Windows.Forms.CheckBox()
         Me.mandateMinAccountAge = New System.Windows.Forms.CheckBox()
+        Me.whitelist = New System.Windows.Forms.CheckBox()
         Me.dsProcessStatus = New System.Windows.Forms.TextBox()
         Me.btnUpdate = New System.Windows.Forms.Button()
         Me.btnLaunchDS = New System.Windows.Forms.Button()
@@ -334,7 +335,7 @@ Partial Class MainWindow
         Me.lblVer.Name = "lblVer"
         Me.lblVer.Size = New System.Drawing.Size(76, 13)
         Me.lblVer.TabIndex = 49
-        Me.lblVer.Text = "2021.02.15.0"
+        Me.lblVer.Text = "2021.03.02.0"
         '
         'chkExpand
         '
@@ -1052,6 +1053,17 @@ Partial Class MainWindow
         Me.mandateMinAccountAge.Text = "Mandate minimum steam account age"
         Me.mandateMinAccountAge.UseVisualStyleBackColor = False
         '
+        'Whitelist
+        '
+        Me.whitelist.AutoSize = True
+        Me.whitelist.BackColor = System.Drawing.SystemColors.Control
+        Me.whitelist.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.whitelist.Location = New System.Drawing.Point(135, 27)
+        Me.whitelist.Name = "whitelist"
+        Me.whitelist.Size = New System.Drawing.Size(80, 20)
+        Me.whitelist.Text = "Enable Whitelist"
+        Me.whitelist.UseVisualStyleBackColor = False
+        '
         'dsProcessStatus
         '
         Me.dsProcessStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left),System.Windows.Forms.AnchorStyles)
@@ -1092,6 +1104,7 @@ Partial Class MainWindow
         Me.Controls.Add(Me.dsProcessStatus)
         Me.Controls.Add(Me.chkDSCMNet)
         Me.Controls.Add(Me.mandateMinAccountAge)
+        Me.Controls.Add(Me.whitelist)
         Me.Controls.Add(Me.lblNewVersion)
         Me.Controls.Add(Me.btnRemFavorite)
         Me.Controls.Add(Me.btnRemBlock)
@@ -1167,6 +1180,7 @@ End Sub
     Friend WithEvents tabDSCMNet As TabPage
     Friend WithEvents chkDSCMNet As CheckBox
     Friend WithEvents mandateMinAccountAge As CheckBox
+    Friend WithEvents whitelist As CheckBox
     Friend WithEvents txtIRCDebug As System.Windows.Forms.TextBox
     Friend WithEvents dsProcessStatus As System.Windows.Forms.TextBox
     Friend WithEvents tabHelp As System.Windows.Forms.TabPage

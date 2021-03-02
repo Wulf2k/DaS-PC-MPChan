@@ -893,6 +893,45 @@ Public Class MainWindow
         dsProcess.DrawNodes = chkDebugDrawing.Checked
     End Sub
 
+    Private Sub whitelist_CheckedChanged(sender As Object, e As EventArgs) Handles whitelist.CheckedChanged
+        If IsNothing(dsProcess) Then
+            whitelist.Checked = False
+            Exit Sub
+        End If
+        If whitelist.Checked = True Then
+            If My.Computer.FileSystem.FileExists("whitelist.txt") Then
+                Try
+                    'Read in the whitelist file
+                    Dim whitenodes = My.Computer.FileSystem.ReadAllText("whitelist.txt").Split(new String() {Environment.NewLine}, StringSplitOptions.None)
+                    'Write it to the whitelist in-memory array and sync
+                    dsProcess.Sync_MemoryWhiteList(whitenodes)
+                    'set the listType to Whitelist
+                    dsProcess.WriteUInt32(dsProcess.listTypeInMemory, 1)
+                Catch ex As Exception
+                    Dim thread2_whitelist as New Thread(
+                      Sub() 
+                        MsgBox("Malformed whitelist.txt", MsgBoxStyle.Information)
+                      End Sub
+                    )
+                    thread2_whitelist.Start()
+                    whitelist.Checked = False
+                End Try
+            Else
+                'Warning about failure to find file
+                Dim thread1_whitelist as New Thread(
+                  Sub() 
+                    MsgBox("Unable to find whitelist.txt", MsgBoxStyle.Information)
+                  End Sub
+                )
+                thread1_whitelist.Start()
+                whitelist.Checked = False
+            End If
+        Else
+            'set the listType back to Blocklist
+            dsProcess.WriteUInt32(dsProcess.listTypeInMemory, 0)
+        End If
+    End Sub
+
     Private Sub errorCheckSteamName()
         'Disabled temporarily due to being non-functional
         Dim byt() As Byte

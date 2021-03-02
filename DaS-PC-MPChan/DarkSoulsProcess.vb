@@ -170,6 +170,9 @@ Public Class DarkSoulsProcess
     Private blocklistRecvDetour As AllocatedMemory
     Private blocklistInMemory As AllocatedMemory
     Private blocklistInMemorySize As Int32
+    Private whitelistInMemory As AllocatedMemory
+    Private whitelistInMemorySize As Int32
+    Public listTypeInMemory As AllocatedMemory
 
     Public type18TmpStorageSteamId As AllocatedMemory
     Public const onHitListTmpStorageSteamIdSize As UInt32 = 200
@@ -963,42 +966,41 @@ Public Class DarkSoulsProcess
 
         Dim readP2PPacket_end As IntPtr = readP2PPacket_3 + readP2PPacket_3_end_offset
 
+        'Init in-memory list switch
+        listTypeInMemory = New AllocatedMemory(_targetProcessHandle, 4)
+
         'Init in-memory block list
         blocklistInMemorySize = 8 * 200 '200 block slots should be good for now
         blocklistInMemory = New AllocatedMemory(_targetProcessHandle, blocklistInMemorySize)
 
+        'Init in-memory white list
+        whitelistInMemorySize = 8 * 200 '200 slots should be good for now
+        whitelistInMemory = New AllocatedMemory(_targetProcessHandle, whitelistInMemorySize)
+
+        Dim listtype_asm_addr = BitConverter.GetBytes(CType(CType(listTypeInMemory, IntPtr), Integer))
         Dim blocklist_asm_addr = BitConverter.GetBytes(CType(CType(blocklistInMemory, IntPtr), Integer))
         Dim blocklist_asm_length = BitConverter.GetBytes(blocklistInMemorySize)
+        Dim whitelist_asm_addr = BitConverter.GetBytes(CType(CType(whitelistInMemory, IntPtr), Integer))
+        Dim whitelist_asm_length = BitConverter.GetBytes(whitelistInMemorySize)
 
         'for 1st instruction of sendP2PPacket, jump to a check if the target is in our blocklist. Immediate return if so
         'ASM in ASM\ASM-SendPacketBlockList.txt
-        Dim sendP2PdetourCode() As Byte = {
-        &H50,
-        &H53,
-        &H51,
-        &H52,
-        &H8B, &H44, &H24, &H14,
-        &H8B, &H54, &H24, &H18,
-        &HBB, &H0, &H0, &H0, &H0,
-        &HB9, blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
-        &H3B, &H4, &H19,
-        &HF, &H85, &HA, &H0, &H0, &H0,
-        &H3B, &H54, &H19, &H4,
-        &HF, &H84, &H10, &H0, &H0, &H0,
-        &H83, &HC3, &H8,
-        &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
-        &H7C, &HE2,
-        &HE9, &H7, &H0, &H0, &H0,
-        &H5A,
-        &H59,
-        &H5B,
-        &H58,
-        &HC2, &H18, &H0,
-        &H5A,
-        &H59,
-        &H5B,
-        &H58
-        }
+        Dim sendP2PdetourCode() As Byte = { 
+            &H50, &H53, &H51, &H52, &H8B, &H44, &H24, &H14, &H8B, &H54,
+            &H24, &H18, &HBB, &H00, &H00, &H00, &H00, &H8B, &H0D,
+            listtype_asm_addr(0), listtype_asm_addr(1), listtype_asm_addr(2), listtype_asm_addr(3),
+            &H83, &HF9, &H00, &H74, &H02, &HEB, &H1D, &HB9,
+            blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
+            &H3B, &H04, &H19, &H75, &H06, &H3B, &H54, &H19,
+            &H04, &H74, &H2A, &H83, &HC3, &H08, &H81, &HFB,
+            blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
+            &H7C, &HEA, &HEB, &H24, &HB9,
+            whitelist_asm_addr(0), whitelist_asm_addr(1), whitelist_asm_addr(2), whitelist_asm_addr(3),
+            &H3B, &H04, &H19, &H75, &H06, &H3B, &H54, &H19, &H04, &H74,
+            &H14, &H83, &HC3, &H08, &H81, &HFB,
+            whitelist_asm_length(0), whitelist_asm_length(1), whitelist_asm_length(2), whitelist_asm_length(3),
+            &H7C, &HEA, &HEB, &H00, &H5A, &H59, &H5B, &H58, &HC2, &H18,
+            &H00, &H5A, &H59, &H5B, &H58 }
 
         Debug.Assert(sendP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the SendP2PPacket code")
 
@@ -1015,35 +1017,22 @@ Public Class DarkSoulsProcess
         'for the last (return) instruction of ReadP2PPacket, jump to a check if the target that the function tells us the packet is from is in our blocklist. Return false if so
         'ASM in ASM\ASM-ReadPacketBlockList.txt
         Dim readP2PdetourCode() As Byte = {
-        &H50,
-        &H53,
-        &H51,
-        &H52,
-        &H8B, &H44, &H24, &H20,
-        &H8B, &H0,
-        &H8B, &H54, &H24, &H20,
-        &H8B, &H52, &H4,
-        &HBB, &H0, &H0, &H0, &H0,
-        &HB9, blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
-        &H3B, &H4, &H19,
-        &HF, &H85, &HA, &H0, &H0, &H0,
-        &H3B, &H54, &H19, &H4,
-        &HF, &H84, &H10, &H0, &H0, &H0,
-        &H83, &HC3, &H8,
-        &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
-        &H7C, &HE2,
-        &HE9, &H9, &H0, &H0, &H0,
-        &H5A,
-        &H59,
-        &H5B,
-        &H58,
-        &HB0, &H0,
-        &HC2, &H14, &H0,
-        &H5A,
-        &H59,
-        &H5B,
-        &H58
-        }
+            &H50, &H53, &H51, &H52, &H8B, &H44, &H24, &H20, &H8B, &H00,
+            &H8B, &H54, &H24, &H20, &H8B, &H52, &H04, &HBB, &H00, &H00,
+            &H00, &H00, &H8B, &H0D,
+            listtype_asm_addr(0), listtype_asm_addr(1), listtype_asm_addr(2), listtype_asm_addr(3),
+            &H83, &HF9, &H00, &H74, &H02, &HEB, &H1D, &HB9,
+            blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
+            &H3B, &H04, &H19, &H75, &H06, &H3B, &H54, &H19, &H04, &H74,
+            &H2A, &H83, &HC3, &H08, &H81, &HFB,
+            blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
+            &H7C, &HEA, &HEB, &H26, &HB9,
+            whitelist_asm_addr(0), whitelist_asm_addr(1), whitelist_asm_addr(2), whitelist_asm_addr(3),
+            &H3B, &H04, &H19, &H75, &H06, &H3B, &H54, &H19, &H04, &H74,
+            &H16, &H83, &HC3, &H08, &H81, &HFB,
+            whitelist_asm_length(0), whitelist_asm_length(1), whitelist_asm_length(2), whitelist_asm_length(3),
+            &H7C, &HEA, &HEB, &H00, &H5A, &H59, &H5B, &H58, &HB0, &H00,
+            &HC2, &H14, &H00, &H5A, &H59, &H5B, &H58 }
 
         Debug.Assert(readP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the ReadP2PPacket code")
 
@@ -1087,6 +1076,31 @@ Public Class DarkSoulsProcess
             i += 8
         Next
         WriteProcessMemory(_targetProcessHandle, blocklistInMemory, steamid_array, blocklistInMemorySize, 0)
+    End Sub
+
+    Public Sub Sync_MemoryWhiteList(whitenodes As String())
+        Debug.Assert(WhitelistInMemorySize >= whitenodes.Count * 8, "Whitelist larger than allocated memory. Need to increase size.")
+
+        'convert steam64 strings to in-memory (steam64) ints
+        Dim steamid_array(whitelistInMemorySize) As Byte
+        Dim i = 0
+        For Each steamID In whitenodes
+            If steamID <> "" Then
+                Dim upperSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Left(steamID, 8), 16))
+                Dim lowerSteamId() As Byte = BitConverter.GetBytes(Convert.ToInt32(Microsoft.VisualBasic.Right(steamID, 8), 16))
+                'little endian order the ints
+                steamid_array(i + 0) = lowerSteamId(0)
+                steamid_array(i + 1) = lowerSteamId(1)
+                steamid_array(i + 2) = lowerSteamId(2)
+                steamid_array(i + 3) = lowerSteamId(3)
+                steamid_array(i + 4) = upperSteamId(0)
+                steamid_array(i + 5) = upperSteamId(1)
+                steamid_array(i + 6) = upperSteamId(2)
+                steamid_array(i + 7) = upperSteamId(3)
+                i += 8
+            End If
+        Next
+        WriteProcessMemory(_targetProcessHandle, whitelistInMemory, steamid_array, whitelistInMemorySize, 0)
     End Sub
 
     Public Sub UpdateNodes()

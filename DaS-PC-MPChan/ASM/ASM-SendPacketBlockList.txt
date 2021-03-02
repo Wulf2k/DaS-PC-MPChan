@@ -1,34 +1,51 @@
-50                    - push eax
-53                    - push ebx
-51                    - push ecx
-52                    - push edx
+push eax
+push ebx
+push ecx
+push edx
 
-8B 44 24 14           - mov eax,[esp+0x14] //steamid (upper half)
-8B 54 24 18           - mov edx,[esp+0x18] //steamid (lower half)
-BB 00 00 00 00        - mov ebx,0 //counter 
-B9 {BLOCKLIST}        - mov ecx,blocklist 
+mov eax,[esp+0x14] #steamid (upper half)
+mov edx,[esp+0x18] #steamid (lower half)
+mov ebx, 0 #counter
+mov ecx, dword ptr [0xDEADBEEF] #LISTTYPE
+cmp ecx, 0
+je blocklist
+jmp whitelist
 
-looptop:
-3B 04 19              - cmp eax,[ecx+ebx]
-0F 85 0A 00 00 00     - jne loopcontinue
-3B 54 19 04           - cmp edx,[ecx+ebx+04]
-0F 84 10 00 00 00     - je abortsend
+blocklist:
+mov ecx, 0xDEADBEEF #BLOCKLIST 
+b_looptop:
+cmp eax, [ecx+ebx]
+jne b_loopcontinue
+cmp edx, [ecx+ebx+04]
+je abortsend
+b_loopcontinue:
+add ebx, 0x8
+cmp ebx, 0xDEADBEEF #BLOCKLIST_SIZE
+jl b_looptop
+jmp normalsend
 
-loopcontinue:
-83 C3 08              - add ebx,0x8
-81 FB {LISTSIZE}      - cmp ebx,size of block list memory allocated
-7C E2                 - jl looptop
-E9 07 00 00 00        - jmp normalsend
+whitelist:
+mov ecx, 0xDEADBEEF #WHITELIST 
+w_looptop:
+cmp eax, [ecx+ebx]
+jne w_loopcontinue
+cmp edx, [ecx+ebx+04]
+je normalsend
+w_loopcontinue:
+add ebx, 0x8
+cmp ebx, 0xDEADBEEF #WHITELIST_SIZE
+jl w_looptop
+jmp abortsend
 
 abortsend:
-5A                    - pop edx
-59                    - pop ecx
-5B                    - pop ebx
-58                    - pop eax
-C2 18 00              - ret 0x18
+pop edx
+pop ecx
+pop ebx
+pop eax
+ret 0x18
 
 normalsend:
-5A                    - pop edx
-59                    - pop ecx
-5B                    - pop ebx
-58                    - pop eax
+pop edx
+pop ecx
+pop ebx
+pop eax
