@@ -973,11 +973,32 @@ Public Class DarkSoulsProcess
         'for 1st instruction of sendP2PPacket, jump to a check if the target is in our blocklist. Immediate return if so
         'ASM in ASM\ASM-SendPacketBlockList.txt
         Dim sendP2PdetourCode() As Byte = {
-        &H50, &H53, &H51, &H52, &H8B, &H44, &H24, &H14, &H8B, &H54, &H24, &H18, &HBB, &H0, &H0, &H0, &H0, &HB9,
-        blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3), &H3B, &H4,
-        &H19, &HF, &H85, &HA, &H0, &H0, &H0, &H3B, &H54, &H19, &H4, &HF, &H84, &H10, &H0, &H0, &H0, &H83, &HC3,
-        &H8, &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
-        &H7C, &HE2, &HE9, &H7, &H0, &H0, &H0, &H5A, &H59, &H5B, &H58, &HC2, &H18, &H0, &H5A, &H59, &H5B, &H58}
+        &H50,
+        &H53,
+        &H51,
+        &H52,
+        &H8B, &H44, &H24, &H14,
+        &H8B, &H54, &H24, &H18,
+        &HBB, &H0, &H0, &H0, &H0,
+        &HB9, blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
+        &H3B, &H4, &H19,
+        &HF, &H85, &HA, &H0, &H0, &H0,
+        &H3B, &H54, &H19, &H4,
+        &HF, &H84, &H10, &H0, &H0, &H0,
+        &H83, &HC3, &H8,
+        &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
+        &H7C, &HE2,
+        &HE9, &H7, &H0, &H0, &H0,
+        &H5A,
+        &H59,
+        &H5B,
+        &H58,
+        &HC2, &H18, &H0,
+        &H5A,
+        &H59,
+        &H5B,
+        &H58
+        }
 
         Debug.Assert(sendP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the SendP2PPacket code")
 
@@ -994,11 +1015,35 @@ Public Class DarkSoulsProcess
         'for the last (return) instruction of ReadP2PPacket, jump to a check if the target that the function tells us the packet is from is in our blocklist. Return false if so
         'ASM in ASM\ASM-ReadPacketBlockList.txt
         Dim readP2PdetourCode() As Byte = {
-        &H50, &H53, &H51, &H52, &H8B, &H44, &H24, &H20, &H8B, &H0, &H8B, &H54, &H24, &H20, &H8B, &H52, &H4, &HBB,
-        &H0, &H0, &H0, &H0, &HB9, blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
-        &H3B, &H4, &H19, &HF, &H85, &HA, &H0, &H0, &H0, &H3B, &H54, &H19, &H4, &HF, &H84, &H10, &H0, &H0, &H0,
-        &H83, &HC3, &H8, &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
-        &H7C, &HE2, &HE9, &H9, &H0, &H0, &H0, &H5A, &H59, &H5B, &H58, &HB0, &H0, &HC2, &H14, &H0, &H5A, &H59, &H5B, &H58}
+        &H50,
+        &H53,
+        &H51,
+        &H52,
+        &H8B, &H44, &H24, &H20,
+        &H8B, &H0,
+        &H8B, &H54, &H24, &H20,
+        &H8B, &H52, &H4,
+        &HBB, &H0, &H0, &H0, &H0,
+        &HB9, blocklist_asm_addr(0), blocklist_asm_addr(1), blocklist_asm_addr(2), blocklist_asm_addr(3),
+        &H3B, &H4, &H19,
+        &HF, &H85, &HA, &H0, &H0, &H0,
+        &H3B, &H54, &H19, &H4,
+        &HF, &H84, &H10, &H0, &H0, &H0,
+        &H83, &HC3, &H8,
+        &H81, &HFB, blocklist_asm_length(0), blocklist_asm_length(1), blocklist_asm_length(2), blocklist_asm_length(3),
+        &H7C, &HE2,
+        &HE9, &H9, &H0, &H0, &H0,
+        &H5A,
+        &H59,
+        &H5B,
+        &H58,
+        &HB0, &H0,
+        &HC2, &H14, &H0,
+        &H5A,
+        &H59,
+        &H5B,
+        &H58
+        }
 
         Debug.Assert(readP2PdetourCode.Count <= allocatedCodeSize, "You need more space for the ReadP2PPacket code")
 
