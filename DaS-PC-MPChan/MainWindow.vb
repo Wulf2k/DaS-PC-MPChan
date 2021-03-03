@@ -693,7 +693,7 @@ Public Class MainWindow
     End Sub
     Private Sub updateUI() Handles updateUITimer.Tick
         If dsProcess Is Nothing Then
-            btnLaunchDS.Visible = true
+            btnLaunchDS.Visible = false
         Else
             'Node display
             'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
