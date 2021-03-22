@@ -168,9 +168,9 @@ To remove a user from you block list, select the `Block List` tab, select a user
 
 White List
 =========
-DSCM allows you to create a whitelist to only connected with certain players.  
+DSCM allows you to create a whitelist to only connect with certain players.  
 Create a file called "whitelist.txt" in the same location as your DSCM exe.  
-On each line, put in the steam64 ID of a player you want to connect with.  
+On each line, put in the steam64 ID of a player you want to connect with (including yourself!).  
 Save the file, and check the Enable Whitelist button.  
 When the whitelist is enabled, you will connect to no-one except those in the whitelist text file.  
 
