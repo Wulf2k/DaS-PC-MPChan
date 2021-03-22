@@ -247,6 +247,7 @@ Public Class DarkSoulsProcess
         End If
         SetupNodeDumpHook()
         SetupLobbyDumpHook()
+        Sync_MemoryBlockList(MainWindow.dgvBlockedNodes.Rows)
     End Sub
 
     Public Overloads Sub Dispose() Implements IDisposable.Dispose

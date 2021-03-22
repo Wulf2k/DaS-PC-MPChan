@@ -116,8 +116,6 @@ Public Class MainWindow
         publishNodesTimer.Interval = Config.PublishNodesInterval
         checkWatchNodeTimer.Interval = Config.CheckWatchNodeInterval
 
-        attachDSProcess()
-
         setupGridViews()
 
         'Create regkeys if they don't exist
@@ -132,6 +130,8 @@ Public Class MainWindow
         loadRecentNodes()
         loadOptions()
         loadReadme()
+
+        attachDSProcess()
 
         'Resize window
         chkExpand_CheckedChanged()
