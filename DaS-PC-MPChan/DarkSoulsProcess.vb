@@ -231,8 +231,9 @@ Public Class DarkSoulsProcess
                   End Sub
                 )
                 thread.Start()
-                Exit While
+                Throw New DSProcessAttachException("Unable to monitor packets")
             End Try
+            'soft failure. Just wait a bit then retry
             Thread.Sleep(200)
         End While
         Dim success2 = Inject_ReceiveOnHitPacket()
@@ -244,6 +245,7 @@ Public Class DarkSoulsProcess
               End Sub
             )
             thread2.Start()
+            Throw New DSProcessAttachException("Unable to check packets")
         End If
         SetupNodeDumpHook()
         SetupLobbyDumpHook()
@@ -1051,7 +1053,7 @@ Public Class DarkSoulsProcess
     End Function
 
     Public Sub Sync_MemoryBlockList(blockednodes As DataGridViewRowCollection)
-        Debug.Assert(blocklistInMemorySize >= blockednodes.Count * 8, "Blocklist larger than allocated memory. Need to increase size.")
+        Debug.Assert(blocklistInMemorySize >= blockednodes.Count * 8, "Blocklist of size="+blockednodes.Count.ToString()+" larger than allocated memory of count="+blocklistInMemorySize.ToString()+". Need to increase size.")
 
         'convert steam64 strings to in-memory (steam64) ints
         Dim steamid_array(blocklistInMemorySize) As Byte
