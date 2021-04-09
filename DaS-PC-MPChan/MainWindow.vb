@@ -107,8 +107,6 @@ Public Class MainWindow
         checkOnHitPacketStorageTimer.Start()
         damageLogTimer.Interval = 1000
         damageLogTimer.Start()
-        dsAttachmentTimer.Interval = 1000
-        dsAttachmentTimer.Start()
         updateOnlineStateTimer.Interval = Config.OnlineCheckInterval
         updateOnlineStateTimer.Start()
         updateNetNodesTimer.Interval = Config.UpdateNetNodesInterval
@@ -131,6 +129,9 @@ Public Class MainWindow
         loadOptions()
         loadReadme()
 
+        'wait till DSCM is all loaded before we try to attach
+        dsAttachmentTimer.Interval = 1000
+        dsAttachmentTimer.Start()
         attachDSProcess()
 
         'Resize window
