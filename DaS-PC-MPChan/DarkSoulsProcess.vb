@@ -935,32 +935,25 @@ Public Class DarkSoulsProcess
         End If
 
         'search through the readP2PPacket function to get the end
-        'the function is always followed by a spacer of 0xCC bytes
-        'in order to get the last _instruction_ (which could be the original retn or a leftover jmp from us in the past), hunt backwards from the 0xCCs for a known chunk
+        'in order to get the last _instruction_ (which could be the original retn or a leftover jmp from us in the past)
+        'find the known return chunk epilog, and get the 3rd one
+        '(this will work as long as the function control flow doesn't change massively)
         Dim readP2PPacket_3_end_offset = 0
-        'hunt forwards for end of function
-        Dim CC_spaces() As Byte = {&HCC, &HCC, &HCC}
-        While True
-            Dim readP2PPacket_3_bytes = ReadBytes(readP2PPacket_3+readP2PPacket_3_end_offset, 3)
-            If readP2PPacket_3_bytes.SequenceEqual(CC_spaces) Then
-                Exit While
-            Else
-                readP2PPacket_3_end_offset += 1
-                If readP2PPacket_3_end_offset < 0 Or readP2PPacket_3_end_offset > 1000
-                    Throw New ApplicationException("Unable to find end of readP2PPacket function")
-                End If
-            End If
-        End While
-        'hunt backwards for last instruction by searching for the known epilog
         Dim epilog_ops() As Byte = {&H5B, &H8B, &HE5, &H5D}
+        Dim epilogs_found = 0
         While True
             Dim readP2PPacket_3_bytes = ReadBytes(readP2PPacket_3+readP2PPacket_3_end_offset, 4)
             If readP2PPacket_3_bytes.SequenceEqual(epilog_ops) Then
-                'add 4 to account for the epilog ops length, and end
+                epilogs_found += 1
+                'add 4 to account for the epilog ops length
                 readP2PPacket_3_end_offset += 4
-                Exit While
+
+                'if this is the 3rd epilog, end
+                If epilogs_found = 3 Then
+                    Exit While
+                End If
             Else
-                readP2PPacket_3_end_offset -= 1
+                readP2PPacket_3_end_offset += 1
                 If readP2PPacket_3_end_offset < 0 Or readP2PPacket_3_end_offset > 1000
                     Throw New ApplicationException("Unable to find last instruction in readP2PPacket function")
                 End If
@@ -1041,6 +1034,7 @@ Public Class DarkSoulsProcess
 
         blocklistRecvDetour = New AllocatedMemory(_targetProcessHandle, allocatedCodeSize)
 
+        'it's ok to write 1 bytes past the end of the function, since there should be at least 1 filler 0xCC byte there
         blocklistRecvHook = New JmpHook(_targetProcessHandle, readP2PPacket_end, blocklistRecvDetour, 5)
 
         readP2PdetourCode = blocklistRecvHook.PatchCode(readP2PdetourCode)
