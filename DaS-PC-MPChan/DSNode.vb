@@ -30,6 +30,7 @@
         World.Add("17-0", "Duke's Archives / Caves")
         World.Add("18-0", "Kiln")
         World.Add("18-1", "Undead Asylum")
+        World.Add("10-3", "Arena+")
 
         Covenant.Add(-1, "")
         Covenant.Add(0, "None")
@@ -135,6 +136,59 @@ Public Class DSNode
     End Property
     Public ReadOnly Property MPZoneColumn As String
         Get
+            If (MPZone = 103000) Then
+                Return "Lobby:Bloodgulch"
+            ElseIf (MPZone = 103010) Then
+                Return "Bloodgulch"
+            ElseIf (MPZone = 103020) Then
+                Return "Lobby:Hang'Em:TDM"
+            ElseIf (MPZone = 103030) Then
+                Return "Hang'Em:TDM"
+            ElseIf (MPZone = 103040) Then
+                Return "Lobby:Hang'Em:CTL"
+            ElseIf (MPZone = 103050) Then
+                Return "Hang'Em:CTL"
+            ElseIf (MPZone = 103060) Then
+                Return "Lobby:Damnation"
+            ElseIf (MPZone = 103070) Then
+                Return "Damnation"
+            ElseIf (MPZone = 103080) Then
+                Return "Lobby:Sanctuary:TDM"
+            ElseIf (MPZone = 103090) Then
+                Return "Sanctuary : TDM"
+            ElseIf (MPZone = 103100) Then
+                Return "Lobby:Sanctuary:CTL"
+            ElseIf (MPZone = 103110) Then
+                Return "Sanctuary:CTL"
+            ElseIf (MPZone = 103120) Then
+                Return "Lobby:Lockout"
+            ElseIf (MPZone = 103130) Then
+                Return "Lockout"
+            ElseIf (MPZone = 103140) Then
+                Return "Lobby:Wizard"
+            ElseIf (MPZone = 103150) Then
+                Return "Wizard"
+            ElseIf (MPZone = 103160) Then
+                Return "Lobby:Prisoner"
+            ElseIf (MPZone = 103170) Then
+                Return "Prisoner"
+            ElseIf (MPZone = 103180) Then
+                Return "Lobby:Chillout"
+            ElseIf (MPZone = 103190) Then
+                Return "Chillout"
+            ElseIf (MPZone = 103200) Then
+                Return "Lobby:Ivory Tower"
+            ElseIf (MPZone = 103210) Then
+                Return "Ivory Tower"
+            ElseIf (MPZone = 103220) Then
+                Return "Lobby:Death Island"
+            ElseIf (MPZone = 103230) Then
+                Return "Death Island"
+            ElseIf (MPZone = 103140) Then
+                Return "Lobby:Crossfire"
+            ElseIf (MPZone = 103150) Then
+                Return "Crossfire"
+            End If
             Return If(MPZone <= 0, "", MPZone)
         End Get
     End Property

@@ -151,7 +151,7 @@ Public Class MainWindow
             .Columns("name").AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
             .Columns("name").DataPropertyName = "CharacterNameColumn"
             .Columns.Add("steamId", "Steam ID")
-            .Columns("steamId").Width = 145
+            .Columns("steamId").Width = 50
             .Columns("steamId").DataPropertyName = "SteamIdColumn"
             .Columns.Add("soulLevel", "SL")
             .Columns("soulLevel").Width = 60
@@ -161,13 +161,13 @@ Public Class MainWindow
             .Columns("phantomType").Width = 80
             .Columns("phantomType").DataPropertyName = "PhantomTypeText"
             .Columns.Add("mpArea", "MP Area")
-            .Columns("mpArea").Width = 60
+            .Columns("mpArea").Width = 150
             .Columns("mpArea").DataPropertyName = "MPZoneColumn"
             .Columns.Add("world", "World")
-            .Columns("world").Width = 180
+            .Columns("world").Width = 120
             .Columns("world").DataPropertyName = "WorldText"
             .Columns.Add("ping", "Ping")
-            .Columns("ping").Width = 50
+            .Columns("ping").Width = 75
             .Columns("ping").DataPropertyName = "PingColumn"
             .Columns("ping").DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
             .Font = New Font("Consolas", 10)
@@ -1024,6 +1024,7 @@ Public Class MainWindow
         'Color Rows according to ranking
         For Each row As DataGridViewRow In dgvMPNodes.Rows
             Dim steamId = row.Cells("steamId").Value
+
             row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0)
             If steamId = selfNode.SteamId Then
                 row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(198, 239, 206)
