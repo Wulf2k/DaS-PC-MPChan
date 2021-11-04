@@ -136,7 +136,7 @@ Public Class DSNode
     End Property
     Public ReadOnly Property MPZoneColumn As String
         Get
-            If (MPZone = 103000) Then
+            If (MPZone = 103000) Then                 ' I have no idea how to write a switch in this godforsaken language 
                 Return "Lobby:Bloodgulch"
             ElseIf (MPZone = 103010) Then
                 Return "Bloodgulch"

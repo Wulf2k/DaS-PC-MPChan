@@ -277,10 +277,11 @@ Public Class DarkSoulsProcess
 
     Private Sub attachToProcess()
 
-        Dim windowCaption As String = "darksouls"
+        Dim windowCaptionA As String = "darksouls"
+        Dim windowCaptionB As String = "modsouls"
         Dim _allProcesses() As Process = Process.GetProcesses
         For Each pp As Process In _allProcesses
-            If pp.ProcessName.ToLower.Equals(windowCaption.ToLower) AndAlso Not pp.HasExited Then
+            If (pp.ProcessName.ToLower.Equals(windowCaptionA.ToLower) Or pp.ProcessName.ToLower.Equals(windowCaptionB.ToLower)) AndAlso Not pp.HasExited Then
                 attachToProcess(pp)
                 Return
             End If
@@ -308,6 +309,8 @@ Public Class DarkSoulsProcess
         For Each dll As ProcessModule In _targetProcess.Modules
             Select Case dll.ModuleName.ToLower
                 Case "darksouls.exe"
+                    dsBase = dll.BaseAddress
+                Case "modsouls.exe"
                     dsBase = dll.BaseAddress
 
                 Case "d3d9.dll"
