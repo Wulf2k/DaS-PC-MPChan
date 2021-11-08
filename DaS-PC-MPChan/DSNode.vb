@@ -141,13 +141,13 @@ Public Class DSNode
             ElseIf (MPZone = 103010) Then
                 Return "Bloodgulch"
             ElseIf (MPZone = 103020) Then
-                Return "Lobby:Hang'Em:TDM"
-            ElseIf (MPZone = 103030) Then
-                Return "Hang'Em:TDM"
-            ElseIf (MPZone = 103040) Then
                 Return "Lobby:Hang'Em:CTL"
-            ElseIf (MPZone = 103050) Then
+            ElseIf (MPZone = 103030) Then
                 Return "Hang'Em:CTL"
+            ElseIf (MPZone = 103040) Then
+                Return "Lobby:Hang'Em:TDM"
+            ElseIf (MPZone = 103050) Then
+                Return "Hang'Em:TDM"
             ElseIf (MPZone = 103060) Then
                 Return "Lobby:Damnation"
             ElseIf (MPZone = 103070) Then
@@ -184,9 +184,9 @@ Public Class DSNode
                 Return "Lobby:Death Island"
             ElseIf (MPZone = 103230) Then
                 Return "Death Island"
-            ElseIf (MPZone = 103140) Then
+            ElseIf (MPZone = 103240) Then
                 Return "Lobby:Crossfire"
-            ElseIf (MPZone = 103150) Then
+            ElseIf (MPZone = 103250) Then
                 Return "Crossfire"
             End If
             Return If(MPZone <= 0, "", MPZone)
