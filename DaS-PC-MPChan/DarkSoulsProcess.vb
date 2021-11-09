@@ -292,9 +292,19 @@ Public Class DarkSoulsProcess
     Private Sub attachToProcess(ByVal proc As Process)
         If _targetProcessHandle = IntPtr.Zero Then 'not already attached
 
+            Dim targetProcessHandleTMP = OpenProcess(PROCESS_ALL_ACCESS, False, proc.Id)
+
+            'check the exe to be sure it's actually dark souls
+            Dim namestr(17) As Byte
+            ReadProcessMemory(targetProcessHandleTMP, &H15bc784, namestr, 18, vbNull)
+            If Encoding.Unicode.GetChars(namestr) <> "DARKSOULS" Then
+                CloseHandle(targetProcessHandleTMP)
+                Throw New DSProcessAttachException("Detected that this isn't Dark Souls")
+            End If
+
             Try
                 _targetProcess = proc
-                _targetProcessHandle = OpenProcess(PROCESS_ALL_ACCESS, False, _targetProcess.Id)
+                _targetProcessHandle = targetProcessHandleTMP
             If _targetProcessHandle = 0 Then
                 Throw New DSProcessAttachException("OpenProcess() failed. Check Permissions")
             End If
@@ -343,7 +353,10 @@ Public Class DarkSoulsProcess
     End Sub
     Public ReadOnly Property IsAttached As Boolean
         Get
-            Return Not _targetProcess.HasExited
+            If _targetProcess IsNot Nothing Then
+                Return Not _targetProcess.HasExited
+            End If
+            Return False
         End Get
     End Property
     Public ReadOnly Property HasWatchdog As Boolean
