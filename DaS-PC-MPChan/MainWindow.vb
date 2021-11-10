@@ -875,6 +875,7 @@ Public Class MainWindow
         End If
         If dsProcess Is Nothing Then
             Try
+                whitelist.Checked = False
                 dsProcess = New DarkSoulsProcess()
                 dsProcessStatus.Text = " Attached to Dark Souls process"
                 dsProcessStatus.BackColor = System.Drawing.Color.FromArgb(200, 255, 200)

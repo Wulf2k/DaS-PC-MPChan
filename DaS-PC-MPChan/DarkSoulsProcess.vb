@@ -980,6 +980,7 @@ Public Class DarkSoulsProcess
 
         'Init in-memory list switch
         listTypeInMemory = New AllocatedMemory(_targetProcessHandle, 4)
+        WriteUInt32(listTypeInMemory, 0) 'default to blocklist
 
         'Init in-memory block list
         blocklistInMemorySize = 8 * 200 '200 block slots should be good for now
