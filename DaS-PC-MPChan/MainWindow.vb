@@ -57,6 +57,8 @@ Public Class MainWindow
 
     Private recentConnections As New Queue(Of Tuple(Of Date, String))
 
+    Private WhitelistLocation = $"{My.Application.Info.DirectoryPath}\whitelist.txt"
+
     Private Sub DSCM_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         lbxDebugLog.Load(Me)
         Version = lblVer.Text
@@ -124,6 +126,7 @@ Public Class MainWindow
         My.Computer.Registry.CurrentUser.CreateSubKey("Software\DSCM\Options")
 
         loadFavoriteNodes()
+        loadWhitelistNodes()
         loadBlockedNodes()
         loadRecentNodes()
         loadOptions()
@@ -192,6 +195,21 @@ Public Class MainWindow
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
         End With
 
+        With dgvWhitelist
+            .Columns.Add("name", "Name")
+            .Columns("name").Width = 180
+            .Columns("name").ValueType = GetType(String)
+            .Columns.Add("steamId", "Steam ID")
+            .Columns("steamId").Width = 145
+            .Columns("steamId").ValueType = GetType(String)
+            .Columns.Add("isOnline", "O")
+            .Columns("isOnline").Width = 20
+            .Columns("isOnline").ValueType = GetType(String)
+            .Font = New Font("Consolas", 10)
+            .AlternatingRowsDefaultCellStyle.BackColor = AlternateRowColor
+            .SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        End With
+
         'Using this as a gui element and the block array. Stores (steam name, steam id)
         With dgvBlockedNodes
             .Columns.Add("name", "Name")
@@ -228,7 +246,7 @@ Public Class MainWindow
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect
         End With
         'pre-populate the rows
-        For i As Integer = 0 To DarkSoulsProcess.onHitListTmpStorageSteamIdSize-1
+        For i As Integer = 0 To DarkSoulsProcess.onHitListTmpStorageSteamIdSize - 1
             dgvDamageLog.Rows.Add()
         Next
 
@@ -322,6 +340,25 @@ Public Class MainWindow
         For Each id As String In key.GetValueNames()
             dgvFavoriteNodes.Rows.Add(key.GetValue(id), id)
         Next
+    End Sub
+
+    Private Sub loadWhitelistNodes()
+        dgvWhitelist.Rows.Clear()
+        If My.Computer.FileSystem.FileExists(WhitelistLocation) Then
+            Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries)
+            Dim index = 0
+            For Each steamid As String In whitenodes
+                dgvWhitelist.Rows.Add()
+                dgvWhitelist.Rows(index).Cells("steamId").Value = steamid
+                Dim str2 As String = Conversions.ToString(Convert.ToInt64(steamid, 16))
+                Dim xmlDocument As XmlDocument = New XmlDocument()
+                xmlDocument.Load("http://steamcommunity.com/profiles/" + str2 + "?xml=1")
+                Dim innerText As String = xmlDocument.SelectSingleNode("/profile/steamID").InnerText
+                dgvWhitelist.Rows(index).Cells("name").Value = innerText
+                index = index + 1
+            Next
+
+        End If
     End Sub
 
     'Read in blocked node list from register and global block list
@@ -458,6 +495,16 @@ Public Class MainWindow
                 Catch ex As KeyNotFoundException
                 End Try
             Next
+            For Each Row In dgvWhitelist.Rows
+                Try
+                    If onlineInfo(converter(Row.Cells("steamId").Value())) Then
+                        Row.Cells("isOnline").Value = "Y"
+                    Else
+                        Row.Cells("isOnline").Value = "N"
+                    End If
+                Catch ex As KeyNotFoundException
+                End Try
+            Next
         Catch ex As Exception
             'Fail silently since nobody wants to be bothered for the online check.
         End Try
@@ -508,7 +555,7 @@ Public Class MainWindow
                 dsProcess.SelfNode.CharacterName = "" OrElse
                 dsProcess.SelfNode.PhantomType = -1)
 
-        If inMenu AndAlso dsProcess.NodeCount >= Config.BadNodesThreshold
+        If inMenu AndAlso dsProcess.NodeCount >= Config.BadNodesThreshold Then
             Return
         End If
 
@@ -555,23 +602,23 @@ Public Class MainWindow
         Dim sorted As IOrderedEnumerable(Of DSNode) = candidates _
             .OrderByDescending(Function(other) (other.World <> "-1--1")) _
             .ThenByDescending(Function(other) As Boolean
-                                   'Special cross-world invasions
-                                   If anorLondoInvading Then
-                                       'TODO: Use others dark anor londo info once we have it
-                                       If other.World = AnorLondoWorld Then
-                                           Return self.canDarkmoonInvade(other)
-                                       End If
-                                   ElseIf forestInvading Then
-                                       If DarkrootGardenZones.Contains(other.MPZone) Then
-                                           If other.HasExtendedInfo And other.Covenant = Covenant.ForestHunter Then
-                                               Return False
-                                           Else
-                                               Return self.canForestInvade(other)
-                                           End If
-                                       End If
-                                   End If
-                                   Return False
-                               End Function) _
+                                  'Special cross-world invasions
+                                  If anorLondoInvading Then
+                                      'TODO: Use others dark anor londo info once we have it
+                                      If other.World = AnorLondoWorld Then
+                                          Return self.canDarkmoonInvade(other)
+                                      End If
+                                  ElseIf forestInvading Then
+                                      If DarkrootGardenZones.Contains(other.MPZone) Then
+                                          If other.HasExtendedInfo And other.Covenant = Covenant.ForestHunter Then
+                                              Return False
+                                          Else
+                                              Return self.canForestInvade(other)
+                                          End If
+                                      End If
+                                  End If
+                                  Return False
+                              End Function) _
             .ThenByDescending(Function(other) (other.World = self.World))
 
         Dim pvpSorting = Function(s As IOrderedEnumerable(Of DSNode))
@@ -667,7 +714,7 @@ Public Class MainWindow
                     Continue For
                 ElseIf ranking = 1 And badSeconds < Config.HalfBadNodeGracePeriod Then
                     Continue For
-                ElseIf ranking = 2 and badSeconds < Config.BadNodeGracePeriod Then
+                ElseIf ranking = 2 And badSeconds < Config.BadNodeGracePeriod Then
                     Continue For
                 End If
                 'We might currently have an online interaction
@@ -694,7 +741,7 @@ Public Class MainWindow
     End Sub
     Private Sub updateUI() Handles updateUITimer.Tick
         If dsProcess Is Nothing Then
-            btnLaunchDS.Visible = false
+            btnLaunchDS.Visible = False
         Else
             'Node display
             'Changes the comparison instruction to display it if value is 0, rather than changing the value itself
@@ -732,7 +779,7 @@ Public Class MainWindow
 
             'errorCheckSteamName()
             txtLocalSteamName.Text = dsProcess.SelfSteamName
-            If txtLocalSteamName.Text.length > 15 Then 
+            If txtLocalSteamName.Text.Length > 15 Then
                 txtLocalSteamName.BackColor = Color.OrangeRed
             Else
                 txtLocalSteamName.BackColor = DefaultBackColor
@@ -748,8 +795,8 @@ Public Class MainWindow
             txtClearCount.Text = dsProcess.ClearCount
             txtTimePlayed.Text = TimeSpan.FromMilliseconds(dsProcess.TimePlayed).ToString("ddd\.hh\:mm\:ss")
 
-            txtRedCooldown.Text = math.Round(dsProcess.redCooldown, 0)
-            txtBlueCooldown.Text = math.Round(dsProcess.blueCooldown, 0)
+            txtRedCooldown.Text = Math.Round(dsProcess.redCooldown, 0)
+            txtBlueCooldown.Text = Math.Round(dsProcess.blueCooldown, 0)
 
 
             txtXPos.Text = Math.Round(dsProcess.xPos, 1)
@@ -785,7 +832,7 @@ Public Class MainWindow
             flaglist.Add("Dark Anor Londo", dsProcess.FlagsDarkAnorLondo)
             flaglist.Add("New Londo Drained", dsProcess.FlagsNewLondoDrained)
 
-            For Each item in flaglist.keys
+            For Each item In flaglist.Keys
                 Try
                     clbEventFlags.SetItemChecked(clbEventFlags.Items.IndexOf(item), flaglist.GetValues(item)(0))
                 Catch ex As Exception
@@ -806,7 +853,7 @@ Public Class MainWindow
             lbxDebugLog.UpdateFromDS(dsProcess.debugLog)
         End If
     End Sub
-    Private Sub chkLoggerEnabled_CheckedChanged( sender As Object,  e As EventArgs) Handles chkLoggerEnabled.CheckedChanged
+    Private Sub chkLoggerEnabled_CheckedChanged(sender As Object, e As EventArgs) Handles chkLoggerEnabled.CheckedChanged
         If Not IsNothing(dsProcess) Then dsProcess.enableDebugLog = chkLoggerEnabled.Checked
     End Sub
     Private Async Sub checkWatchNode() Handles checkWatchNodeTimer.Tick
@@ -814,7 +861,7 @@ Public Class MainWindow
 
         Dim connectedToOldNode = Not IsNothing(watchSteamId) AndAlso connectedNodes.ContainsKey(watchSteamId)
 
-        If connectedToOldNode And (DateTime.UtcNow - watchExchangedLastTime).TotalMilliseconds <= Config.ExchangeWatchNodeInterval
+        If connectedToOldNode And (DateTime.UtcNow - watchExchangedLastTime).TotalMilliseconds <= Config.ExchangeWatchNodeInterval Then
             Return
         End If
 
@@ -901,18 +948,18 @@ Public Class MainWindow
             Exit Sub
         End If
         If whitelist.Checked = True Then
-            If My.Computer.FileSystem.FileExists("whitelist.txt") Then
+            If My.Computer.FileSystem.FileExists(WhitelistLocation) Then
                 Try
                     'Read in the whitelist file
-                    Dim whitenodes = My.Computer.FileSystem.ReadAllText("whitelist.txt").Split(new String() {Environment.NewLine}, StringSplitOptions.None)
+                    Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.None)
                     'Write it to the whitelist in-memory array and sync
                     dsProcess.Sync_MemoryWhiteList(whitenodes)
                     'set the listType to Whitelist
                     dsProcess.WriteUInt32(dsProcess.listTypeInMemory, 1)
                 Catch ex As Exception
-                    Dim thread2_whitelist as New Thread(
-                      Sub() 
-                        MsgBox("Malformed whitelist.txt", MsgBoxStyle.Information)
+                    Dim thread2_whitelist As New Thread(
+                      Sub()
+                          MsgBox("Malformed whitelist.txt", MsgBoxStyle.Information)
                       End Sub
                     )
                     thread2_whitelist.Start()
@@ -920,9 +967,9 @@ Public Class MainWindow
                 End Try
             Else
                 'Warning about failure to find file
-                Dim thread1_whitelist as New Thread(
-                  Sub() 
-                    MsgBox("Unable to find whitelist.txt", MsgBoxStyle.Information)
+                Dim thread1_whitelist As New Thread(
+                  Sub()
+                      MsgBox("Unable to find whitelist.txt", MsgBoxStyle.Information)
                   End Sub
                 )
                 thread1_whitelist.Start()
@@ -939,7 +986,7 @@ Public Class MainWindow
         Dim byt() As Byte
         byt = Encoding.Unicode.GetBytes(dsProcess.SelfSteamName)
 
-        If byt.Length > &H1d Then ReDim Preserve byt(&H1d)
+        If byt.Length > &H1D Then ReDim Preserve byt(&H1D)
 
         Dim tmpStr As String
         tmpStr = Encoding.Unicode.GetString(byt)
@@ -950,7 +997,7 @@ Public Class MainWindow
         dsProcess.SelfSteamName = tmpStr
     End Sub
 
-    Private sub checkOnHitPacketStorage() Handles checkOnHitPacketStorageTimer.Tick
+    Private Sub checkOnHitPacketStorage() Handles checkOnHitPacketStorageTimer.Tick
         If dsProcess IsNot Nothing Then
             'VS doesn't have short circut eval lmao
             If dsProcess.type18TmpStorageSteamId IsNot Nothing Then
@@ -959,7 +1006,7 @@ Public Class MainWindow
                 Dim steamid = steamid_int.ToString("x16")
 
                 If steamid_int <> 0 Then
-                    dsProcess.WriteBytes(dsProcess.type18TmpStorageSteamId, {0,0,0,0,0,0,0,0})
+                    dsProcess.WriteBytes(dsProcess.type18TmpStorageSteamId, {0, 0, 0, 0, 0, 0, 0, 0})
                     'since we're grabbing this asynchronously, make sure we didn't already just block them
                     If Not isUserBlocked(steamid) Then
                         blockUser(steamid, BlockTypes.OnHitHackBlock)
@@ -967,19 +1014,19 @@ Public Class MainWindow
                 End If
             End If
         End If
-    End sub
+    End Sub
 
-    Private sub damageLog_Sync() Handles damageLogTimer.Tick
+    Private Sub damageLog_Sync() Handles damageLogTimer.Tick
         If dsProcess IsNot Nothing Then
             If dsProcess.onHitListTmpStorageSteamId IsNot Nothing Then
-                Dim damageLog_data = dsProcess.ReadBytes(dsProcess.onHitListTmpStorageSteamId, DarkSoulsProcess.onHitListTmpStorageSteamIdSize*(8+4+4))
+                Dim damageLog_data = dsProcess.ReadBytes(dsProcess.onHitListTmpStorageSteamId, DarkSoulsProcess.onHitListTmpStorageSteamIdSize * (8 + 4 + 4))
 
                 'fill in the ui with the grabbed data
-                For i As Integer = 0 To DarkSoulsProcess.onHitListTmpStorageSteamIdSize-1
-                    Dim steamid = BitConverter.ToUInt64(damageLog_data, (i*(8+4+4)))
+                For i As Integer = 0 To DarkSoulsProcess.onHitListTmpStorageSteamIdSize - 1
+                    Dim steamid = BitConverter.ToUInt64(damageLog_data, (i * (8 + 4 + 4)))
                     Dim steamid_str As String = steamid.ToString("x16")
-                    Dim spellSpeffect = BitConverter.ToInt32(damageLog_data, (i*(8+4+4))+8)
-                    Dim weaponSpeffect = BitConverter.ToInt32(damageLog_data, (i*(8+4+4))+8+4)
+                    Dim spellSpeffect = BitConverter.ToInt32(damageLog_data, (i * (8 + 4 + 4)) + 8)
+                    Dim weaponSpeffect = BitConverter.ToInt32(damageLog_data, (i * (8 + 4 + 4)) + 8 + 4)
 
                     'use the connected list to grab the name
                     If steamid <> 0 And dsProcess.ConnectedNodes.ContainsKey(steamid_str) Then
@@ -991,7 +1038,7 @@ Public Class MainWindow
                 Next
             End If
         End If
-    End sub
+    End Sub
 
     Private Sub updateActiveNodes() Handles updateActiveNodesTimer.Tick
         Dim selfNode As DSNode = Nothing
@@ -1226,7 +1273,7 @@ Public Class MainWindow
         Dim idString As String = verifySteamId(txtTargetSteamID)
         If idString IsNot Nothing Then
             manualConnections.Add(idString)
-            connectToSteamId(idString) 
+            connectToSteamId(idString)
         End If
     End Sub
 
@@ -1260,10 +1307,10 @@ Public Class MainWindow
             Dim steamID As String = blockNode.Cells("steamId").Value
             steamID = steamID.ToLower()
             If steamID.Contains("_") Then
-                steamID = steamID.Remove(steamID.LastIndexOf("_"),2)
+                steamID = steamID.Remove(steamID.LastIndexOf("_"), 2)
             End If
 
-            If steamID.Equals(idString)
+            If steamID.Equals(idString) Then
                 Return True
             End If
         Next
@@ -1527,7 +1574,64 @@ Public Class MainWindow
             MsgBox("Error launching." & Environment.NewLine & ex.Message)
         End Try
     End Sub
+
+    Private Sub ActiveAndFavorite_MouseUp(sender As DataGridView, e As MouseEventArgs) Handles dgvMPNodes.MouseUp, dgvFavoriteNodes.MouseUp
+        If e.Button <> Windows.Forms.MouseButtons.Right Then Return
+        Dim info = sender.HitTest(e.X, e.Y)
+        If sender.Rows.Count < 1 Then Return
+        sender.CurrentCell = sender.Item(info.ColumnIndex, info.RowIndex)
+
+        Dim cms = New ContextMenuStrip
+        Dim item1 = cms.Items.Add("Remove Whitelist")
+        item1.Tag = 1
+        AddHandler item1.Click, AddressOf addWhitelist
+        cms.Show(tabs, e.Location)
+    End Sub
+
+    Private Sub addWhitelist(ByVal sender As Object, ByVal e As EventArgs)
+        If Not My.Computer.FileSystem.FileExists(WhitelistLocation) Then
+            System.IO.File.Create(WhitelistLocation).Dispose()
+        End If
+        If tabs.SelectedTab Is tabActive Then
+            Dim id = dgvMPNodes.SelectedRows(0).Cells("steamId").Value
+            AddNewWhitelistEntry(id)
+        Else
+            Dim id = dgvFavoriteNodes.SelectedRows(0).Cells("steamId").Value
+            AddNewWhitelistEntry(id)
+        End If
+        loadWhitelistNodes()
+        whitelist_CheckedChanged(Nothing, Nothing)
+    End Sub
+
+    Private Sub AddNewWhitelistEntry(id As String)
+        Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.None).ToList()
+        whitenodes.Add(id)
+        File.WriteAllLines(WhitelistLocation, whitenodes)
+    End Sub
+
+    Private Sub dgvWhitelist_MouseUp(sender As DataGridView, e As MouseEventArgs) Handles dgvWhitelist.MouseUp
+        If e.Button <> Windows.Forms.MouseButtons.Right Then Return
+        Dim info = sender.HitTest(e.X, e.Y)
+        If sender.Rows.Count < 1 Then Return
+        sender.CurrentCell = sender.Item(info.ColumnIndex, info.RowIndex)
+
+        Dim cms = New ContextMenuStrip
+        Dim item1 = cms.Items.Add("Remove Whitelist")
+        item1.Tag = 1
+        AddHandler item1.Click, AddressOf removeWhiteList
+        cms.Show(tabs, e.Location)
+    End Sub
+
+    Private Sub removeWhiteList(ByVal sender As Object, ByVal e As EventArgs)
+        Dim id = dgvWhitelist.SelectedRows(0).Cells("steamId").Value
+        Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.None).ToList()
+        whitenodes.Remove(id)
+        File.WriteAllLines(WhitelistLocation, whitenodes)
+        loadWhitelistNodes()
+        whitelist_CheckedChanged(Nothing, Nothing)
+    End Sub
 End Class
+
 
 
 Class DebugLogForm
