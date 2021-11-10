@@ -471,6 +471,7 @@ Partial Class MainWindow
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.tabs.Controls.Add(Me.tabActive)
         Me.tabs.Controls.Add(Me.tabFavorites)
+        Me.tabs.Controls.Add(Me.tabWhitelist)
         Me.tabs.Controls.Add(Me.tabBlock)
         Me.tabs.Controls.Add(Me.tabDamageLog)
         Me.tabs.Controls.Add(Me.tabRecent)
@@ -478,7 +479,6 @@ Partial Class MainWindow
         Me.tabs.Controls.Add(Me.tabLocal)
         Me.tabs.Controls.Add(Me.tabDebugLog)
         Me.tabs.Controls.Add(Me.tabHelp)
-        Me.tabs.Controls.Add(Me.tabWhitelist)
         Me.tabs.Location = New System.Drawing.Point(15, 177)
         Me.tabs.Margin = New System.Windows.Forms.Padding(4, 5, 4, 5)
         Me.tabs.Name = "tabs"
@@ -1066,12 +1066,15 @@ Partial Class MainWindow
         '
         Me.dgvWhitelist.AllowUserToAddRows = False
         Me.dgvWhitelist.AllowUserToDeleteRows = False
+        Me.dgvWhitelist.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.dgvWhitelist.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         Me.dgvWhitelist.Location = New System.Drawing.Point(6, 6)
         Me.dgvWhitelist.Name = "dgvWhitelist"
+        Me.dgvWhitelist.RowHeadersVisible = False
         Me.dgvWhitelist.RowHeadersWidth = 62
         Me.dgvWhitelist.RowTemplate.Height = 28
-        Me.dgvWhitelist.Size = New System.Drawing.Size(655, 460)
+        Me.dgvWhitelist.Size = New System.Drawing.Size(545, 460)
         Me.dgvWhitelist.TabIndex = 0
         '
         'btnAddFavorite

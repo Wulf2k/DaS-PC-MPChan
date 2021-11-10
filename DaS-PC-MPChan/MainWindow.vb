@@ -1574,7 +1574,7 @@ Public Class MainWindow
             MsgBox("Error launching." & Environment.NewLine & ex.Message)
         End Try
     End Sub
-
+    'New subroutines for whitelist tab
     Private Sub ActiveAndFavorite_MouseUp(sender As DataGridView, e As MouseEventArgs) Handles dgvMPNodes.MouseUp, dgvFavoriteNodes.MouseUp
         If e.Button <> Windows.Forms.MouseButtons.Right Then Return
         Dim info = sender.HitTest(e.X, e.Y)
@@ -1582,7 +1582,7 @@ Public Class MainWindow
         sender.CurrentCell = sender.Item(info.ColumnIndex, info.RowIndex)
 
         Dim cms = New ContextMenuStrip
-        Dim item1 = cms.Items.Add("Remove Whitelist")
+        Dim item1 = cms.Items.Add("Add Whitelist")
         item1.Tag = 1
         AddHandler item1.Click, AddressOf addWhitelist
         cms.Show(tabs, e.Location)
@@ -1601,10 +1601,12 @@ Public Class MainWindow
         End If
         loadWhitelistNodes()
         whitelist_CheckedChanged(Nothing, Nothing)
+        updateOnlineState()
     End Sub
 
     Private Sub AddNewWhitelistEntry(id As String)
         Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.None).ToList()
+        If whitenodes.Contains(id) Then Return
         whitenodes.Add(id)
         File.WriteAllLines(WhitelistLocation, whitenodes)
     End Sub
@@ -1629,6 +1631,7 @@ Public Class MainWindow
         File.WriteAllLines(WhitelistLocation, whitenodes)
         loadWhitelistNodes()
         whitelist_CheckedChanged(Nothing, Nothing)
+        updateOnlineState()
     End Sub
 End Class
 
