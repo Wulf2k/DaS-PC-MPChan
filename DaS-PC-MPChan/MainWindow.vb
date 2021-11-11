@@ -1579,6 +1579,7 @@ Public Class MainWindow
         If e.Button <> Windows.Forms.MouseButtons.Right Then Return
         Dim info = sender.HitTest(e.X, e.Y)
         If sender.Rows.Count < 1 Then Return
+        If info.Type <> DataGridViewHitTestType.Cell Then Return
         sender.CurrentCell = sender.Item(info.ColumnIndex, info.RowIndex)
 
         Dim cms = New ContextMenuStrip
@@ -1615,6 +1616,7 @@ Public Class MainWindow
         If e.Button <> Windows.Forms.MouseButtons.Right Then Return
         Dim info = sender.HitTest(e.X, e.Y)
         If sender.Rows.Count < 1 Then Return
+        If info.Type <> DataGridViewHitTestType.Cell Then Return
         sender.CurrentCell = sender.Item(info.ColumnIndex, info.RowIndex)
 
         Dim cms = New ContextMenuStrip
@@ -1646,6 +1648,7 @@ Public Class MainWindow
 
     Private Sub btnClear_Click(sender As Object, e As EventArgs) Handles btnClear.Click
         If dgvWhitelist.Rows.Count < 1 Then Return
+        whitelist.Checked = False
         File.Delete(WhitelistLocation)
         loadWhitelistNodes()
         File.Create(WhitelistLocation)
