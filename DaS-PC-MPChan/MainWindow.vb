@@ -1576,7 +1576,7 @@ Public Class MainWindow
         End Try
     End Sub
     'New subroutines for whitelist tab
-    Private Sub ActiveAndFavorite_MouseUp(sender As DataGridView, e As MouseEventArgs) Handles dgvMPNodes.MouseUp, dgvFavoriteNodes.MouseUp
+    Private Sub ActiveAndFavorite_MouseUp(sender As DataGridView, e As MouseEventArgs) Handles dgvMPNodes.MouseUp, dgvFavoriteNodes.MouseUp, dgvRecentNodes.MouseUp, dgvDSCMNet.MouseUp
         If e.Button <> Windows.Forms.MouseButtons.Right Then Return
         Dim info = sender.HitTest(e.X, e.Y)
         If sender.Rows.Count < 1 Then Return
@@ -1597,8 +1597,14 @@ Public Class MainWindow
         If tabs.SelectedTab Is tabActive Then
             Dim id = dgvMPNodes.SelectedRows(0).Cells("steamId").Value
             AddNewWhitelistEntry(id)
-        Else
+        ElseIf tabs.SelectedTab Is tabFavorites Then
             Dim id = dgvFavoriteNodes.SelectedRows(0).Cells("steamId").Value
+            AddNewWhitelistEntry(id)
+        ElseIf tabs.SelectedTab Is tabRecent Then
+            Dim id = dgvRecentNodes.SelectedRows(0).Cells("steamId").Value
+            AddNewWhitelistEntry(id)
+        ElseIf tabs.SelectedTab Is tabDSCMNet Then
+            Dim id = dgvDSCMNet.SelectedRows(0).Cells("steamId").Value
             AddNewWhitelistEntry(id)
         End If
         loadWhitelistNodes()
