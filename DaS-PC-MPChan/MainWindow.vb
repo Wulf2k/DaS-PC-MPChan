@@ -1587,7 +1587,11 @@ Public Class MainWindow
         Dim item1 = cms.Items.Add("Add Whitelist")
         item1.Tag = 1
         AddHandler item1.Click, AddressOf addWhitelist
-        cms.Show(tabs, e.Location)
+        cms.Items.Add(New ToolStripSeparator())
+        Dim item2 = cms.Items.Add("Copy Steam ID")
+        item1.Tag = 2
+        AddHandler item2.Click, AddressOf copySteamID
+        cms.Show(sender, e.Location)
     End Sub
 
     Private Sub addWhitelist(ByVal sender As Object, ByVal e As EventArgs)
@@ -1612,6 +1616,29 @@ Public Class MainWindow
         updateOnlineState()
     End Sub
 
+    Private Sub copySteamID(ByVal sender As Object, ByVal e As EventArgs)
+        If Not My.Computer.FileSystem.FileExists(WhitelistLocation) Then
+            System.IO.File.Create(WhitelistLocation).Dispose()
+        End If
+        If tabs.SelectedTab Is tabActive Then
+            Dim id = dgvMPNodes.SelectedRows(0).Cells("steamId").Value
+            My.Computer.Clipboard.SetText(id)
+        ElseIf tabs.SelectedTab Is tabFavorites Then
+            Dim id = dgvFavoriteNodes.SelectedRows(0).Cells("steamId").Value
+            My.Computer.Clipboard.SetText(id)
+        ElseIf tabs.SelectedTab Is tabRecent Then
+            Dim id = dgvRecentNodes.SelectedRows(0).Cells("steamId").Value
+            My.Computer.Clipboard.SetText(id)
+        ElseIf tabs.SelectedTab Is tabDSCMNet Then
+            Dim id = dgvDSCMNet.SelectedRows(0).Cells("steamId").Value
+            My.Computer.Clipboard.SetText(id)
+        ElseIf tabs.SelectedTab Is tabWhitelist Then
+            Dim id = dgvWhitelist.SelectedRows(0).Cells("steamId").Value
+            My.Computer.Clipboard.SetText(id)
+        End If
+
+    End Sub
+
     Private Sub AddNewWhitelistEntry(id As String)
         Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).ToList()
         If whitenodes.Contains(id) Then Return
@@ -1630,6 +1657,10 @@ Public Class MainWindow
         Dim item1 = cms.Items.Add("Remove Whitelist")
         item1.Tag = 1
         AddHandler item1.Click, AddressOf removeWhiteList
+        cms.Items.Add(New ToolStripSeparator())
+        Dim item2 = cms.Items.Add("Copy Steam ID")
+        item1.Tag = 2
+        AddHandler item2.Click, AddressOf copySteamID
         cms.Show(tabs, e.Location)
     End Sub
 
