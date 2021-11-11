@@ -61,6 +61,8 @@ Features
 Hotkeys:  
 Ctrl + 1 = Toggle Node Drawing
 
+Right click on players for context menu, which includes copy steamID.  
+
 Node Drawing
 ------------
 Enabling this shows a visualization of currently active connections. 
@@ -169,6 +171,11 @@ To remove a user from you block list, select the `Block List` tab, select a user
 White List
 =========
 DSCM allows you to create a whitelist to only connect with certain players.  
+Right clicking on players in the "Active", "Favorite", "Recent", and "DSCM-Net" tabs will allow you to add them to your whitelist by seleteing the add option.  
+Additionally, you can add them manually and clear your whitelist from the new whitelist tab, as well as remove them by right clicking and selecting the remove opetion.  
+This whitelist tab will create the "whitelist.txt" for you, and delete it if there is nobody on it.  
+
+Manual Creation:
 Create a file called "whitelist.txt" in the same location as your DSCM exe.  
 On each line, put in the steam64 ID of a player you want to connect with (including yourself!).  
 Save the file, and check the Enable Whitelist button.  
