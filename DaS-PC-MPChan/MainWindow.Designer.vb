@@ -624,7 +624,7 @@ Partial Class MainWindow
         '
         'txtWhitelistSteamID
         '
-        Me.txtWhitelistSteamID.Location = New System.Drawing.Point(617, 96)
+        Me.txtWhitelistSteamID.Location = New System.Drawing.Point(618, 96)
         Me.txtWhitelistSteamID.Name = "txtWhitelistSteamID"
         Me.txtWhitelistSteamID.Size = New System.Drawing.Size(286, 26)
         Me.txtWhitelistSteamID.TabIndex = 3
