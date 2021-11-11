@@ -175,7 +175,7 @@ Right clicking on players in the "Active", "Favorite", "Recent", and "DSCM-Net" 
 Additionally, you can add them manually and clear your whitelist from the new whitelist tab, as well as remove them by right clicking and selecting the remove opetion.  
 This whitelist tab will create the "whitelist.txt" for you, and delete it if there is nobody on it.  
 
-Manual Creation:
+**Manual Creation**:  
 Create a file called "whitelist.txt" in the same location as your DSCM exe.  
 On each line, put in the steam64 ID of a player you want to connect with (including yourself!).  
 Save the file, and check the Enable Whitelist button.  
