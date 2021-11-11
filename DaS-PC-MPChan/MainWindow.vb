@@ -1661,7 +1661,7 @@ Public Class MainWindow
         Dim item2 = cms.Items.Add("Copy Steam ID")
         item1.Tag = 2
         AddHandler item2.Click, AddressOf copySteamID
-        cms.Show(tabs, e.Location)
+        cms.Show(sender, e.Location)
     End Sub
 
     Private Sub removeWhiteList(ByVal sender As Object, ByVal e As EventArgs)
