@@ -952,6 +952,7 @@ Public Class MainWindow
                 Try
                     'Read in the whitelist file
                     Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.None)
+                    If whitenodes.Length < 1 Then Return
                     'Write it to the whitelist in-memory array and sync
                     dsProcess.Sync_MemoryWhiteList(whitenodes)
                     'set the listType to Whitelist
@@ -969,7 +970,7 @@ Public Class MainWindow
                 'Warning about failure to find file
                 Dim thread1_whitelist As New Thread(
                   Sub()
-                      MsgBox("Unable to find whitelist.txt", MsgBoxStyle.Information)
+                      MsgBox("Unable to find whitelist.txt (Nobody is on your whitelist)", MsgBoxStyle.Information)
                   End Sub
                 )
                 thread1_whitelist.Start()
@@ -1651,7 +1652,6 @@ Public Class MainWindow
         whitelist.Checked = False
         File.Delete(WhitelistLocation)
         loadWhitelistNodes()
-        File.Create(WhitelistLocation)
         whitelist_CheckedChanged(Nothing, Nothing)
     End Sub
 End Class
