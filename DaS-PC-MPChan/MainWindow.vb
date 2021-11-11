@@ -1605,7 +1605,7 @@ Public Class MainWindow
     End Sub
 
     Private Sub AddNewWhitelistEntry(id As String)
-        Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.None).ToList()
+        Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).ToList()
         If whitenodes.Contains(id) Then Return
         whitenodes.Add(id)
         File.WriteAllLines(WhitelistLocation, whitenodes)
@@ -1626,12 +1626,30 @@ Public Class MainWindow
 
     Private Sub removeWhiteList(ByVal sender As Object, ByVal e As EventArgs)
         Dim id = dgvWhitelist.SelectedRows(0).Cells("steamId").Value
-        Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.None).ToList()
+        Dim whitenodes = My.Computer.FileSystem.ReadAllText(WhitelistLocation).Split(New String() {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).ToList()
         whitenodes.Remove(id)
         File.WriteAllLines(WhitelistLocation, whitenodes)
         loadWhitelistNodes()
         whitelist_CheckedChanged(Nothing, Nothing)
         updateOnlineState()
+    End Sub
+
+    Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
+        If String.IsNullOrWhiteSpace(txtWhitelistSteamID.Text) Then Return
+        Dim id = txtWhitelistSteamID.Text
+        AddNewWhitelistEntry(id)
+        loadWhitelistNodes()
+        whitelist_CheckedChanged(Nothing, Nothing)
+        updateOnlineState()
+        txtWhitelistSteamID.Clear()
+    End Sub
+
+    Private Sub btnClear_Click(sender As Object, e As EventArgs) Handles btnClear.Click
+        If dgvWhitelist.Rows.Count < 1 Then Return
+        File.Delete(WhitelistLocation)
+        loadWhitelistNodes()
+        File.Create(WhitelistLocation)
+        whitelist_CheckedChanged(Nothing, Nothing)
     End Sub
 End Class
 

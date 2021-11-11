@@ -69,6 +69,12 @@ Partial Class MainWindow
         Me.dgvMPNodes = New DSCM.ExtendedDataGridView()
         Me.tabFavorites = New System.Windows.Forms.TabPage()
         Me.dgvFavoriteNodes = New System.Windows.Forms.DataGridView()
+        Me.tabWhitelist = New System.Windows.Forms.TabPage()
+        Me.lblSteamID = New System.Windows.Forms.Label()
+        Me.txtWhitelistSteamID = New System.Windows.Forms.TextBox()
+        Me.btnAdd = New System.Windows.Forms.Button()
+        Me.btnClear = New System.Windows.Forms.Button()
+        Me.dgvWhitelist = New System.Windows.Forms.DataGridView()
         Me.tabBlock = New System.Windows.Forms.TabPage()
         Me.dgvBlockedNodes = New System.Windows.Forms.DataGridView()
         Me.tabDamageLog = New System.Windows.Forms.TabPage()
@@ -101,8 +107,6 @@ Partial Class MainWindow
         Me.debugLogContextMenu = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.tabHelp = New System.Windows.Forms.TabPage()
         Me.helpView = New System.Windows.Forms.WebBrowser()
-        Me.tabWhitelist = New System.Windows.Forms.TabPage()
-        Me.dgvWhitelist = New System.Windows.Forms.DataGridView()
         Me.btnAddFavorite = New System.Windows.Forms.Button()
         Me.btnRemFavorite = New System.Windows.Forms.Button()
         Me.btnRemBlock = New System.Windows.Forms.Button()
@@ -138,6 +142,8 @@ Partial Class MainWindow
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.tabFavorites.SuspendLayout()
         CType(Me.dgvFavoriteNodes, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.tabWhitelist.SuspendLayout()
+        CType(Me.dgvWhitelist, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.tabBlock.SuspendLayout()
         CType(Me.dgvBlockedNodes, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.tabDamageLog.SuspendLayout()
@@ -150,8 +156,6 @@ Partial Class MainWindow
         Me.tabDebugLog.SuspendLayout()
         Me.debugLogContextMenu.SuspendLayout()
         Me.tabHelp.SuspendLayout()
-        Me.tabWhitelist.SuspendLayout()
-        CType(Me.dgvWhitelist, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'lblNodes
@@ -593,6 +597,70 @@ Partial Class MainWindow
         Me.dgvFavoriteNodes.RowHeadersWidth = 62
         Me.dgvFavoriteNodes.Size = New System.Drawing.Size(555, 446)
         Me.dgvFavoriteNodes.TabIndex = 54
+        '
+        'tabWhitelist
+        '
+        Me.tabWhitelist.Controls.Add(Me.lblSteamID)
+        Me.tabWhitelist.Controls.Add(Me.txtWhitelistSteamID)
+        Me.tabWhitelist.Controls.Add(Me.btnAdd)
+        Me.tabWhitelist.Controls.Add(Me.btnClear)
+        Me.tabWhitelist.Controls.Add(Me.dgvWhitelist)
+        Me.tabWhitelist.Location = New System.Drawing.Point(4, 29)
+        Me.tabWhitelist.Name = "tabWhitelist"
+        Me.tabWhitelist.Padding = New System.Windows.Forms.Padding(3)
+        Me.tabWhitelist.Size = New System.Drawing.Size(1140, 472)
+        Me.tabWhitelist.TabIndex = 7
+        Me.tabWhitelist.Text = "Whitelist"
+        Me.tabWhitelist.UseVisualStyleBackColor = True
+        '
+        'lblSteamID
+        '
+        Me.lblSteamID.AutoSize = True
+        Me.lblSteamID.Location = New System.Drawing.Point(613, 73)
+        Me.lblSteamID.Name = "lblSteamID"
+        Me.lblSteamID.Size = New System.Drawing.Size(77, 20)
+        Me.lblSteamID.TabIndex = 4
+        Me.lblSteamID.Text = "Steam ID"
+        '
+        'txtWhitelistSteamID
+        '
+        Me.txtWhitelistSteamID.Location = New System.Drawing.Point(617, 96)
+        Me.txtWhitelistSteamID.Name = "txtWhitelistSteamID"
+        Me.txtWhitelistSteamID.Size = New System.Drawing.Size(286, 26)
+        Me.txtWhitelistSteamID.TabIndex = 3
+        '
+        'btnAdd
+        '
+        Me.btnAdd.Location = New System.Drawing.Point(617, 128)
+        Me.btnAdd.Name = "btnAdd"
+        Me.btnAdd.Size = New System.Drawing.Size(102, 36)
+        Me.btnAdd.TabIndex = 2
+        Me.btnAdd.Text = "Add"
+        Me.btnAdd.UseVisualStyleBackColor = True
+        '
+        'btnClear
+        '
+        Me.btnClear.Location = New System.Drawing.Point(617, 223)
+        Me.btnClear.Name = "btnClear"
+        Me.btnClear.Size = New System.Drawing.Size(102, 36)
+        Me.btnClear.TabIndex = 1
+        Me.btnClear.Text = "Clear"
+        Me.btnClear.UseVisualStyleBackColor = True
+        '
+        'dgvWhitelist
+        '
+        Me.dgvWhitelist.AllowUserToAddRows = False
+        Me.dgvWhitelist.AllowUserToDeleteRows = False
+        Me.dgvWhitelist.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.dgvWhitelist.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.dgvWhitelist.Location = New System.Drawing.Point(6, 6)
+        Me.dgvWhitelist.Name = "dgvWhitelist"
+        Me.dgvWhitelist.RowHeadersVisible = False
+        Me.dgvWhitelist.RowHeadersWidth = 62
+        Me.dgvWhitelist.RowTemplate.Height = 28
+        Me.dgvWhitelist.Size = New System.Drawing.Size(545, 460)
+        Me.dgvWhitelist.TabIndex = 0
         '
         'tabBlock
         '
@@ -1051,32 +1119,6 @@ Partial Class MainWindow
         Me.helpView.Size = New System.Drawing.Size(1126, 451)
         Me.helpView.TabIndex = 0
         '
-        'tabWhitelist
-        '
-        Me.tabWhitelist.Controls.Add(Me.dgvWhitelist)
-        Me.tabWhitelist.Location = New System.Drawing.Point(4, 29)
-        Me.tabWhitelist.Name = "tabWhitelist"
-        Me.tabWhitelist.Padding = New System.Windows.Forms.Padding(3)
-        Me.tabWhitelist.Size = New System.Drawing.Size(1140, 472)
-        Me.tabWhitelist.TabIndex = 7
-        Me.tabWhitelist.Text = "Whitelist"
-        Me.tabWhitelist.UseVisualStyleBackColor = True
-        '
-        'dgvWhitelist
-        '
-        Me.dgvWhitelist.AllowUserToAddRows = False
-        Me.dgvWhitelist.AllowUserToDeleteRows = False
-        Me.dgvWhitelist.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
-            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.dgvWhitelist.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.dgvWhitelist.Location = New System.Drawing.Point(6, 6)
-        Me.dgvWhitelist.Name = "dgvWhitelist"
-        Me.dgvWhitelist.RowHeadersVisible = False
-        Me.dgvWhitelist.RowHeadersWidth = 62
-        Me.dgvWhitelist.RowTemplate.Height = 28
-        Me.dgvWhitelist.Size = New System.Drawing.Size(545, 460)
-        Me.dgvWhitelist.TabIndex = 0
-        '
         'btnAddFavorite
         '
         Me.btnAddFavorite.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
@@ -1250,6 +1292,9 @@ Partial Class MainWindow
         CType(Me.dgvMPNodes, System.ComponentModel.ISupportInitialize).EndInit()
         Me.tabFavorites.ResumeLayout(False)
         CType(Me.dgvFavoriteNodes, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.tabWhitelist.ResumeLayout(False)
+        Me.tabWhitelist.PerformLayout()
+        CType(Me.dgvWhitelist, System.ComponentModel.ISupportInitialize).EndInit()
         Me.tabBlock.ResumeLayout(False)
         CType(Me.dgvBlockedNodes, System.ComponentModel.ISupportInitialize).EndInit()
         Me.tabDamageLog.ResumeLayout(False)
@@ -1265,8 +1310,6 @@ Partial Class MainWindow
         Me.tabDebugLog.PerformLayout()
         Me.debugLogContextMenu.ResumeLayout(False)
         Me.tabHelp.ResumeLayout(False)
-        Me.tabWhitelist.ResumeLayout(False)
-        CType(Me.dgvWhitelist, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -1331,4 +1374,8 @@ Partial Class MainWindow
     Friend WithEvents chkLogLobby As System.Windows.Forms.CheckBox
     Friend WithEvents tabWhitelist As TabPage
     Friend WithEvents dgvWhitelist As DataGridView
+    Friend WithEvents lblSteamID As Label
+    Friend WithEvents txtWhitelistSteamID As TextBox
+    Friend WithEvents btnAdd As Button
+    Friend WithEvents btnClear As Button
 End Class
